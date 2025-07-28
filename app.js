@@ -11,22 +11,25 @@ let appData = {
     totalEarnings: 0,
     totalClients: 0,
     totalInvoices: 0,
-    nextInvoiceNumber: 19,
     monthlyEarnings: [],
     clients: [],
     invoices: [],
-    settings: {
-        currency: 'INR',
-        taxRate: 18,
-        invoicePrefix: 'HP-2526',
-        profileName: 'Hariprasad Sivakumar',
-        profileEmail: 'contact@hariprasadss.com',
-        profilePhone: '+91 9876543210',
-        bankName: 'HARIPRASAD SIVAKUMAR',
-        bankAccount: '',
-        bankIFSC: '',
-        bankNameField: ''
-    }
+    
+settings: {
+    currency       : 'INR',
+    taxRate        : 18,
+    invoicePrefix  : 'HP-2526',
+    profileName    : 'Hariprasad Sivakumar',
+    profileEmail   : 'contact@hariprasadss.com',
+    profilePhone   : '+91 9876543210',
+    profileAddress : '6/91, Mahit Complex, Hosur Road, Attibele, Bengaluru, Karnataka – 562107',
+    gstin          : '29GLOPS9921M1ZT',
+    bankNameField  : 'Kotak Mahindra Bank',
+    bankName       : 'Hariprasad Sivakumar',
+    bankAccount    : '2049315152',
+    bankIFSC       : 'KKBK0008068',
+    bankSWIFT      : 'KKBKINBBCPC'
+}
 };
 
 // Charts
@@ -138,28 +141,23 @@ async function loadDataFromSupabase() {
     }
 }
 
+
 function calculateMonthlyEarnings() {
-    const monthlyData = {};
-    
+    const monthlyData = new Map();
+
     appData.invoices
         .filter(inv => inv.status === 'Paid')
-        .forEach(invoice => {
-            const date = new Date(invoice.date);
-            const monthKey = date.toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'short' 
-            });
-            
-            if (!monthlyData[monthKey]) {
-                monthlyData[monthKey] = 0;
-            }
-            monthlyData[monthKey] += invoice.amount;
+        .forEach(({ date, amount }) => {
+            const d = new Date(date);
+            if (Number.isNaN(d)) return;
+            const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            monthlyData.set(monthKey, (monthlyData.get(monthKey) || 0) + amount);
         });
-    
-    appData.monthlyEarnings = Object.entries(monthlyData)
-        .map(([month, amount]) => ({ month, amount }))
-        .sort((a, b) => new Date(a.month) - new Date(b.month));
+
+    appData.monthlyEarnings = Array.from(monthlyData, ([month, amount]) => ({ month, amount }))
+                                   .sort((a, b) => a.month.localeCompare(b.month));
 }
+
 
 // Supabase Database Operations - Fixed all supabase references
 async function saveClientToSupabase(clientData) {
@@ -692,7 +690,11 @@ function openInvoiceModal() {
         modal.classList.remove('hidden');
         
         // Generate invoice number
-        const invoiceNumber = `${appData.settings.invoicePrefix}-${String(appData.nextInvoiceNumber).padStart(3, '0')}`;
+        // Generate invoice number asynchronously
+        getNextInvoiceNumber().then(num => {
+            const invoiceNumInput = document.getElementById('invoice-number');
+            if (invoiceNumInput) invoiceNumInput.value = `${appData.settings.invoicePrefix}-${String(num).padStart(3, '0')}`;
+        });
         const invoiceNumberField = document.getElementById('invoice-number');
         if (invoiceNumberField) {
             invoiceNumberField.value = invoiceNumber;
@@ -851,7 +853,8 @@ function calculateInvoiceTotal() {
 async function saveInvoice(status) {
     console.log('Saving invoice with status:', status);
     
-    const invoiceNumber = document.getElementById('invoice-number')?.value;
+    const invoiceNumberInput = document.getElementById('invoice-number');
+    let invoiceNumber = invoiceNumberInput?.value;
     const clientSelect = document.getElementById('invoice-client');
     const clientId = clientSelect ? parseInt(clientSelect.value) : null;
     const client = appData.clients.find(c => c.id === clientId);
