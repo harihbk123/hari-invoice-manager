@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Manager - Hariprasad Sivakumar</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="app-layout">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>Invoice Manager</h2>
+                <p class="sidebar-subtitle">Hariprasad S.</p>
+            </div>
+            <ul class="sidebar-nav">
+                <li><a href="#" class="nav-link active" data-page="dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a></li>
+                <li><a href="#" class="nav-link" data-page="invoices">
+                    <span class="nav-icon">📄</span>
+                    <span>Invoices</span>
+                </a></li>
+                <li><a href="#" class="nav-link" data-page="clients">
+                    <span class="nav-icon">👥</span>
+                    <span>Clients</span>
+                </a></li>
+                <li><a href="#" class="nav-link" data-page="analytics">
+                    <span class="nav-icon">📈</span>
+                    <span>Analytics</span>
+                </a></li>
+                <li><a href="#" class="nav-link" data-page="settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Settings</span>
+                </a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Dashboard Page -->
+            <div id="dashboard-page" class="page active">
+                <div class="page-header">
+                    <h1>Dashboard</h1>
+                    <button class="btn btn--primary" id="create-invoice-btn">+ Create Invoice</button>
+                </div>
+
+                <!-- Metrics Cards -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">₹18,17,838</div>
+                        <div class="metric-label">Total Earnings</div>
+                        <div class="metric-change positive">+12.5%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">8</div>
+                        <div class="metric-label">Total Clients</div>
+                        <div class="metric-change positive">+2</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">38</div>
+                        <div class="metric-label">Total Invoices</div>
+                        <div class="metric-change positive">+5</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">₹1,81,784</div>
+                        <div class="metric-label">Average Monthly</div>
+                        <div class="metric-change positive">+8.2%</div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-section">
+                    <div class="chart-container">
+                        <h3>Monthly Earnings Trend</h3>
+                        <div style="position: relative; height: 300px;">
+                            <canvas id="monthlyChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Client Revenue Distribution</h3>
+                        <div style="position: relative; height: 300px;">
+                            <canvas id="clientChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Invoices -->
+                <div class="recent-invoices">
+                    <h3>Recent Invoices</h3>
+                    <div class="table-container">
+                        <table class="invoices-table">
+                            <thead>
+                                <tr>
+                                    <th>Invoice #</th>
+                                    <th>Client</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-invoices-body">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoices Page -->
+            <div id="invoices-page" class="page">
+                <div class="page-header">
+                    <h1>Invoices</h1>
+                    <div class="header-actions">
+                        <div class="filter-tabs">
+                            <button class="filter-tab active" data-filter="all">All</button>
+                            <button class="filter-tab" data-filter="paid">Paid</button>
+                            <button class="filter-tab" data-filter="pending">Pending</button>
+                            <button class="filter-tab" data-filter="draft">Draft</button>
+                        </div>
+                        <button class="btn btn--primary" id="new-invoice-btn">+ New Invoice</button>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="invoices-table">
+                        <thead>
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Client</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoices-body">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Clients Page -->
+            <div id="clients-page" class="page">
+                <div class="page-header">
+                    <h1>Clients</h1>
+                    <button class="btn btn--primary" id="add-client-btn">+ Add Client</button>
+                </div>
+                
+                <div class="clients-grid" id="clients-grid">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Analytics Page -->
+            <div id="analytics-page" class="page">
+                <div class="page-header">
+                    <h1>Analytics</h1>
+                    <div class="date-filter">
+                        <select class="form-control" id="analytics-period">
+                            <option value="monthly">Monthly View</option>
+                            <option value="quarterly">Quarterly View</option>
+                            <option value="yearly">Yearly View</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="analytics-content">
+                    <div class="chart-container full-width">
+                        <h3>Earnings Trend Analysis</h3>
+                        <div style="position: relative; height: 400px;">
+                            <canvas id="analyticsChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="analytics-stats">
+                        <div class="stat-card">
+                            <h4>Highest Earning Month</h4>
+                            <div class="stat-value">Jan 2025</div>
+                            <div class="stat-amount">₹2,76,576</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Top Client</h4>
+                            <div class="stat-value">Rover Resources</div>
+                            <div class="stat-amount">₹6,40,134</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Average Invoice</h4>
+                            <div class="stat-value">₹47,838</div>
+                            <div class="stat-amount">Per invoice</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div id="settings-page" class="page">
+                <div class="page-header">
+                    <h1>Settings</h1>
+                </div>
+
+                <div class="settings-content">
+                    <div class="settings-section">
+                        <h3>Profile Information</h3>
+                        <div class="form-group">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-control" value="Hariprasad Sivakumar" id="profile-name">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" value="contact@hariprasadss.com" id="profile-email">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" value="+91 9876543210" id="profile-phone">
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Banking Details</h3>
+                        <div class="banking-info">
+                            <div class="form-group">
+                                <label class="form-label">Account Holder Name</label>
+                                <input type="text" class="form-control" value="HARIPRASAD SIVAKUMAR" id="bank-name">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Account Number</label>
+                                <input type="text" class="form-control" placeholder="Enter account number" id="bank-account">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">IFSC Code</label>
+                                <input type="text" class="form-control" placeholder="Enter IFSC code" id="bank-ifsc">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Bank Name</label>
+                                <input type="text" class="form-control" placeholder="Enter bank name" id="bank-name-field">
+                            </div>
+                        </div>
+                        <div class="wise-integration">
+                            <p><strong>💡 Integration Tip:</strong> Connect with <a href="https://wise.com/in/invoice-generator/" target="_blank">Wise Invoice Generator</a> for streamlined payment processing and international transactions.</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Invoice Settings</h3>
+                        <div class="form-group">
+                            <label class="form-label">Currency</label>
+                            <select class="form-control" id="currency-setting">
+                                <option value="INR">Indian Rupee (₹)</option>
+                                <option value="USD">US Dollar ($)</option>
+                                <option value="EUR">Euro (€)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tax Rate (%)</label>
+                            <input type="number" class="form-control" value="18" id="tax-rate">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Invoice Prefix</label>
+                            <input type="text" class="form-control" value="HP-2526" id="invoice-prefix">
+                        </div>
+                    </div>
+
+                    <div class="settings-actions">
+                        <button class="btn btn--primary" id="save-settings">Save Settings</button>
+                        <button class="btn btn--secondary" id="reset-settings">Reset to Default</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Create Invoice Modal -->
+    <div id="invoice-modal" class="modal hidden">
+        <div class="modal-overlay" id="invoice-modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Invoice</h2>
+                <button class="modal-close" id="close-invoice-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="invoice-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Invoice Number</label>
+                            <input type="text" class="form-control" id="invoice-number" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Issue Date</label>
+                            <input type="date" class="form-control" id="issue-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Due Date</label>
+                            <input type="date" class="form-control" id="due-date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Client</label>
+                        <select class="form-control" id="invoice-client" required>
+                            <option value="">Select Client</option>
+                        </select>
+                    </div>
+
+                    <div class="line-items">
+                        <h4>Line Items</h4>
+                        <div id="line-items-container">
+                            <div class="line-item">
+                                <div class="form-row">
+                                    <div class="form-group flex-2">
+                                        <input type="text" class="form-control" placeholder="Description" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="number" class="form-control quantity" placeholder="Qty" min="1" value="1" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="number" class="form-control rate" placeholder="Rate" min="0" step="0.01" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="number" class="form-control amount" placeholder="Amount" readonly>
+                                    </div>
+                                    <button type="button" class="btn btn--secondary remove-item">Remove</button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn--secondary" id="add-line-item">+ Add Item</button>
+                    </div>
+
+                    <div class="invoice-totals">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span id="invoice-subtotal">₹0.00</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Tax (18%):</span>
+                            <span id="invoice-tax">₹0.00</span>
+                        </div>
+                        <div class="total-row total">
+                            <span>Total:</span>
+                            <span id="invoice-total">₹0.00</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--secondary" id="save-draft">Save as Draft</button>
+                <button type="button" class="btn btn--primary" id="create-invoice">Create Invoice</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Client Modal -->
+    <div id="client-modal" class="modal hidden">
+        <div class="modal-overlay" id="client-modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Client</h2>
+                <button class="modal-close" id="close-client-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="client-form">
+                    <div class="form-group">
+                        <label class="form-label">Company Name</label>
+                        <input type="text" class="form-control" id="client-company" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Contact Person</label>
+                        <input type="text" class="form-control" id="client-contact">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="client-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="client-phone">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Address</label>
+                        <textarea class="form-control" id="client-address" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Payment Terms</label>
+                        <select class="form-control" id="client-terms">
+                            <option value="net15">Net 15 days</option>
+                            <option value="net30">Net 30 days</option>
+                            <option value="net45">Net 45 days</option>
+                            <option value="due_on_receipt">Due on receipt</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--secondary" id="cancel-client">Cancel</button>
+                <button type="button" class="btn btn--primary" id="save-client">Save Client</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
