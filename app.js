@@ -1,9 +1,10 @@
 // Supabase Configuration
-const SUPABASE_URL = 'https://kgdewraoanlaqewpbdlo.supabase.co'; // Replace with your Project URL
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnZGV3cmFvYW5sYXFld3BiZGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3MTg3NDksImV4cCI6MjA2OTI5NDc0OX0.wBgDDHcdK0Q9mN6uEPQFEO8gXiJdnrntLJW3dUdh89M'; // Replace with your anon key
+const SUPABASE_URL = 'https://kgdewraoanlaqewpbdlo.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnZGV3cmFvYW5sYXFld3BiZGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3MTg3NDksImV4cCI6MjA2OTI5NDc0OX0.wBgDDHcdK0Q9mN6uEPQFEO8gXiJdnrntLJW3dUdh89M';
 
-// Initialize Supabase client
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Initialize Supabase client - Fixed
+const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Application Data - Will be loaded from Supabase
 let appData = {
@@ -57,13 +58,13 @@ async function initializeApp() {
     }
 }
 
-// Supabase Data Loading Functions
+// Supabase Data Loading Functions - Fixed all supabase references
 async function loadDataFromSupabase() {
     console.log('Loading data from Supabase...');
     
     try {
         // Load clients
-        const { data: clients, error: clientsError } = await supabase
+        const { data: clients, error: clientsError } = await supabaseClient
             .from('clients')
             .select('*')
             .order('name', { ascending: true });
@@ -73,7 +74,7 @@ async function loadDataFromSupabase() {
         appData.totalClients = clients?.length || 0;
 
         // Load invoices
-        const { data: invoices, error: invoicesError } = await supabase
+        const { data: invoices, error: invoicesError } = await supabaseClient
             .from('invoices')
             .select('*')
             .order('date_issued', { ascending: false });
@@ -105,7 +106,7 @@ async function loadDataFromSupabase() {
         calculateMonthlyEarnings();
 
         // Load settings
-        const { data: settings, error: settingsError } = await supabase
+        const { data: settings, error: settingsError } = await supabaseClient
             .from('settings')
             .select('*')
             .eq('user_id', 'default')
@@ -160,12 +161,12 @@ function calculateMonthlyEarnings() {
         .sort((a, b) => new Date(a.month) - new Date(b.month));
 }
 
-// Supabase Database Operations
+// Supabase Database Operations - Fixed all supabase references
 async function saveClientToSupabase(clientData) {
     try {
         if (clientData.id && clientData.id !== Date.now()) {
             // Update existing client
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('clients')
                 .update({
                     name: clientData.name,
@@ -183,7 +184,7 @@ async function saveClientToSupabase(clientData) {
             return data;
         } else {
             // Insert new client
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('clients')
                 .insert([{
                     name: clientData.name,
@@ -208,7 +209,7 @@ async function saveClientToSupabase(clientData) {
 
 async function saveInvoiceToSupabase(invoiceData) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('invoices')
             .insert([{
                 id: invoiceData.id,
@@ -240,7 +241,7 @@ async function saveInvoiceToSupabase(invoiceData) {
 async function updateClientTotals(clientId) {
     try {
         // Get all invoices for this client
-        const { data: invoices, error: invoicesError } = await supabase
+        const { data: invoices, error: invoicesError } = await supabaseClient
             .from('invoices')
             .select('amount, status')
             .eq('client_id', clientId);
@@ -253,7 +254,7 @@ async function updateClientTotals(clientId) {
             .reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
         
         // Update client record
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseClient
             .from('clients')
             .update({
                 total_invoices: totalInvoices,
@@ -272,7 +273,7 @@ async function updateClientTotals(clientId) {
 async function deleteInvoiceFromSupabase(invoiceId) {
     try {
         // First get the invoice to know which client to update
-        const { data: invoice, error: getError } = await supabase
+        const { data: invoice, error: getError } = await supabaseClient
             .from('invoices')
             .select('client_id')
             .eq('id', invoiceId)
@@ -281,7 +282,7 @@ async function deleteInvoiceFromSupabase(invoiceId) {
         if (getError) throw getError;
         
         // Delete the invoice
-        const { error: deleteError } = await supabase
+        const { error: deleteError } = await supabaseClient
             .from('invoices')
             .delete()
             .eq('id', invoiceId);
@@ -300,7 +301,7 @@ async function deleteInvoiceFromSupabase(invoiceId) {
 
 async function saveSettingsToSupabase(settingsData) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('settings')
             .upsert({
                 user_id: 'default',
