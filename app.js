@@ -43,7 +43,9 @@ if (!checkAuth()) {
 
 // Supabase Configuration
 const SUPABASE_URL = 'https://kgdewraoanlaqewpbdlo.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnZGV3cmFvYW5sYXFld3BiZGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3MTg3NDksImV4cCI6MjA2OTI5NDc0OX0.wBgDDHcdK0Q9Q9mN6uEPQFEO8gXiJdnrntLJW3dUdh89M';
+// IMPORTANT: Replace 'YOUR_SUPABASE_ANON_KEY' with your actual Supabase Anon Key.
+// Find this in your Supabase project settings under API. Keep this key secure!
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnZGV3cmFvYW5sYXFld3BiZGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3MTg3NDksImV4cCI6MjA2OTI5NDc0OX0.wBgDDHcdK0Q9mN6uEPQFEO8gXiJdnrntLJW3dUdh89M';
 
 // Initialize Supabase client
 const { createClient } = supabase;
