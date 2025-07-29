@@ -200,82 +200,96 @@
                 </div>
             </div>
 
-            <!-- Settings Page -->
-            <div id="settings-page" class="page">
-                <div class="page-header">
-                    <h1>Settings</h1>
+            <!-- Settings Page - UPDATED SECTION -->
+<div id="settings-page" class="page">
+    <div class="page-header">
+        <h1>Settings</h1>
+    </div>
+
+    <div class="settings-content">
+        <div class="settings-section">
+            <h3>Profile Information</h3>
+            <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-control" value="Hariprasad Sivakumar" id="profile-name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" value="contact@hariprasadss.com" id="profile-email">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="tel" class="form-control" value="+91 9876543210" id="profile-phone">
+            </div>
+            <!-- NEW: Address field -->
+            <div class="form-group">
+                <label class="form-label">Address</label>
+                <textarea class="form-control" id="profile-address" rows="3" placeholder="Enter your business address">6/91, Mahit Complex, Hosur Road, Attibele, Bengaluru, Karnataka – 562107</textarea>
+            </div>
+            <!-- NEW: GSTIN field -->
+            <div class="form-group">
+                <label class="form-label">GSTIN</label>
+                <input type="text" class="form-control" value="29GLOPS9921M1ZT" id="profile-gstin">
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h3>Banking Details</h3>
+            <div class="banking-info">
+                <div class="form-group">
+                    <label class="form-label">Account Holder Name</label>
+                    <input type="text" class="form-control" value="HARIPRASAD SIVAKUMAR" id="bank-name">
                 </div>
-
-                <div class="settings-content">
-                    <div class="settings-section">
-                        <h3>Profile Information</h3>
-                        <div class="form-group">
-                            <label class="form-label">Full Name</label>
-                            <input type="text" class="form-control" value="Hariprasad Sivakumar" id="profile-name">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control" value="contact@hariprasadss.com" id="profile-email">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Phone</label>
-                            <input type="tel" class="form-control" value="+91 9876543210" id="profile-phone">
-                        </div>
-                    </div>
-
-                    <div class="settings-section">
-                        <h3>Banking Details</h3>
-                        <div class="banking-info">
-                            <div class="form-group">
-                                <label class="form-label">Account Holder Name</label>
-                                <input type="text" class="form-control" value="HARIPRASAD SIVAKUMAR" id="bank-name">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Account Number</label>
-                                <input type="text" class="form-control" placeholder="Enter account number" id="bank-account">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">IFSC Code</label>
-                                <input type="text" class="form-control" placeholder="Enter IFSC code" id="bank-ifsc">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Bank Name</label>
-                                <input type="text" class="form-control" placeholder="Enter bank name" id="bank-name-field">
-                            </div>
-                        </div>
-                        <div class="wise-integration">
-                            <p><strong>💡 Integration Tip:</strong> Connect with <a href="https://wise.com/in/invoice-generator/" target="_blank">Wise Invoice Generator</a> for streamlined payment processing and international transactions.</p>
-                        </div>
-                    </div>
-
-                    <div class="settings-section">
-                        <h3>Invoice Settings</h3>
-                        <div class="form-group">
-                            <label class="form-label">Currency</label>
-                            <select class="form-control" id="currency-setting">
-                                <option value="INR">Indian Rupee (₹)</option>
-                                <option value="USD">US Dollar ($)</option>
-                                <option value="EUR">Euro (€)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Tax Rate (%)</label>
-                            <input type="number" class="form-control" value="18" id="tax-rate">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Invoice Prefix</label>
-                            <input type="text" class="form-control" value="HP-2526" id="invoice-prefix">
-                        </div>
-                    </div>
-
-                    <div class="settings-actions">
-                        <button class="btn btn--primary" id="save-settings">Save Settings</button>
-                        <button class="btn btn--secondary" id="reset-settings">Reset to Default</button>
-                    </div>
+                <div class="form-group">
+                    <label class="form-label">Account Number</label>
+                    <input type="text" class="form-control" placeholder="Enter account number" id="bank-account">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">IFSC Code</label>
+                    <input type="text" class="form-control" placeholder="Enter IFSC code" id="bank-ifsc">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Bank Name</label>
+                    <input type="text" class="form-control" placeholder="Enter bank name" id="bank-name-field">
+                </div>
+                <!-- NEW: SWIFT Code field -->
+                <div class="form-group">
+                    <label class="form-label">SWIFT Code</label>
+                    <input type="text" class="form-control" placeholder="Enter SWIFT code" id="bank-swift">
                 </div>
             </div>
-        </main>
+            <div class="wise-integration">
+                <p><strong>💡 Integration Tip:</strong> Connect with <a href="https://wise.com/in/invoice-generator/" target="_blank">Wise Invoice Generator</a> for streamlined payment processing and international transactions.</p>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h3>Invoice Settings</h3>
+            <div class="form-group">
+                <label class="form-label">Currency</label>
+                <select class="form-control" id="currency-setting">
+                    <option value="INR">Indian Rupee (₹)</option>
+                    <option value="USD">US Dollar ($)</option>
+                    <option value="EUR">Euro (€)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tax Rate (%)</label>
+                <input type="number" class="form-control" value="18" id="tax-rate" min="0" max="100" step="0.01">
+                <small style="color: var(--color-text-secondary); font-size: 12px;">Set to 0 for no tax</small>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Invoice Prefix</label>
+                <input type="text" class="form-control" value="HP-2526" id="invoice-prefix">
+            </div>
+        </div>
+
+        <div class="settings-actions">
+            <button class="btn btn--primary" id="save-settings">Save Settings</button>
+            <button class="btn btn--secondary" id="reset-settings">Reset to Default</button>
+        </div>
     </div>
+</div>
 
     <!-- Modals -->
     <!-- Create Invoice Modal -->
