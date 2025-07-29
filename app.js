@@ -628,8 +628,9 @@ async function loadDataFromSupabase() {
             throw clientsError;
         }
 
+        // MODIFIED: Do not parse client ID as integer, keep as string (UUID)
         appData.clients = (clients || []).map(client => ({
-            id: parseInt(client.id), // FIXED: Ensure ID is integer
+            id: client.id, // KEPT AS STRING (UUID)
             name: client.name || '',
             email: client.email || '',
             phone: client.phone || '',
@@ -656,7 +657,7 @@ async function loadDataFromSupabase() {
         // Process invoices data with proper validation
         appData.invoices = (invoices || []).map(invoice => ({
             id: invoice.id || '',
-            clientId: parseInt(invoice.client_id || 0),
+            clientId: invoice.client_id, // KEPT AS STRING (UUID)
             client: invoice.client_name || '',
             amount: parseFloat(invoice.amount || 0),
             subtotal: parseFloat(invoice.subtotal || 0),
@@ -796,7 +797,7 @@ async function saveClientToSupabase(clientData) {
                     payment_terms: clientData.paymentTerms || 'net30',
                     updated_at: new Date().toISOString()
                 })
-                .eq('id', editingClientId)
+                .eq('id', editingClientId) // Use editingClientId directly (it's already a string/UUID)
                 .select()
                 .single();
 
@@ -812,6 +813,7 @@ async function saveClientToSupabase(clientData) {
             const { data, error } = await supabaseClient
                 .from('clients')
                 .insert([{
+                    // Supabase will generate UUID if 'id' is a UUID type and not provided
                     name: clientData.name.trim(),
                     email: clientData.email.trim(),
                     phone: clientData.phone?.trim() || '',
@@ -915,6 +917,8 @@ async function updateClientTotals(clientId) {
                 updated_at: new Date().toISOString()
             })
             .eq('id', clientId);
+        // MODIFIED: Ensure clientId is used directly (it's already a string/UUID)
+
 
         if (updateError) throw updateError;
     } catch (error) {
@@ -1328,7 +1332,8 @@ function renderClients() {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                const clientId = parseInt(btn.getAttribute('data-client-id'));
+                // MODIFIED: Do not parse client ID as integer, keep as string (UUID)
+                const clientId = btn.getAttribute('data-client-id');
                 console.log('Edit button clicked for client ID:', clientId);
                 editClient(clientId);
             });
@@ -1435,7 +1440,8 @@ function editClient(clientId) {
     }
 
     // Find client with proper type conversion
-    const client = appData.clients.find(c => parseInt(c.id) === parseInt(clientId));
+    // MODIFIED: Do not parse client ID as integer, keep as string (UUID)
+    const client = appData.clients.find(c => c.id === clientId);
 
     if (!client) {
         console.error('Client not found. Available clients:', appData.clients.map(c => ({ id: c.id, name: c.name })));
@@ -1446,7 +1452,8 @@ function editClient(clientId) {
     console.log('Found client for editing:', client);
 
     // Set editing state
-    editingClientId = parseInt(clientId);
+    // MODIFIED: Keep editingClientId as string (UUID)
+    editingClientId = clientId;
 
     // Populate modal with client data
     const fields = {
@@ -1869,10 +1876,10 @@ async function saveInvoice(status) {
     const invoiceNumberInput = document.getElementById('invoice-number');
     let invoiceNumber = invoiceNumberInput?.value;
     const clientSelect = document.getElementById('invoice-client');
-    const clientId = clientSelect ? parseInt(clientSelect.value) : null;
+    const clientId = clientSelect ? clientSelect.value : null; // MODIFIED: Keep clientId as string (UUID)
 
     // Better client validation
-    if (!clientId || isNaN(clientId)) {
+    if (!clientId) {
         showToast('Please select a client', 'error');
         clientSelect?.focus();
         return;
@@ -2032,7 +2039,7 @@ async function saveClient() {
             if (index > -1) {
                 appData.clients[index] = {
                     ...appData.clients[index],
-                    id: parseInt(savedClient.id),
+                    id: savedClient.id, // KEPT AS STRING (UUID)
                     name: savedClient.name,
                     email: savedClient.email,
                     phone: savedClient.phone || '',
@@ -2044,7 +2051,7 @@ async function saveClient() {
         } else {
             // Add new client to local data
             const newClient = {
-                id: parseInt(savedClient.id),
+                id: savedClient.id, // KEPT AS STRING (UUID)
                 name: savedClient.name,
                 email: savedClient.email,
                 phone: savedClient.phone || '',
