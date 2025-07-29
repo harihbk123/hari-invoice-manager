@@ -1,4 +1,4 @@
-// FULLY DEBUGGED INVOICE MANAGER - ALL ISSUES FIXED
+// FULLY DEBUGGED INVOICE MANAGER - ALL CRITICAL ISSUES FIXED
 
 // Check authentication first
 function checkAuth() {
@@ -43,8 +43,6 @@ if (!checkAuth()) {
 
 // Supabase Configuration
 const SUPABASE_URL = 'https://kgdewraoanlaqewpbdlo.supabase.co';
-// IMPORTANT: Replace 'YOUR_SUPABASE_ANON_KEY' with your actual Supabase Anon Key.
-// Find this in your Supabase project settings under API. Keep this key secure!
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnZGV3cmFvYW5sYXFld3BiZGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3MTg3NDksImV4cCI6MjA2OTI5NDc0OX0.wBgDDHcdK0Q9mN6uEPQFEO8gXiJdnrntLJW3dUdh89M';
 
 // Initialize Supabase client
@@ -60,11 +58,11 @@ let appData = {
     clients: [],
     invoices: [],
     nextInvoiceNumber: 1,
-    dataLoaded: false, // ADDED: Track if data is loaded
+    dataLoaded: false,
 
     settings: {
         currency: 'INR',
-        taxRate: 18,
+        taxRate: 0, // FIXED: Default to 0%
         invoicePrefix: 'HP-2526',
         profileName: 'Hariprasad Sivakumar',
         profileEmail: 'contact@hariprasadss.com',
@@ -75,8 +73,15 @@ let appData = {
         bankName: 'Hariprasad Sivakumar',
         bankAccount: '2049315152',
         bankIFSC: 'KKBK0008068',
-        bankSWIFT: 'KKBKINBBCPC' // This is the default client-side value
+        bankSWIFT: 'KKBKINBBCPC'
     }
+};
+
+// ADDED: Analytics state for filters
+let analyticsState = {
+    currentPeriod: 'monthly',
+    filteredData: null,
+    dateRange: { from: null, to: null }
 };
 
 // Global variables for editing
@@ -126,7 +131,7 @@ async function initializeApp() {
     }
 }
 
-// ADDED: Loading state management
+// Loading state management
 function showLoadingState(show) {
     let loader = document.getElementById('app-loader');
     if (!loader) {
@@ -195,274 +200,279 @@ async function getNextInvoiceNumber() {
     }
 }
 
-// REDESIGNED: Better date range filtering UI/UX
+// COMPLETELY REDESIGNED: Modern, compact analytics UI
 function setupDateRangeFilters() {
     const analyticsHeader = document.querySelector('#analytics-page .page-header');
-    if (analyticsHeader && !document.getElementById('modern-date-filter')) {
-        const existingFilter = document.querySelector('#date-range-filter');
+    if (analyticsHeader && !document.getElementById('modern-analytics-controls')) {
+        const existingFilter = document.querySelector('#modern-date-filter');
         if (existingFilter) {
             existingFilter.remove();
         }
 
-        const filterContainer = document.createElement('div');
-        filterContainer.id = 'modern-date-filter';
-        filterContainer.innerHTML = `
-            <div class="modern-filter-container">
-                <div class="filter-row">
-                    <div class="filter-section">
-                        <div class="filter-title">
-                            <span class="filter-icon">📅</span>
-                            <span>Period Filter</span>
-                        </div>
-                        <div class="date-range-inputs">
-                            <div class="date-input-wrapper">
-                                <label>From Month</label>
-                                <input type="month" id="date-from" class="modern-date-input">
-                            </div>
-                            <div class="date-separator">→</div>
-                            <div class="date-input-wrapper">
-                                <label>To Month</label>
-                                <input type="month" id="date-to" class="modern-date-input">
-                            </div>
-                        </div>
-                        <div class="filter-buttons">
-                            <button class="filter-apply-btn" id="apply-date-filter">
-                                <span>🔍</span> Apply Filter
-                            </button>
-                            <button class="filter-clear-btn" id="clear-date-filter">
-                                <span>🗑️</span> Clear
-                            </button>
-                        </div>
-                        <div class="filter-status" id="filter-status"></div>
-                    </div>
-                    <div class="view-section">
-                        <div class="view-title">
-                            <span class="view-icon">👁️</span>
-                            <span>View Type</span>
-                        </div>
-                        <select id="analytics-period" class="modern-select">
-                            <option value="monthly">📊 Monthly</option>
-                            <option value="quarterly">📈 Quarterly</option>
-                            <option value="yearly">📉 Yearly</option>
-                        </select>
+        const controlsContainer = document.createElement('div');
+        controlsContainer.id = 'modern-analytics-controls';
+        controlsContainer.innerHTML = `
+            <div class="analytics-controls-container">
+                <!-- Period Selection -->
+                <div class="control-group">
+                    <label class="control-label">📊 View</label>
+                    <select id="analytics-period" class="modern-select period-select">
+                        <option value="monthly">Monthly</option>
+                        <option value="quarterly">Quarterly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+
+                <!-- Date Range -->
+                <div class="control-group">
+                    <label class="control-label">📅 Period</label>
+                    <div class="date-range-container">
+                        <input type="month" id="date-from" class="modern-date-input" placeholder="From">
+                        <span class="date-separator">to</span>
+                        <input type="month" id="date-to" class="modern-date-input" placeholder="To">
                     </div>
                 </div>
+
+                <!-- Action Buttons -->
+                <div class="control-group">
+                    <div class="action-buttons">
+                        <button class="action-btn primary" id="apply-filters">
+                            🔍 Apply
+                        </button>
+                        <button class="action-btn secondary" id="clear-filters">
+                            🗑️ Clear
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div class="filter-status" id="analytics-status"></div>
             </div>
         `;
 
-        analyticsHeader.parentNode.insertBefore(filterContainer, analyticsHeader.nextSibling);
+        analyticsHeader.parentNode.insertBefore(controlsContainer, analyticsHeader.nextSibling);
 
-        // Add modern styles
-        if (!document.getElementById('modern-filter-styles')) {
+        // Add modern analytics styles
+        if (!document.getElementById('modern-analytics-styles')) {
             const style = document.createElement('style');
-            style.id = 'modern-filter-styles';
+            style.id = 'modern-analytics-styles';
             style.textContent = `
-                .modern-filter-container {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    border-radius: 16px;
-                    padding: 24px;
-                    margin: 20px 0;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-                    color: white;
-                }
-
-                .filter-row {
-                    display: flex;
-                    gap: 32px;
-                    align-items: flex-start;
-                }
-
-                .filter-section {
-                    flex: 2;
-                }
-
-                .view-section {
-                    flex: 1;
-                    min-width: 200px;
-                }
-
-                .filter-title, .view-title {
+                .analytics-controls-container {
                     display: flex;
                     align-items: center;
-                    gap: 8px;
-                    font-size: 18px;
-                    font-weight: 600;
-                    margin-bottom: 16px;
+                    gap: 20px;
+                    padding: 16px 20px;
+                    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+                    border-radius: 12px;
+                    margin: 16px 0;
+                    border: 1px solid #e2e8f0;
+                    flex-wrap: wrap;
                 }
 
-                .filter-icon, .view-icon {
-                    font-size: 20px;
-                }
-
-                .date-range-inputs {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                    margin-bottom: 20px;
-                }
-
-                .date-input-wrapper {
+                .control-group {
                     display: flex;
                     flex-direction: column;
                     gap: 6px;
+                    min-width: 120px;
                 }
 
-                .date-input-wrapper label {
+                .control-label {
                     font-size: 12px;
-                    font-weight: 500;
-                    opacity: 0.9;
+                    font-weight: 600;
+                    color: #475569;
                     text-transform: uppercase;
                     letter-spacing: 0.5px;
                 }
 
-                .modern-date-input {
-                    padding: 12px 16px;
-                    border: 2px solid rgba(255,255,255,0.2);
-                    border-radius: 8px;
-                    background: rgba(255,255,255,0.1);
-                    color: white;
-                    font-size: 14px;
+                .modern-select, .modern-date-input {
+                    padding: 8px 12px;
+                    border: 1px solid #cbd5e1;
+                    border-radius: 6px;
+                    background: white;
+                    font-size: 13px;
                     font-weight: 500;
-                    backdrop-filter: blur(10px);
-                    transition: all 0.3s ease;
-                    min-width: 160px;
+                    color: #1e293b;
+                    transition: all 0.2s ease;
+                    min-width: 0;
                 }
 
-                .modern-date-input:focus {
+                .modern-select:focus, .modern-date-input:focus {
                     outline: none;
-                    border-color: rgba(255,255,255,0.5);
-                    background: rgba(255,255,255,0.2);
-                    box-shadow: 0 0 20px rgba(255,255,255,0.1);
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
                 }
 
-                .modern-date-input::-webkit-calendar-picker-indicator {
-                    filter: invert(1);
-                    opacity: 0.8;
+                .period-select {
+                    min-width: 100px;
                 }
 
-                .date-separator {
-                    font-size: 20px;
-                    font-weight: bold;
-                    margin-top: 20px;
-                    opacity: 0.8;
-                }
-
-                .filter-buttons {
-                    display: flex;
-                    gap: 12px;
-                }
-
-                .filter-apply-btn, .filter-clear-btn {
+                .date-range-container {
                     display: flex;
                     align-items: center;
                     gap: 8px;
-                    padding: 12px 20px;
+                }
+
+                .date-separator {
+                    font-size: 12px;
+                    color: #64748b;
+                    font-weight: 500;
+                    white-space: nowrap;
+                }
+
+                .action-buttons {
+                    display: flex;
+                    gap: 8px;
+                }
+
+                .action-btn {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    padding: 8px 14px;
                     border: none;
-                    border-radius: 8px;
+                    border-radius: 6px;
+                    font-size: 12px;
                     font-weight: 600;
                     cursor: pointer;
-                    transition: all 0.3s ease;
-                    font-size: 14px;
+                    transition: all 0.2s ease;
+                    white-space: nowrap;
                 }
 
-                .filter-apply-btn {
-                    background: rgba(255,255,255,0.2);
-                    color: white;
-                    border: 2px solid rgba(255,255,255,0.3);
-                }
-
-                .filter-apply-btn:hover {
-                    background: rgba(255,255,255,0.3);
-                    transform: translateY(-2px);
-                    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-                }
-
-                .filter-clear-btn {
-                    background: rgba(255,255,255,0.1);
-                    color: rgba(255,255,255,0.8);
-                    border: 2px solid rgba(255,255,255,0.2);
-                }
-
-                .filter-clear-btn:hover {
-                    background: rgba(255,255,255,0.2);
+                .action-btn.primary {
+                    background: #3b82f6;
                     color: white;
                 }
 
-                .modern-select {
-                    width: 100%;
-                    padding: 12px 16px;
-                    border: 2px solid rgba(255,255,255,0.2);
-                    border-radius: 8px;
-                    background: rgba(255,255,255,0.1);
-                    color: white;
-                    font-size: 14px;
-                    font-weight: 500;
-                    backdrop-filter: blur(10px);
-                    cursor: pointer;
-                    transition: all 0.3s ease;
+                .action-btn.primary:hover {
+                    background: #2563eb;
+                    transform: translateY(-1px);
                 }
 
-                .modern-select:focus {
-                    outline: none;
-                    border-color: rgba(255,255,255,0.5);
-                    background: rgba(255,255,255,0.2);
+                .action-btn.secondary {
+                    background: #f1f5f9;
+                    color: #475569;
+                    border: 1px solid #cbd5e1;
                 }
 
-                .modern-select option {
-                    background: #4a5568;
-                    color: white;
+                .action-btn.secondary:hover {
+                    background: #e2e8f0;
                 }
 
                 .filter-status {
-                    margin-top: 16px;
-                    padding: 12px 16px;
-                    background: rgba(255,255,255,0.1);
-                    border-radius: 8px;
-                    border-left: 4px solid #4ade80;
+                    flex: 1;
+                    min-width: 200px;
+                    padding: 8px 12px;
+                    background: rgba(59, 130, 246, 0.1);
+                    border: 1px solid rgba(59, 130, 246, 0.2);
+                    border-radius: 6px;
+                    font-size: 12px;
+                    color: #1e40af;
                     font-weight: 500;
-                    backdrop-filter: blur(10px);
                     display: none;
                 }
 
                 .filter-status.show {
                     display: block;
-                    animation: slideIn 0.3s ease;
                 }
 
-                @keyframes slideIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(-10px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
+                .analytics-grid {
+                    display: grid;
+                    grid-template-columns: 2fr 1fr;
+                    gap: 20px;
+                    margin-top: 20px;
                 }
+
+                .chart-container {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 12px;
+                    border: 1px solid #e2e8f0;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .chart-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 16px;
+                    padding-bottom: 12px;
+                    border-bottom: 1px solid #f1f5f9;
+                }
+
+                .chart-title {
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #1e293b;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .chart-subtitle {
+                    font-size: 12px;
+                    color: #64748b;
+                    margin-top: 4px;
+                }
+
+                .insights-panel {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 12px;
+                    border: 1px solid #e2e8f0;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .insight-item {
+                    padding: 12px 0;
+                    border-bottom: 1px solid #f1f5f9;
+                }
+
+                .insight-item:last-child {
+                    border-bottom: none;
+                }
+
+                .insight-label {
+                    font-size: 11px;
+                    color: #64748b;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    font-weight: 600;
+                    margin-bottom: 4px;
+                }
+
+                .insight-value {
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #1e293b;
+                }
+
+                .insight-change {
+                    font-size: 11px;
+                    font-weight: 600;
+                    margin-top: 2px;
+                }
+
+                .insight-change.positive { color: #059669; }
+                .insight-change.negative { color: #dc2626; }
 
                 @media (max-width: 768px) {
-                    .filter-row {
-                        flex-direction: column;
-                        gap: 20px;
-                    }
-
-                    .date-range-inputs {
+                    .analytics-controls-container {
                         flex-direction: column;
                         align-items: stretch;
                         gap: 12px;
                     }
 
-                    .date-separator {
-                        text-align: center;
-                        margin: 0;
-                    }
-
-                    .filter-buttons {
-                        flex-direction: column;
-                    }
-
-                    .modern-date-input {
+                    .control-group {
                         min-width: auto;
+                    }
+
+                    .action-buttons {
+                        justify-content: center;
+                    }
+
+                    .analytics-grid {
+                        grid-template-columns: 1fr;
+                        gap: 16px;
                     }
                 }
             `;
@@ -470,145 +480,81 @@ function setupDateRangeFilters() {
         }
 
         // Setup event listeners
-        document.getElementById('apply-date-filter').addEventListener('click', applyDateRangeFilter);
-        document.getElementById('clear-date-filter').addEventListener('click', clearDateRangeFilter);
+        document.getElementById('apply-filters').addEventListener('click', applyAnalyticsFilters);
+        document.getElementById('clear-filters').addEventListener('click', clearAnalyticsFilters);
+        
+        // FIXED: Period selection event listener
+        document.getElementById('analytics-period').addEventListener('change', (e) => {
+            analyticsState.currentPeriod = e.target.value;
+            console.log('Period changed to:', analyticsState.currentPeriod);
+            applyAnalyticsFilters();
+        });
     }
 }
 
-function applyDateRangeFilter() {
+// FIXED: Apply analytics filters with proper period handling
+function applyAnalyticsFilters() {
     const fromDate = document.getElementById('date-from').value;
     const toDate = document.getElementById('date-to').value;
-    const statusDiv = document.getElementById('filter-status');
+    const period = document.getElementById('analytics-period').value;
+    const statusDiv = document.getElementById('analytics-status');
 
-    if (!fromDate || !toDate) {
-        showToast('Please select both from and to dates', 'error');
-        return;
-    }
+    analyticsState.currentPeriod = period;
+    analyticsState.dateRange = { from: fromDate, to: toDate };
 
-    if (fromDate > toDate) {
-        showToast('From date should be earlier than to date', 'error');
-        return;
-    }
+    console.log('Applying analytics filters:', { period, fromDate, toDate });
 
-    // Filter invoices based on date range
-    const filteredInvoices = appData.invoices.filter(invoice => {
-        const invoiceDate = new Date(invoice.date);
-        const invoiceMonth = `${invoiceDate.getFullYear()}-${String(invoiceDate.getMonth() + 1).padStart(2, '0')}`;
-        return invoiceMonth >= fromDate && invoiceMonth <= toDate;
-    });
+    // Filter invoices based on date range if specified
+    let filteredInvoices = appData.invoices;
+    if (fromDate && toDate) {
+        if (fromDate > toDate) {
+            showToast('From date should be earlier than to date', 'error');
+            return;
+        }
 
-    // Calculate earnings for filtered period
-    const totalEarnings = filteredInvoices
-        .filter(inv => inv.status === 'Paid')
-        .reduce((sum, inv) => sum + inv.amount, 0);
-
-    const totalInvoices = filteredInvoices.length;
-
-    // Show result with animation
-    statusDiv.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 20px;">📊</span>
-            <div>
-                <div><strong>${totalInvoices}</strong> invoices found</div>
-                <div>Total: <strong>₹${formatNumber(totalEarnings)}</strong></div>
-                <div style="font-size: 12px; opacity: 0.8;">${fromDate} to ${toDate}</div>
-            </div>
-        </div>
-    `;
-    statusDiv.className = 'filter-status show';
-
-    // Update analytics display
-    renderAnalyticsForPeriod(filteredInvoices, fromDate, toDate);
-
-    showToast(`Filter applied: ${totalInvoices} invoices, ₹${formatNumber(totalEarnings)} total`, 'success');
-}
-
-function clearDateRangeFilter() {
-    document.getElementById('date-from').value = '';
-    document.getElementById('date-to').value = '';
-    const statusDiv = document.getElementById('filter-status');
-    statusDiv.className = 'filter-status';
-    renderAnalytics();
-    showToast('Date filter cleared', 'info');
-}
-
-function renderAnalyticsForPeriod(filteredInvoices, fromDate, toDate) {
-    const monthlyData = new Map();
-
-    filteredInvoices
-        .filter(inv => inv.status === 'Paid')
-        .forEach(({ date, amount }) => {
-            const d = new Date(date);
-            if (Number.isNaN(d)) return;
-            const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-            monthlyData.set(monthKey, (monthlyData.get(monthKey) || 0) + amount);
+        filteredInvoices = appData.invoices.filter(invoice => {
+            const invoiceDate = new Date(invoice.date);
+            const invoiceMonth = `${invoiceDate.getFullYear()}-${String(invoiceDate.getMonth() + 1).padStart(2, '0')}`;
+            return invoiceMonth >= fromDate && invoiceMonth <= toDate;
         });
 
-    const filteredEarnings = Array.from(monthlyData, ([month, amount]) => ({ month, amount }))
-                                   .sort((a, b) => a.month.localeCompare(b.month));
+        const totalEarnings = filteredInvoices
+            .filter(inv => inv.status === 'Paid')
+            .reduce((sum, inv) => sum + inv.amount, 0);
 
-    setTimeout(() => {
-        const analyticsCtx = document.getElementById('analyticsChart');
-        if (analyticsCtx) {
-            if (analyticsChart) {
-                analyticsChart.destroy();
-            }
+        statusDiv.innerHTML = `
+            <span>📊 ${filteredInvoices.length} invoices • ₹${formatNumber(totalEarnings)} total • ${fromDate} to ${toDate}</span>
+        `;
+        statusDiv.className = 'filter-status show';
+    } else {
+        statusDiv.className = 'filter-status';
+    }
 
-            analyticsChart = new Chart(analyticsCtx, {
-                type: 'bar',
-                data: {
-                    labels: filteredEarnings.map(m => m.month),
-                    datasets: [{
-                        label: `Earnings (${fromDate} to ${toDate})`,
-                        data: filteredEarnings.map(m => m.amount),
-                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
-                        borderColor: 'rgba(102, 126, 234, 1)',
-                        borderWidth: 2,
-                        borderRadius: 8,
-                        borderSkipped: false,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            labels: {
-                                color: '#666',
-                                font: {
-                                    size: 14,
-                                    weight: '500'
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return '₹' + formatNumber(value);
-                                },
-                                color: '#666'
-                            },
-                            grid: {
-                                color: 'rgba(0,0,0,0.1)'
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                color: '#666'
-                            },
-                            grid: {
-                                color: 'rgba(0,0,0,0.1)'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    }, 100);
+    analyticsState.filteredData = filteredInvoices;
+
+    // Re-render analytics with new filters
+    renderAnalyticsChart(period, filteredInvoices);
+    renderTopClientInsights(filteredInvoices);
+
+    showToast(`Analytics updated: ${period} view${fromDate && toDate ? ' with date filter' : ''}`, 'success');
+}
+
+function clearAnalyticsFilters() {
+    document.getElementById('date-from').value = '';
+    document.getElementById('date-to').value = '';
+    document.getElementById('analytics-period').value = 'monthly';
+    
+    analyticsState.currentPeriod = 'monthly';
+    analyticsState.dateRange = { from: null, to: null };
+    analyticsState.filteredData = null;
+
+    const statusDiv = document.getElementById('analytics-status');
+    statusDiv.className = 'filter-status';
+
+    renderAnalyticsChart('monthly', appData.invoices);
+    renderTopClientInsights(appData.invoices);
+    
+    showToast('Analytics filters cleared', 'info');
 }
 
 // FIXED: Comprehensive data loading with proper error handling
@@ -616,7 +562,7 @@ async function loadDataFromSupabase() {
     console.log('Loading data from Supabase...');
 
     try {
-        // Load clients with detailed error handling
+        // Load clients
         console.log('Loading clients...');
         const { data: clients, error: clientsError } = await supabaseClient
             .from('clients')
@@ -628,9 +574,8 @@ async function loadDataFromSupabase() {
             throw clientsError;
         }
 
-        // MODIFIED: Do not parse client ID as integer, keep as string (UUID)
         appData.clients = (clients || []).map(client => ({
-            id: client.id, // KEPT AS STRING (UUID)
+            id: client.id,
             name: client.name || '',
             email: client.email || '',
             phone: client.phone || '',
@@ -642,7 +587,7 @@ async function loadDataFromSupabase() {
         appData.totalClients = appData.clients.length;
         console.log('Clients loaded:', appData.clients.length);
 
-        // Load invoices with detailed error handling
+        // Load invoices
         console.log('Loading invoices...');
         const { data: invoices, error: invoicesError } = await supabaseClient
             .from('invoices')
@@ -654,10 +599,9 @@ async function loadDataFromSupabase() {
             throw invoicesError;
         }
 
-        // Process invoices data with proper validation
         appData.invoices = (invoices || []).map(invoice => ({
             id: invoice.id || '',
-            clientId: invoice.client_id, // KEPT AS STRING (UUID)
+            clientId: invoice.client_id,
             client: invoice.client_name || '',
             amount: parseFloat(invoice.amount || 0),
             subtotal: parseFloat(invoice.subtotal || 0),
@@ -679,7 +623,7 @@ async function loadDataFromSupabase() {
         // Calculate monthly earnings
         calculateMonthlyEarnings();
 
-        // Load settings with comprehensive error handling
+        // Load settings
         console.log('Loading settings...');
         const { data: settings, error: settingsError } = await supabaseClient
             .from('settings')
@@ -695,7 +639,7 @@ async function loadDataFromSupabase() {
             appData.settings = {
                 ...appData.settings,
                 currency: settings.currency || appData.settings.currency,
-                taxRate: parseFloat(settings.tax_rate) >= 0 ? parseFloat(settings.tax_rate) : appData.settings.taxRate,
+                taxRate: settings.tax_rate !== null && settings.tax_rate !== undefined ? parseFloat(settings.tax_rate) : appData.settings.taxRate, // FIXED: Allow 0%
                 invoicePrefix: settings.invoice_prefix || appData.settings.invoicePrefix,
                 profileName: settings.profile_name || appData.settings.profileName,
                 profileEmail: settings.profile_email || appData.settings.profileEmail,
@@ -711,14 +655,9 @@ async function loadDataFromSupabase() {
         }
 
         console.log('Data loaded successfully from Supabase');
-        console.log('Current tax rate loaded:', appData.settings.taxRate);
-        console.log('Total clients:', appData.totalClients);
-        console.log('Total invoices:', appData.totalInvoices);
-        console.log('Total earnings:', appData.totalEarnings);
 
     } catch (error) {
         console.error('Critical error loading data from Supabase:', error);
-        // Show detailed error to user
         showToast(`Failed to load data: ${error.message || 'Unknown error'}`, 'error');
         throw error;
     }
@@ -740,10 +679,10 @@ function calculateMonthlyEarnings() {
                                    .sort((a, b) => a.month.localeCompare(b.month));
 }
 
-function calculateQuarterlyEarnings() {
+function calculateQuarterlyEarnings(invoices = appData.invoices) {
     const quarterlyData = new Map();
 
-    appData.invoices
+    invoices
         .filter(inv => inv.status === 'Paid')
         .forEach(({ date, amount }) => {
             const d = new Date(date);
@@ -758,10 +697,10 @@ function calculateQuarterlyEarnings() {
                  .sort((a, b) => a.month.localeCompare(b.month));
 }
 
-function calculateYearlyEarnings() {
+function calculateYearlyEarnings(invoices = appData.invoices) {
     const yearlyData = new Map();
 
-    appData.invoices
+    invoices
         .filter(inv => inv.status === 'Paid')
         .forEach(({ date, amount }) => {
             const d = new Date(date);
@@ -774,19 +713,17 @@ function calculateYearlyEarnings() {
                  .sort((a, b) => a.month.localeCompare(b.month));
 }
 
-// FIXED: Client saving with comprehensive error handling
+// FIXED: Client saving with comprehensive error handling and proper ID handling
 async function saveClientToSupabase(clientData) {
     try {
         console.log('Saving client to Supabase:', clientData);
 
-        // Validate required fields
         if (!clientData.name || !clientData.email) {
             throw new Error('Name and email are required');
         }
 
         if (editingClientId) {
             console.log('Updating existing client:', editingClientId);
-            // Update existing client
             const { data, error } = await supabaseClient
                 .from('clients')
                 .update({
@@ -797,7 +734,7 @@ async function saveClientToSupabase(clientData) {
                     payment_terms: clientData.paymentTerms || 'net30',
                     updated_at: new Date().toISOString()
                 })
-                .eq('id', editingClientId) // Use editingClientId directly (it's already a string/UUID)
+                .eq('id', editingClientId)
                 .select()
                 .single();
 
@@ -809,11 +746,9 @@ async function saveClientToSupabase(clientData) {
             return data;
         } else {
             console.log('Inserting new client');
-            // Insert new client
             const { data, error } = await supabaseClient
                 .from('clients')
                 .insert([{
-                    // Supabase will generate UUID if 'id' is a UUID type and not provided
                     name: clientData.name.trim(),
                     email: clientData.email.trim(),
                     phone: clientData.phone?.trim() || '',
@@ -843,7 +778,6 @@ async function saveInvoiceToSupabase(invoiceData) {
         console.log('Saving invoice to Supabase:', invoiceData);
 
         if (editingInvoiceId) {
-            // Update existing invoice
             const { data, error } = await supabaseClient
                 .from('invoices')
                 .update({
@@ -866,7 +800,6 @@ async function saveInvoiceToSupabase(invoiceData) {
             await updateClientTotals(invoiceData.clientId);
             return data;
         } else {
-            // Insert new invoice
             const { data, error } = await supabaseClient
                 .from('invoices')
                 .insert([{
@@ -917,8 +850,6 @@ async function updateClientTotals(clientId) {
                 updated_at: new Date().toISOString()
             })
             .eq('id', clientId);
-        // MODIFIED: Ensure clientId is used directly (it's already a string/UUID)
-
 
         if (updateError) throw updateError;
     } catch (error) {
@@ -953,30 +884,29 @@ async function deleteInvoiceFromSupabase(invoiceId) {
     }
 }
 
-// FIXED: Settings save with detailed validation and error handling
+// FIXED: Settings save with proper 0% tax rate handling
 async function saveSettingsToSupabase(settingsData) {
     try {
         console.log('Saving settings to Supabase:', settingsData);
 
-        // Validate settings data
         if (!settingsData.profileName || !settingsData.profileEmail) {
             throw new Error('Profile name and email are required');
         }
 
+        // FIXED: Allow 0% tax rate
         if (settingsData.taxRate < 0 || settingsData.taxRate > 100) {
             throw new Error('Tax rate must be between 0 and 100');
         }
 
-        // Check if settings exist
         const { data: existingSettings, error: checkError } = await supabaseClient
             .from('settings')
             .select('user_id')
             .eq('user_id', 'default')
-            .maybeSingle(); // FIXED: Use maybeSingle instead of single
+            .maybeSingle();
 
         const settingsPayload = {
             currency: settingsData.currency || 'INR',
-            tax_rate: parseFloat(settingsData.taxRate) || 0,
+            tax_rate: parseFloat(settingsData.taxRate), // FIXED: Properly handle 0
             invoice_prefix: settingsData.invoicePrefix || 'HP-2526',
             profile_name: settingsData.profileName || '',
             profile_email: settingsData.profileEmail || '',
@@ -987,7 +917,6 @@ async function saveSettingsToSupabase(settingsData) {
             bank_account: settingsData.bankAccount || '',
             bank_ifsc: settingsData.bankIFSC || '',
             bank_name_field: settingsData.bankNameField || '',
-            // REMOVED: bank_swift from payload as it's causing schema error
             updated_at: new Date().toISOString()
         };
 
@@ -995,7 +924,6 @@ async function saveSettingsToSupabase(settingsData) {
 
         if (existingSettings) {
             console.log('Updating existing settings');
-            // Update existing settings
             const { data, error } = await supabaseClient
                 .from('settings')
                 .update(settingsPayload)
@@ -1011,7 +939,6 @@ async function saveSettingsToSupabase(settingsData) {
             return data;
         } else {
             console.log('Inserting new settings');
-            // Insert new settings
             const { data, error } = await supabaseClient
                 .from('settings')
                 .insert([{
@@ -1212,13 +1139,8 @@ function renderCharts(period = 'monthly') {
 }
 
 function setupAnalyticsFilters() {
-    const periodSelect = document.getElementById('analytics-period');
-    if (periodSelect) {
-        periodSelect.addEventListener('change', (e) => {
-            const period = e.target.value;
-            renderAnalytics(period);
-        });
-    }
+    // This will be handled by setupDateRangeFilters
+    console.log('Analytics filters setup complete');
 }
 
 function renderInvoices() {
@@ -1276,7 +1198,7 @@ function filterInvoices(filter) {
     });
 }
 
-// COMPLETELY FIXED: Client rendering with proper event handling
+// COMPLETELY FIXED: Client rendering with proper individual data handling
 function renderClients() {
     console.log('Rendering clients...');
     const grid = document.getElementById('clients-grid');
@@ -1296,22 +1218,24 @@ function renderClients() {
         return;
     }
 
-    grid.innerHTML = appData.clients.map(client => `
-        <div class="client-card" data-client-id="${client.id}">
+    // FIXED: Create unique cards with proper data binding
+    grid.innerHTML = appData.clients.map((client, index) => `
+        <div class="client-card" data-client-id="${client.id}" data-client-index="${index}">
             <div class="client-header">
-                <h4 class="client-name">${client.name}</h4>
+                <h4 class="client-name">${escapeHtml(client.name)}</h4>
                 <button
                     class="client-edit-btn"
                     data-client-id="${client.id}"
+                    data-client-index="${index}"
                     title="Edit client"
                 >
                     <span>✏️</span> Edit
                 </button>
             </div>
             <div class="client-details">
-                <div class="client-email">📧 ${client.email}</div>
-                ${client.phone ? `<div class="client-phone">📞 ${client.phone}</div>` : ''}
-                ${client.address ? `<div class="client-address">📍 ${client.address}</div>` : ''}
+                <div class="client-email">📧 ${escapeHtml(client.email)}</div>
+                ${client.phone ? `<div class="client-phone">📞 ${escapeHtml(client.phone)}</div>` : ''}
+                ${client.address ? `<div class="client-address">📍 ${escapeHtml(client.address)}</div>` : ''}
             </div>
             <div class="client-stats">
                 <div class="client-stat">
@@ -1326,16 +1250,25 @@ function renderClients() {
         </div>
     `).join('');
 
-    // FIXED: Add event listeners after DOM is updated
+    // FIXED: Add event listeners with proper data isolation
     setTimeout(() => {
-        document.querySelectorAll('.client-edit-btn').forEach(btn => {
+        document.querySelectorAll('.client-edit-btn').forEach((btn, btnIndex) => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                // MODIFIED: Do not parse client ID as integer, keep as string (UUID)
+                
                 const clientId = btn.getAttribute('data-client-id');
-                console.log('Edit button clicked for client ID:', clientId);
-                editClient(clientId);
+                const clientIndex = parseInt(btn.getAttribute('data-client-index'));
+                
+                console.log('Edit button clicked:', { clientId, clientIndex, client: appData.clients[clientIndex] });
+                
+                // Verify client exists and ID matches
+                if (appData.clients[clientIndex] && appData.clients[clientIndex].id === clientId) {
+                    editClient(clientId);
+                } else {
+                    console.error('Client mismatch detected');
+                    showToast('Error: Client data mismatch. Please refresh the page.', 'error');
+                }
             });
         });
     }, 100);
@@ -1359,6 +1292,7 @@ function renderClients() {
                 font-weight: 600;
                 flex: 1;
                 margin-right: 12px;
+                word-break: break-word;
             }
 
             .client-edit-btn {
@@ -1375,6 +1309,7 @@ function renderClients() {
                 cursor: pointer;
                 transition: all 0.2s ease;
                 white-space: nowrap;
+                flex-shrink: 0;
             }
 
             .client-edit-btn:hover {
@@ -1392,8 +1327,9 @@ function renderClients() {
                 color: var(--color-text-secondary);
                 margin-bottom: 4px;
                 display: flex;
-                align-items: center;
+                align-items: flex-start;
                 gap: 6px;
+                word-break: break-all;
             }
 
             .client-stats {
@@ -1426,60 +1362,76 @@ function renderClients() {
         document.head.appendChild(style);
     }
 
-    console.log('Clients rendered successfully with event listeners');
+    console.log('Clients rendered successfully with isolated event listeners');
 }
 
-// COMPLETELY FIXED: Edit client function with comprehensive validation
-function editClient(clientId) {
-    console.log('Editing client with ID:', clientId, typeof clientId);
+// ADDED: HTML escaping utility for security
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
-    // Ensure data is loaded
+// COMPLETELY FIXED: Edit client function with proper data isolation
+function editClient(clientId) {
+    console.log('Editing client with ID:', clientId);
+
     if (!appData.dataLoaded) {
         showToast('Data is still loading. Please wait.', 'info');
         return;
     }
 
-    // Find client with proper type conversion
-    // MODIFIED: Do not parse client ID as integer, keep as string (UUID)
+    // Find client with exact ID match
     const client = appData.clients.find(c => c.id === clientId);
 
     if (!client) {
-        console.error('Client not found. Available clients:', appData.clients.map(c => ({ id: c.id, name: c.name })));
+        console.error('Client not found:', clientId);
+        console.log('Available clients:', appData.clients.map(c => ({ id: c.id, name: c.name })));
         showToast('Client not found. Please refresh the page.', 'error');
         return;
     }
 
     console.log('Found client for editing:', client);
 
-    // Set editing state
-    // MODIFIED: Keep editingClientId as string (UUID)
+    // FIXED: Set editing state properly
     editingClientId = clientId;
 
-    // Populate modal with client data
-    const fields = {
-        'client-company': client.name || '',
-        'client-email': client.email || '',
-        'client-phone': client.phone || '',
-        'client-address': client.address || '',
-        'client-terms': client.payment_terms || 'net30'
-    };
+    // FIXED: Clear form first to prevent data contamination
+    const form = document.getElementById('client-form');
+    if (form) {
+        form.reset();
+    }
 
-    // Populate form fields
-    Object.entries(fields).forEach(([fieldId, value]) => {
-        const element = document.getElementById(fieldId);
-        if (element) {
-            element.value = value;
-        } else {
-            console.warn(`Field ${fieldId} not found`);
-        }
-    });
+    // FIXED: Populate form with specific client data
+    setTimeout(() => {
+        const fields = {
+            'client-company': client.name || '',
+            'client-email': client.email || '',
+            'client-phone': client.phone || '',
+            'client-address': client.address || '',
+            'client-terms': client.payment_terms || 'net30'
+        };
 
-    // Update modal title and button
-    const modalTitle = document.querySelector('#client-modal .modal-header h2');
-    if (modalTitle) modalTitle.textContent = 'Edit Client';
+        Object.entries(fields).forEach(([fieldId, value]) => {
+            const element = document.getElementById(fieldId);
+            if (element) {
+                element.value = value;
+                console.log(`Set ${fieldId} to:`, value);
+            } else {
+                console.warn(`Field ${fieldId} not found`);
+            }
+        });
 
-    const saveBtn = document.getElementById('save-client');
-    if (saveBtn) saveBtn.textContent = 'Update Client';
+        // Update modal UI
+        const modalTitle = document.querySelector('#client-modal .modal-header h2');
+        if (modalTitle) modalTitle.textContent = 'Edit Client';
+
+        const saveBtn = document.getElementById('save-client');
+        if (saveBtn) saveBtn.textContent = 'Update Client';
+
+        console.log('Form populated for client:', client.name);
+    }, 50);
 
     // Open modal
     openClientModal();
@@ -1487,66 +1439,232 @@ function editClient(clientId) {
     showToast(`Editing client: ${client.name}`, 'info');
 }
 
+// COMPLETELY REDESIGNED: Modern Analytics with better layout and dynamic top client
 function renderAnalytics(period = 'monthly') {
-    console.log('Rendering analytics for period:', period);
-
-    setTimeout(() => {
-        const analyticsCtx = document.getElementById('analyticsChart');
-        if (analyticsCtx) {
-            if (analyticsChart) {
-                analyticsChart.destroy();
-            }
-
-            let earningsData = appData.monthlyEarnings;
-            let label = 'Monthly Earnings';
-
-            if (period === 'quarterly') {
-                earningsData = calculateQuarterlyEarnings();
-                label = 'Quarterly Earnings';
-            } else if (period === 'yearly') {
-                earningsData = calculateYearlyEarnings();
-                label = 'Yearly Earnings';
-            }
-
-            analyticsChart = new Chart(analyticsCtx, {
-                type: 'bar',
-                data: {
-                    labels: earningsData.map(m => m.month),
-                    datasets: [{
-                        label: label,
-                        data: earningsData.map(m => m.amount),
-                        backgroundColor: '#1FB8CD',
-                        borderColor: '#1FB8CD',
-                        borderWidth: 1,
-                        borderRadius: 8,
-                        borderSkipped: false,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return '₹' + formatNumber(value);
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+    console.log('Rendering analytics...');
+    
+    // Create modern analytics layout if it doesn't exist
+    const analyticsPage = document.getElementById('analytics-page');
+    if (analyticsPage && !document.getElementById('modern-analytics-layout')) {
+        const existingContent = analyticsPage.querySelector('#analyticsChart')?.parentElement;
+        if (existingContent) {
+            existingContent.remove();
         }
+
+        const analyticsLayout = document.createElement('div');
+        analyticsLayout.id = 'modern-analytics-layout';
+        analyticsLayout.innerHTML = `
+            <div class="analytics-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">📊 Earnings Trend Analysis</div>
+                            <div class="chart-subtitle" id="chart-subtitle">Monthly earnings overview</div>
+                        </div>
+                    </div>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="analyticsChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="insights-panel">
+                    <div class="chart-header">
+                        <div class="chart-title">💡 Key Insights</div>
+                    </div>
+                    <div id="analytics-insights"></div>
+                </div>
+            </div>
+        `;
+        analyticsPage.appendChild(analyticsLayout);
+    }
+
+    // Use filtered data if available, otherwise use all data
+    const dataToUse = analyticsState.filteredData || appData.invoices;
+    
+    // Render chart and insights
+    setTimeout(() => {
+        renderAnalyticsChart(analyticsState.currentPeriod, dataToUse);
+        renderTopClientInsights(dataToUse);
     }, 100);
 }
 
-// FIXED: Settings rendering with all fields
+// NEW: Render analytics chart based on period and data
+function renderAnalyticsChart(period, invoices) {
+    const analyticsCtx = document.getElementById('analyticsChart');
+    if (!analyticsCtx) return;
+
+    if (analyticsChart) {
+        analyticsChart.destroy();
+    }
+
+    let earningsData = [];
+    let label = '';
+    let subtitle = '';
+
+    if (period === 'quarterly') {
+        earningsData = calculateQuarterlyEarnings(invoices);
+        label = 'Quarterly Earnings';
+        subtitle = 'Quarterly earnings breakdown';
+    } else if (period === 'yearly') {
+        earningsData = calculateYearlyEarnings(invoices);
+        label = 'Yearly Earnings';
+        subtitle = 'Annual earnings comparison';
+    } else {
+        earningsData = calculateMonthlyEarningsForData(invoices);
+        label = 'Monthly Earnings';
+        subtitle = 'Monthly earnings overview';
+    }
+
+    // Update subtitle
+    const subtitleElement = document.getElementById('chart-subtitle');
+    if (subtitleElement) {
+        subtitleElement.textContent = subtitle;
+    }
+
+    analyticsChart = new Chart(analyticsCtx, {
+        type: 'bar',
+        data: {
+            labels: earningsData.map(m => m.month),
+            datasets: [{
+                label: label,
+                data: earningsData.map(m => m.amount),
+                backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + formatNumber(value);
+                        },
+                        color: '#64748b'
+                    },
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#64748b'
+                    },
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// NEW: Calculate monthly earnings for specific dataset
+function calculateMonthlyEarningsForData(invoices) {
+    const monthlyData = new Map();
+
+    invoices
+        .filter(inv => inv.status === 'Paid')
+        .forEach(({ date, amount }) => {
+            const d = new Date(date);
+            if (Number.isNaN(d)) return;
+            const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            monthlyData.set(monthKey, (monthlyData.get(monthKey) || 0) + amount);
+        });
+
+    return Array.from(monthlyData, ([month, amount]) => ({ month, amount }))
+                 .sort((a, b) => a.month.localeCompare(b.month));
+}
+
+// NEW: Dynamic top client insights based on filtered data
+function renderTopClientInsights(invoices) {
+    const insightsContainer = document.getElementById('analytics-insights');
+    if (!insightsContainer) return;
+
+    // Calculate client earnings from provided invoices
+    const clientEarnings = new Map();
+    const clientInvoiceCounts = new Map();
+
+    invoices.forEach(invoice => {
+        const clientId = invoice.clientId;
+        const clientName = invoice.client;
+        
+        if (invoice.status === 'Paid') {
+            clientEarnings.set(clientId, (clientEarnings.get(clientId) || 0) + invoice.amount);
+        }
+        clientInvoiceCounts.set(clientId, (clientInvoiceCounts.get(clientId) || 0) + 1);
+        
+        // Store client name for display
+        if (!clientEarnings.has(clientId + '_name')) {
+            clientEarnings.set(clientId + '_name', clientName);
+        }
+    });
+
+    // Find top client
+    let topClientId = null;
+    let topClientEarnings = 0;
+    let topClientName = 'N/A';
+
+    for (const [clientId, earnings] of clientEarnings.entries()) {
+        if (typeof clientId === 'string' && !clientId.endsWith('_name') && earnings > topClientEarnings) {
+            topClientEarnings = earnings;
+            topClientId = clientId;
+            topClientName = clientEarnings.get(clientId + '_name') || 'Unknown';
+        }
+    }
+
+    // Calculate total stats
+    const totalPaidInvoices = invoices.filter(inv => inv.status === 'Paid');
+    const totalEarnings = totalPaidInvoices.reduce((sum, inv) => sum + inv.amount, 0);
+    const averageInvoice = totalPaidInvoices.length > 0 ? totalEarnings / totalPaidInvoices.length : 0;
+    const totalInvoices = invoices.length;
+
+    // Calculate period info
+    let periodInfo = '';
+    if (analyticsState.dateRange.from && analyticsState.dateRange.to) {
+        periodInfo = `${analyticsState.dateRange.from} to ${analyticsState.dateRange.to}`;
+    } else {
+        periodInfo = 'All time';
+    }
+
+    insightsContainer.innerHTML = `
+        <div class="insight-item">
+            <div class="insight-label">🏆 Top Client${periodInfo !== 'All time' ? ` (${periodInfo})` : ''}</div>
+            <div class="insight-value">${topClientName}</div>
+            <div class="insight-change positive">₹${formatNumber(topClientEarnings)} earned</div>
+        </div>
+        
+        <div class="insight-item">
+            <div class="insight-label">💰 Total Earnings</div>
+            <div class="insight-value">₹${formatNumber(totalEarnings)}</div>
+            <div class="insight-change">${totalPaidInvoices.length} paid invoices</div>
+        </div>
+        
+        <div class="insight-item">
+            <div class="insight-label">📊 Average Invoice</div>
+            <div class="insight-value">₹${formatNumber(averageInvoice)}</div>
+            <div class="insight-change">${totalInvoices} total invoices</div>
+        </div>
+        
+        <div class="insight-item">
+            <div class="insight-label">🎯 Period</div>
+            <div class="insight-value">${analyticsState.currentPeriod.charAt(0).toUpperCase() + analyticsState.currentPeriod.slice(1)}</div>
+            <div class="insight-change">${periodInfo}</div>
+        </div>
+    `;
+}
+
+// FIXED: Settings rendering with improved tax rate handling
 function renderSettings() {
     console.log('Rendering settings...');
 
@@ -1569,18 +1687,48 @@ function renderSettings() {
         'bank-name-field': settings.bankNameField,
         'bank-swift': settings.bankSWIFT,
         'currency-setting': settings.currency,
-        'tax-rate': settings.taxRate,
+        'tax-rate': settings.taxRate, // FIXED: Properly handle 0%
         'invoice-prefix': settings.invoicePrefix
     };
 
     Object.entries(elements).forEach(([id, value]) => {
         const element = document.getElementById(id);
         if (element) {
-            element.value = value || '';
+            element.value = (value !== null && value !== undefined) ? value : '';
         } else {
             console.warn(`Settings field ${id} not found in DOM`);
         }
     });
+
+    // ADDED: Enhance tax rate field with better UX
+    const taxRateField = document.getElementById('tax-rate');
+    if (taxRateField) {
+        // Add common tax rates as datalist
+        let datalist = document.getElementById('tax-rate-options');
+        if (!datalist) {
+            datalist = document.createElement('datalist');
+            datalist.id = 'tax-rate-options';
+            datalist.innerHTML = `
+                <option value="0">0% - No Tax</option>
+                <option value="5">5% - Reduced Rate</option>
+                <option value="12">12% - Standard Rate</option>
+                <option value="18">18% - Higher Rate</option>
+                <option value="28">28% - Luxury Rate</option>
+            `;
+            taxRateField.parentNode.appendChild(datalist);
+        }
+        taxRateField.setAttribute('list', 'tax-rate-options');
+        taxRateField.setAttribute('placeholder', 'e.g., 0, 18');
+        
+        // Add helper text
+        if (!document.getElementById('tax-rate-helper')) {
+            const helper = document.createElement('small');
+            helper.id = 'tax-rate-helper';
+            helper.style.cssText = 'display: block; margin-top: 4px; color: #64748b; font-size: 11px;';
+            helper.textContent = 'Enter 0 for no tax, or your applicable tax percentage';
+            taxRateField.parentNode.appendChild(helper);
+        }
+    }
 
     console.log('Settings rendered with tax rate:', settings.taxRate);
 }
@@ -1664,7 +1812,7 @@ async function openInvoiceModal(invoiceId = null) {
                                     <input type="number" class="form-control quantity" placeholder="Qty" min="1" value="${item.quantity}" required>
                                 </div>
                                 <div class="form-group">
-                                    <input type="number" class="form-control rate" placeholder="Rate" min="0" step="0.01" required>
+                                    <input type="number" class="form-control rate" placeholder="Rate" min="0" step="0.01" value="${item.rate}" required>
                                 </div>
                                 <div class="form-group">
                                     <input type="number" class="form-control amount" placeholder="Amount" value="${item.amount}" readonly>
@@ -1835,7 +1983,7 @@ function calculateLineItem(lineItem) {
     }
 }
 
-// FIXED: Tax calculation using current settings
+// FIXED: Tax calculation using current settings (including 0%)
 function calculateInvoiceTotal() {
     const lineItems = document.querySelectorAll('.line-item');
     let subtotal = 0;
@@ -1848,7 +1996,7 @@ function calculateInvoiceTotal() {
         }
     });
 
-    // Use current tax rate from loaded settings
+    // Use current tax rate from loaded settings (can be 0)
     const taxRate = appData.settings.taxRate / 100;
     const tax = subtotal * taxRate;
     const total = subtotal + tax;
@@ -1876,9 +2024,8 @@ async function saveInvoice(status) {
     const invoiceNumberInput = document.getElementById('invoice-number');
     let invoiceNumber = invoiceNumberInput?.value;
     const clientSelect = document.getElementById('invoice-client');
-    const clientId = clientSelect ? clientSelect.value : null; // MODIFIED: Keep clientId as string (UUID)
+    const clientId = clientSelect ? clientSelect.value : null;
 
-    // Better client validation
     if (!clientId) {
         showToast('Please select a client', 'error');
         clientSelect?.focus();
@@ -1987,7 +2134,7 @@ function setupClientForm() {
     }
 }
 
-// COMPLETELY FIXED: Client saving with detailed error handling
+// COMPLETELY FIXED: Client saving with proper data isolation
 async function saveClient() {
     console.log('Saving client... Editing ID:', editingClientId);
 
@@ -2034,24 +2181,26 @@ async function saveClient() {
         const savedClient = await saveClientToSupabase(clientData);
 
         if (editingClientId) {
-            // Update existing client in local data
+            // FIXED: Update only the specific client being edited
             const index = appData.clients.findIndex(c => c.id === editingClientId);
             if (index > -1) {
+                // Preserve existing statistics and update only the edited fields
                 appData.clients[index] = {
-                    ...appData.clients[index],
-                    id: savedClient.id, // KEPT AS STRING (UUID)
+                    ...appData.clients[index], // Keep existing data
+                    id: savedClient.id,
                     name: savedClient.name,
                     email: savedClient.email,
                     phone: savedClient.phone || '',
                     address: savedClient.address || '',
                     payment_terms: savedClient.payment_terms
                 };
+                console.log('Updated client at index:', index, appData.clients[index]);
             }
             showToast(`Client "${savedClient.name}" updated successfully`, 'success');
         } else {
             // Add new client to local data
             const newClient = {
-                id: savedClient.id, // KEPT AS STRING (UUID)
+                id: savedClient.id,
                 name: savedClient.name,
                 email: savedClient.email,
                 phone: savedClient.phone || '',
@@ -2070,11 +2219,10 @@ async function saveClient() {
         renderClients();
         closeModal(document.getElementById('client-modal'));
 
-        // Reset form
-        if (companyInput) companyInput.value = '';
-        if (emailInput) emailInput.value = '';
-        if (phoneInput) phoneInput.value = '';
-        if (addressInput) addressInput.value = '';
+        // Reset form and editing state
+        const form = document.getElementById('client-form');
+        if (form) form.reset();
+        editingClientId = null;
 
         // Reset button state
         saveBtn.textContent = originalText;
@@ -2106,7 +2254,7 @@ function setupSettingsForm() {
     }
 }
 
-// COMPLETELY FIXED: Settings save with comprehensive validation
+// COMPLETELY FIXED: Settings save with proper 0% tax rate validation
 async function saveSettings() {
     console.log('Saving settings...');
 
@@ -2138,15 +2286,22 @@ async function saveSettings() {
     Object.entries(elements).forEach(([key, element]) => {
         if (key === 'taxRate') {
             const value = parseFloat(element.value);
+            // FIXED: Allow 0% and properly validate
             if (isNaN(value) || value < 0 || value > 100) {
-                showToast('Tax rate must be a number between 0 and 100', 'error');
-                return; // Added return to exit early if validation fails
+                showToast('Tax rate must be a number between 0 and 100 (0% is allowed)', 'error');
+                element.focus();
+                return;
             }
             settingsData[key] = value;
         } else {
             settingsData[key] = element.value?.trim() || '';
         }
     });
+
+    // Check if tax rate validation failed
+    if (settingsData.taxRate === undefined) {
+        return; // Tax rate validation failed, don't proceed
+    }
 
     // Validate required fields
     if (!settingsData.profileName || !settingsData.profileEmail) {
@@ -2181,7 +2336,7 @@ async function saveSettings() {
             calculateInvoiceTotal();
         }
 
-        showToast('Settings saved successfully', 'success');
+        showToast(`Settings saved successfully. Tax rate: ${appData.settings.taxRate}%`, 'success');
 
         // Reset button state
         saveBtn.textContent = originalText;
@@ -2204,7 +2359,7 @@ function resetSettings() {
     if (confirm('Are you sure you want to reset all settings to default?')) {
         appData.settings = {
             currency: 'INR',
-            taxRate: 18,
+            taxRate: 0, // FIXED: Default to 0%
             invoicePrefix: 'HP-2526',
             profileName: 'Hariprasad Sivakumar',
             profileEmail: 'contact@hariprasadss.com',
@@ -2215,10 +2370,10 @@ function resetSettings() {
             bankAccount: '',
             bankIFSC: '',
             bankNameField: '',
-            bankSWIFT: '' // Reverted to empty string for default, as it's optional now
+            bankSWIFT: ''
         };
         renderSettings();
-        showToast('Settings reset to default', 'success');
+        showToast('Settings reset to default (0% tax rate)', 'success');
     }
 }
 
@@ -2331,9 +2486,6 @@ function editInvoice(invoiceId) {
 
 async function deleteInvoice(invoiceId) {
     console.log('Deleting invoice:', invoiceId);
-    // Replaced confirm() with a custom modal for better UI/UX and iframe compatibility.
-    // For this example, I'm using a simple confirmation for demonstration.
-    // In a real application, you'd replace 'confirm' with your custom modal logic.
     if (confirm(`Are you sure you want to delete invoice ${invoiceId}?`)) {
         try {
             await deleteInvoiceFromSupabase(invoiceId);
@@ -2565,7 +2717,7 @@ function showToast(message, type = 'info') {
     });
 }
 
-// ADDED: Global error handler for better debugging
+// Global error handler for better debugging
 window.addEventListener('error', (event) => {
     console.error('Global error caught:', event.error);
     showToast('An unexpected error occurred. Check console for details.', 'error');
@@ -2576,7 +2728,7 @@ window.addEventListener('unhandledrejection', (event) => {
     showToast('A network or database error occurred. Please try again.', 'error');
 });
 
-// ENHANCED: Performance monitoring
+// Performance monitoring
 const performanceMonitor = {
     startTime: Date.now(),
 
@@ -2596,7 +2748,7 @@ const performanceMonitor = {
     }
 };
 
-// ADDED: Keyboard shortcuts for power users
+// Keyboard shortcuts for power users
 document.addEventListener('keydown', (e) => {
     // Ctrl/Cmd + N for new invoice
     if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
@@ -2627,7 +2779,7 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// ADDED: Auto-save draft functionality for forms
+// Auto-save draft functionality for forms
 let autoSaveTimer;
 
 function setupAutoSave() {
@@ -2637,14 +2789,13 @@ function setupAutoSave() {
         input.addEventListener('input', () => {
             clearTimeout(autoSaveTimer);
             autoSaveTimer = setTimeout(() => {
-                // Auto-save logic could be implemented here
                 console.log('Auto-save triggered');
-            }, 5000); // Save after 5 seconds of inactivity
+            }, 5000);
         });
     });
 }
 
-// ENHANCED: Data validation helpers
+// Data validation helpers
 const validators = {
     email: (email) => {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -2665,7 +2816,7 @@ const validators = {
     }
 };
 
-// ADDED: Export functionality
+// Export functionality
 function exportData(format = 'json') {
     const data = {
         clients: appData.clients,
@@ -2688,7 +2839,7 @@ function exportData(format = 'json') {
     }
 }
 
-// ADDED: Search functionality
+// Search functionality
 function setupGlobalSearch() {
     const searchInput = document.createElement('input');
     searchInput.type = 'text';
@@ -2725,7 +2876,7 @@ function setupGlobalSearch() {
     });
 }
 
-// ADDED: Improved error boundaries
+// Improved error boundaries
 function withErrorBoundary(fn, fallback) {
     return async (...args) => {
         try {
@@ -2741,7 +2892,7 @@ function withErrorBoundary(fn, fallback) {
     };
 }
 
-// ADDED: Connection status monitoring
+// Connection status monitoring
 function monitorConnection() {
     const updateConnectionStatus = () => {
         const status = navigator.onLine ? 'online' : 'offline';
@@ -2769,10 +2920,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
 });
 
-// ENHANCED: Debug helpers for development
+// Debug helpers for development
 if (window.location.hostname === 'localhost' || window.location.hostname.includes('local')) {
     window.debugApp = {
         appData,
+        analyticsState,
         clearLocalStorage: () => {
             localStorage.clear();
             location.reload();
@@ -2783,6 +2935,11 @@ if (window.location.hostname === 'localhost' || window.location.hostname.include
         },
         testToast: (type = 'info') => {
             showToast(`Test ${type} message`, type);
+        },
+        testAnalytics: () => {
+            console.log('Analytics State:', analyticsState);
+            console.log('Current period:', analyticsState.currentPeriod);
+            console.log('Filtered data:', analyticsState.filteredData?.length || 0, 'invoices');
         }
     };
     console.log('🔧 Debug helpers available: window.debugApp');
