@@ -35,6 +35,7 @@ let appData = {
 
 // Global variables for editing
 let editingInvoiceId = null;
+let editingClientId = null;
 
 // Charts
 let monthlyChart, clientChart, analyticsChart;
@@ -53,7 +54,8 @@ async function initializeApp() {
         setupNavigation();
         setupModals();
         setupForms();
-        setupAnalyticsFilters(); // Add this
+        setupAnalyticsFilters();
+        setupDateRangeFilters(); // NEW: Add date range filtering
         renderDashboard();
         renderInvoices();
         renderClients();
@@ -92,6 +94,143 @@ async function getNextInvoiceNumber() {
         console.error('Error getting next invoice number:', error);
         return Date.now(); // Fallback to timestamp
     }
+}
+
+// NEW: Date range filtering functions
+function setupDateRangeFilters() {
+    // Add date range controls to analytics page if they don't exist
+    const analyticsHeader = document.querySelector('#analytics-page .page-header');
+    if (analyticsHeader && !document.getElementById('date-from')) {
+        const dateFilterDiv = document.querySelector('.date-filter') || document.createElement('div');
+        dateFilterDiv.className = 'date-filter';
+        
+        dateFilterDiv.innerHTML = `
+            <div style="display: flex; gap: 16px; align-items: center;">
+                <div>
+                    <label style="font-size: 12px; display: block; margin-bottom: 4px;">From Month:</label>
+                    <input type="month" class="form-control" id="date-from" style="width: 150px;">
+                </div>
+                <div>
+                    <label style="font-size: 12px; display: block; margin-bottom: 4px;">To Month:</label>
+                    <input type="month" class="form-control" id="date-to" style="width: 150px;">
+                </div>
+                <button class="btn btn--primary" id="apply-date-filter" style="margin-top: 20px;">Apply Filter</button>
+                <button class="btn btn--secondary" id="clear-date-filter" style="margin-top: 20px;">Clear</button>
+                <select class="form-control" id="analytics-period" style="width: 150px; margin-top: 20px;">
+                    <option value="monthly">Monthly View</option>
+                    <option value="quarterly">Quarterly View</option>
+                    <option value="yearly">Yearly View</option>
+                </select>
+            </div>
+        `;
+        
+        analyticsHeader.appendChild(dateFilterDiv);
+        
+        // Setup event listeners
+        document.getElementById('apply-date-filter').addEventListener('click', applyDateRangeFilter);
+        document.getElementById('clear-date-filter').addEventListener('click', clearDateRangeFilter);
+    }
+}
+
+function applyDateRangeFilter() {
+    const fromDate = document.getElementById('date-from').value;
+    const toDate = document.getElementById('date-to').value;
+    
+    if (!fromDate || !toDate) {
+        showToast('Please select both from and to dates', 'error');
+        return;
+    }
+    
+    if (fromDate > toDate) {
+        showToast('From date should be earlier than to date', 'error');
+        return;
+    }
+    
+    // Filter invoices based on date range
+    const filteredInvoices = appData.invoices.filter(invoice => {
+        const invoiceDate = new Date(invoice.date);
+        const invoiceMonth = `${invoiceDate.getFullYear()}-${String(invoiceDate.getMonth() + 1).padStart(2, '0')}`;
+        return invoiceMonth >= fromDate && invoiceMonth <= toDate;
+    });
+    
+    // Calculate earnings for filtered period
+    const totalEarnings = filteredInvoices
+        .filter(inv => inv.status === 'Paid')
+        .reduce((sum, inv) => sum + inv.amount, 0);
+    
+    // Update analytics display
+    renderAnalyticsForPeriod(filteredInvoices, fromDate, toDate);
+    
+    showToast(`Showing data from ${fromDate} to ${toDate}. Total: ₹${formatNumber(totalEarnings)}`, 'success');
+}
+
+function clearDateRangeFilter() {
+    document.getElementById('date-from').value = '';
+    document.getElementById('date-to').value = '';
+    renderAnalytics(); // Render with all data
+    showToast('Date filter cleared', 'info');
+}
+
+function renderAnalyticsForPeriod(filteredInvoices, fromDate, toDate) {
+    // Calculate monthly earnings for filtered period
+    const monthlyData = new Map();
+    
+    filteredInvoices
+        .filter(inv => inv.status === 'Paid')
+        .forEach(({ date, amount }) => {
+            const d = new Date(date);
+            if (Number.isNaN(d)) return;
+            const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            monthlyData.set(monthKey, (monthlyData.get(monthKey) || 0) + amount);
+        });
+
+    const filteredEarnings = Array.from(monthlyData, ([month, amount]) => ({ month, amount }))
+                                   .sort((a, b) => a.month.localeCompare(b.month));
+
+    // Update chart with filtered data
+    setTimeout(() => {
+        const analyticsCtx = document.getElementById('analyticsChart');
+        if (analyticsCtx) {
+            if (analyticsChart) {
+                analyticsChart.destroy();
+            }
+            
+            analyticsChart = new Chart(analyticsCtx, {
+                type: 'bar',
+                data: {
+                    labels: filteredEarnings.map(m => m.month),
+                    datasets: [{
+                        label: `Earnings (${fromDate} to ${toDate})`,
+                        data: filteredEarnings.map(m => m.amount),
+                        backgroundColor: '#1FB8CD',
+                        borderColor: '#1FB8CD',
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + formatNumber(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }, 100);
 }
 
 // Supabase Data Loading Functions - Fixed all supabase references
@@ -150,7 +289,6 @@ async function loadDataFromSupabase() {
         
         if (settingsError && settingsError.code !== 'PGRST116') {
             console.warn('Settings error:', settingsError);
-            // Don't throw, just use defaults
         }
         
         if (settings) {
@@ -162,14 +300,18 @@ async function loadDataFromSupabase() {
                 profileName: settings.profile_name || appData.settings.profileName,
                 profileEmail: settings.profile_email || appData.settings.profileEmail,
                 profilePhone: settings.profile_phone || appData.settings.profilePhone,
+                profileAddress: settings.profile_address || appData.settings.profileAddress,
+                gstin: settings.gstin || appData.settings.gstin,
                 bankName: settings.bank_name || appData.settings.bankName,
                 bankAccount: settings.bank_account || appData.settings.bankAccount,
                 bankIFSC: settings.bank_ifsc || appData.settings.bankIFSC,
-                bankNameField: settings.bank_name_field || appData.settings.bankNameField
+                bankNameField: settings.bank_name_field || appData.settings.bankNameField,
+                bankSWIFT: settings.bank_swift || appData.settings.bankSWIFT
             };
         }
 
         console.log('Data loaded successfully from Supabase');
+        console.log('Current tax rate:', appData.settings.taxRate); // Debug log
     } catch (error) {
         console.error('Error loading data from Supabase:', error);
         throw error;
@@ -227,10 +369,10 @@ function calculateYearlyEarnings() {
                  .sort((a, b) => a.month.localeCompare(b.month));
 }
 
-// Supabase Database Operations - Fixed all supabase references
+// Supabase Database Operations
 async function saveClientToSupabase(clientData) {
     try {
-        if (clientData.id && clientData.id !== Date.now()) {
+        if (editingClientId) {
             // Update existing client
             const { data, error } = await supabaseClient
                 .from('clients')
@@ -242,7 +384,7 @@ async function saveClientToSupabase(clientData) {
                     payment_terms: clientData.paymentTerms || 'net30',
                     updated_at: new Date().toISOString()
                 })
-                .eq('id', clientData.id)
+                .eq('id', editingClientId)
                 .select()
                 .single();
             
@@ -295,6 +437,9 @@ async function saveInvoiceToSupabase(invoiceData) {
                 .single();
             
             if (error) throw error;
+            
+            // Update client totals
+            await updateClientTotals(invoiceData.clientId);
             return data;
         } else {
             // Insert new invoice
@@ -316,13 +461,11 @@ async function saveInvoiceToSupabase(invoiceData) {
                 .single();
             
             if (error) throw error;
+
+            // Update client totals
+            await updateClientTotals(invoiceData.clientId);
             return data;
         }
-        
-        // Update client totals
-        await updateClientTotals(invoiceData.clientId);
-        
-        return data;
     } catch (error) {
         console.error('Error saving invoice to Supabase:', error);
         throw error;
@@ -390,7 +533,7 @@ async function deleteInvoiceFromSupabase(invoiceId) {
     }
 }
 
-// FIXED: Settings save with proper upsert
+// FIXED: Settings save with proper upsert and additional fields
 async function saveSettingsToSupabase(settingsData) {
     try {
         // First check if settings exist
@@ -400,23 +543,28 @@ async function saveSettingsToSupabase(settingsData) {
             .eq('user_id', 'default')
             .single();
         
+        const settingsPayload = {
+            currency: settingsData.currency,
+            tax_rate: settingsData.taxRate,
+            invoice_prefix: settingsData.invoicePrefix,
+            profile_name: settingsData.profileName,
+            profile_email: settingsData.profileEmail,
+            profile_phone: settingsData.profilePhone,
+            profile_address: settingsData.profileAddress,
+            gstin: settingsData.gstin,
+            bank_name: settingsData.bankName,
+            bank_account: settingsData.bankAccount,
+            bank_ifsc: settingsData.bankIFSC,
+            bank_name_field: settingsData.bankNameField,
+            bank_swift: settingsData.bankSWIFT,
+            updated_at: new Date().toISOString()
+        };
+        
         if (existingSettings) {
             // Update existing settings
             const { data, error } = await supabaseClient
                 .from('settings')
-                .update({
-                    currency: settingsData.currency,
-                    tax_rate: settingsData.taxRate,
-                    invoice_prefix: settingsData.invoicePrefix,
-                    profile_name: settingsData.profileName,
-                    profile_email: settingsData.profileEmail,
-                    profile_phone: settingsData.profilePhone,
-                    bank_name: settingsData.bankName,
-                    bank_account: settingsData.bankAccount,
-                    bank_ifsc: settingsData.bankIFSC,
-                    bank_name_field: settingsData.bankNameField,
-                    updated_at: new Date().toISOString()
-                })
+                .update(settingsPayload)
                 .eq('user_id', 'default')
                 .select()
                 .single();
@@ -429,17 +577,7 @@ async function saveSettingsToSupabase(settingsData) {
                 .from('settings')
                 .insert([{
                     user_id: 'default',
-                    currency: settingsData.currency,
-                    tax_rate: settingsData.taxRate,
-                    invoice_prefix: settingsData.invoicePrefix,
-                    profile_name: settingsData.profileName,
-                    profile_email: settingsData.profileEmail,
-                    profile_phone: settingsData.profilePhone,
-                    bank_name: settingsData.bankName,
-                    bank_account: settingsData.bankAccount,
-                    bank_ifsc: settingsData.bankIFSC,
-                    bank_name_field: settingsData.bankNameField,
-                    updated_at: new Date().toISOString()
+                    ...settingsPayload
                 }])
                 .select()
                 .single();
@@ -712,7 +850,7 @@ function filterInvoices(filter) {
     });
 }
 
-// Client Management
+// FIXED: Client Management with edit functionality
 function renderClients() {
     console.log('Rendering clients...');
     const grid = document.getElementById('clients-grid');
@@ -720,8 +858,12 @@ function renderClients() {
     
     grid.innerHTML = appData.clients.map(client => `
         <div class="client-card">
-            <h4>${client.name}</h4>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <h4>${client.name}</h4>
+                <button class="btn btn--sm btn--secondary" onclick="editClient(${client.id})" style="padding: 4px 8px; font-size: 12px;">Edit</button>
+            </div>
             <div class="client-email">${client.email}</div>
+            ${client.phone ? `<div style="color: var(--color-text-secondary); font-size: 12px;">${client.phone}</div>` : ''}
             <div class="client-stats">
                 <div class="client-stat">
                     <div class="client-stat-value">${client.total_invoices || 0}</div>
@@ -734,6 +876,32 @@ function renderClients() {
             </div>
         </div>
     `).join('');
+}
+
+// NEW: Edit client function
+function editClient(clientId) {
+    console.log('Editing client:', clientId);
+    const client = appData.clients.find(c => c.id === clientId);
+    if (!client) return;
+    
+    editingClientId = clientId;
+    
+    // Populate modal with client data
+    document.getElementById('client-company').value = client.name;
+    document.getElementById('client-email').value = client.email;
+    document.getElementById('client-phone').value = client.phone || '';
+    document.getElementById('client-address').value = client.address || '';
+    document.getElementById('client-terms').value = client.payment_terms || 'net30';
+    
+    // Change modal title
+    const modalTitle = document.querySelector('#client-modal .modal-header h2');
+    if (modalTitle) modalTitle.textContent = 'Edit Client';
+    
+    // Change button text
+    const saveBtn = document.getElementById('save-client');
+    if (saveBtn) saveBtn.textContent = 'Update Client';
+    
+    openClientModal();
 }
 
 // FIXED: Analytics with period support
@@ -805,10 +973,13 @@ function renderSettings() {
         'profile-name': settings.profileName,
         'profile-email': settings.profileEmail,
         'profile-phone': settings.profilePhone,
+        'profile-address': settings.profileAddress,
+        'profile-gstin': settings.gstin,
         'bank-name': settings.bankName,
         'bank-account': settings.bankAccount,
         'bank-ifsc': settings.bankIFSC,
         'bank-name-field': settings.bankNameField,
+        'bank-swift': settings.bankSWIFT,
         'currency-setting': settings.currency,
         'tax-rate': settings.taxRate,
         'invoice-prefix': settings.invoicePrefix
@@ -817,7 +988,7 @@ function renderSettings() {
     Object.entries(elements).forEach(([id, value]) => {
         const element = document.getElementById(id);
         if (element) {
-            element.value = value;
+            element.value = value || '';
         }
     });
 }
@@ -854,7 +1025,7 @@ function setupModals() {
     const addClientBtn = document.getElementById('add-client-btn');
 
     if (addClientBtn) {
-        addClientBtn.addEventListener('click', openClientModal);
+        addClientBtn.addEventListener('click', () => openClientModal());
     }
 
     if (clientModalOverlay) {
@@ -972,10 +1143,19 @@ function openClientModal() {
     if (modal) {
         modal.classList.remove('hidden');
         
-        // Clear form fields
-        const form = document.getElementById('client-form');
-        if (form) {
-            form.reset();
+        // Reset modal for new client if not editing
+        if (!editingClientId) {
+            const form = document.getElementById('client-form');
+            if (form) {
+                form.reset();
+            }
+            
+            // Reset modal title and button
+            const modalTitle = document.querySelector('#client-modal .modal-header h2');
+            if (modalTitle) modalTitle.textContent = 'Add New Client';
+            
+            const saveBtn = document.getElementById('save-client');
+            if (saveBtn) saveBtn.textContent = 'Save Client';
         }
     }
 }
@@ -984,10 +1164,10 @@ function closeModal(modal) {
     if (modal) {
         modal.classList.add('hidden');
         editingInvoiceId = null; // Reset editing state
+        editingClientId = null; // Reset client editing state
     }
 }
 
-// Rest of the functions remain the same...
 // Form Management
 function setupForms() {
     console.log('Setting up forms...');
@@ -1079,6 +1259,7 @@ function calculateLineItem(lineItem) {
     }
 }
 
+// FIXED: Tax rate calculation using current settings
 function calculateInvoiceTotal() {
     const lineItems = document.querySelectorAll('.line-item');
     let subtotal = 0;
@@ -1091,6 +1272,7 @@ function calculateInvoiceTotal() {
         }
     });
     
+    // FIXED: Use current tax rate from settings
     const taxRate = appData.settings.taxRate / 100;
     const tax = subtotal * taxRate;
     const total = subtotal + tax;
@@ -1102,8 +1284,15 @@ function calculateInvoiceTotal() {
     if (subtotalElement) subtotalElement.textContent = `₹${formatNumber(subtotal)}`;
     if (taxElement) taxElement.textContent = `₹${formatNumber(tax)}`;
     if (totalElement) totalElement.textContent = `₹${formatNumber(total)}`;
+    
+    // Also update the tax rate display
+    const taxLabel = document.querySelector('.total-row:nth-child(2) span:first-child');
+    if (taxLabel) {
+        taxLabel.textContent = `Tax (${appData.settings.taxRate}%):`;
+    }
 }
 
+// FIXED: Client selection validation
 async function saveInvoice(status) {
     console.log('Saving invoice with status:', status);
     
@@ -1111,10 +1300,16 @@ async function saveInvoice(status) {
     let invoiceNumber = invoiceNumberInput?.value;
     const clientSelect = document.getElementById('invoice-client');
     const clientId = clientSelect ? parseInt(clientSelect.value) : null;
-    const client = appData.clients.find(c => c.id === clientId);
     
-    if (!client) {
+    // FIXED: Better client validation
+    if (!clientId || isNaN(clientId)) {
         showToast('Please select a client', 'error');
+        return;
+    }
+    
+    const client = appData.clients.find(c => c.id === clientId);
+    if (!client) {
+        showToast('Selected client not found', 'error');
         return;
     }
     
@@ -1128,7 +1323,7 @@ async function saveInvoice(status) {
         const amountInput = item.querySelector('.amount');
         
         if (descInput && quantityInput && rateInput && amountInput) {
-            const description = descInput.value;
+            const description = descInput.value.trim();
             const quantity = parseFloat(quantityInput.value);
             const rate = parseFloat(rateInput.value);
             const amount = parseFloat(amountInput.value);
@@ -1145,6 +1340,7 @@ async function saveInvoice(status) {
     }
     
     const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
+    // FIXED: Use current tax rate from settings
     const tax = subtotal * (appData.settings.taxRate / 100);
     const total = subtotal + tax;
     
@@ -1236,10 +1432,10 @@ async function saveClient() {
     }
     
     const clientData = {
-        name: companyInput.value,
-        email: emailInput.value,
-        phone: phoneInput ? phoneInput.value : '',
-        address: addressInput ? addressInput.value : '',
+        name: companyInput.value.trim(),
+        email: emailInput.value.trim(),
+        phone: phoneInput ? phoneInput.value.trim() : '',
+        address: addressInput ? addressInput.value.trim() : '',
         paymentTerms: termsInput ? termsInput.value : 'net30'
     };
     
@@ -1252,25 +1448,40 @@ async function saveClient() {
         // Save to Supabase
         const savedClient = await saveClientToSupabase(clientData);
         
-        // Update local data
-        const newClient = {
-            id: savedClient.id,
-            name: savedClient.name,
-            email: savedClient.email,
-            phone: savedClient.phone || '',
-            address: savedClient.address || '',
-            paymentTerms: savedClient.payment_terms,
-            total_invoices: savedClient.total_invoices || 0,
-            total_amount: savedClient.total_amount || 0
-        };
-        
-        appData.clients.push(newClient);
-        appData.totalClients++;
+        if (editingClientId) {
+            // Update existing client in local data
+            const index = appData.clients.findIndex(c => c.id === editingClientId);
+            if (index > -1) {
+                appData.clients[index] = {
+                    ...appData.clients[index],
+                    name: savedClient.name,
+                    email: savedClient.email,
+                    phone: savedClient.phone || '',
+                    address: savedClient.address || '',
+                    paymentTerms: savedClient.payment_terms
+                };
+            }
+            showToast(`Client ${savedClient.name} updated successfully`, 'success');
+        } else {
+            // Add new client to local data
+            const newClient = {
+                id: savedClient.id,
+                name: savedClient.name,
+                email: savedClient.email,
+                phone: savedClient.phone || '',
+                address: savedClient.address || '',
+                paymentTerms: savedClient.payment_terms,
+                total_invoices: savedClient.total_invoices || 0,
+                total_amount: savedClient.total_amount || 0
+            };
+            
+            appData.clients.push(newClient);
+            appData.totalClients++;
+            showToast(`Client ${newClient.name} added successfully`, 'success');
+        }
         
         renderClients();
-        
         closeModal(document.getElementById('client-modal'));
-        showToast(`Client ${newClient.name} added successfully`, 'success');
         
         // Reset form
         if (companyInput) companyInput.value = '';
@@ -1306,17 +1517,20 @@ async function saveSettings() {
         profileName: document.getElementById('profile-name'),
         profileEmail: document.getElementById('profile-email'),
         profilePhone: document.getElementById('profile-phone'),
+        profileAddress: document.getElementById('profile-address'),
+        gstin: document.getElementById('profile-gstin'),
         bankName: document.getElementById('bank-name'),
         bankAccount: document.getElementById('bank-account'),
         bankIFSC: document.getElementById('bank-ifsc'),
-        bankNameField: document.getElementById('bank-name-field')
+        bankNameField: document.getElementById('bank-name-field'),
+        bankSWIFT: document.getElementById('bank-swift')
     };
     
     const settingsData = {};
     Object.entries(elements).forEach(([key, element]) => {
         if (element) {
             if (key === 'taxRate') {
-                settingsData[key] = parseFloat(element.value) || 18;
+                settingsData[key] = parseFloat(element.value) || 0; // FIXED: Allow 0 tax rate
             } else {
                 settingsData[key] = element.value;
             }
@@ -1327,10 +1541,11 @@ async function saveSettings() {
         // Save to Supabase
         await saveSettingsToSupabase(settingsData);
         
-        // Update local data
+        // FIXED: Update local data immediately
         Object.assign(appData.settings, settingsData);
         
         showToast('Settings saved successfully', 'success');
+        console.log('Updated tax rate in settings:', appData.settings.taxRate); // Debug log
     } catch (error) {
         console.error('Error saving settings:', error);
         showToast('Error saving settings. Please try again.', 'error');
@@ -1361,8 +1576,105 @@ function viewInvoice(invoiceId) {
     console.log('Viewing invoice:', invoiceId);
     const invoice = appData.invoices.find(inv => inv.id === invoiceId);
     if (invoice) {
-        showToast(`Viewing invoice ${invoiceId} - Amount: ₹${formatNumber(invoice.amount)}`, 'info');
+        // NEW: Show invoice in a proper format like the PDF
+        showInvoiceModal(invoice);
     }
+}
+
+// NEW: Show invoice in proper format
+function showInvoiceModal(invoice) {
+    const client = appData.clients.find(c => c.id === invoice.clientId);
+    const settings = appData.settings;
+    
+    // Create invoice view modal
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2>Invoice ${invoice.id}</h2>
+                <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 40px; background: white; color: black;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+                    <div>
+                        <h1 style="font-size: 36px; color: #333; margin: 0;">Invoice</h1>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="margin-bottom: 10px;"><strong>INVOICE NUMBER:</strong> ${invoice.id}</div>
+                        <div style="margin-bottom: 10px;"><strong>DATE OF ISSUE:</strong> ${formatDate(invoice.date)}</div>
+                        <div><strong>DUE DATE:</strong> ${formatDate(invoice.dueDate)}</div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 40px;">
+                    <div>
+                        <div style="font-weight: bold; margin-bottom: 10px;">BILLED TO:</div>
+                        <div style="line-height: 1.6;">
+                            ${client ? client.name : invoice.client}<br>
+                            ${client && client.address ? client.address.replace(/\n/g, '<br>') : ''}
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: bold; margin-bottom: 10px;">FROM:</div>
+                        <div style="line-height: 1.6;">
+                            ${settings.profileName}<br>
+                            ${settings.profileAddress ? settings.profileAddress.replace(/\n/g, '<br>') : ''}<br>
+                            <br>
+                            ${settings.gstin ? `GSTIN: ${settings.gstin}` : ''}
+                        </div>
+                    </div>
+                </div>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                    <thead>
+                        <tr style="background-color: #f5f5f5;">
+                            <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Description</th>
+                            <th style="padding: 12px; text-align: right; border: 1px solid #ddd;">Unit Cost</th>
+                            <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">QTY</th>
+                            <th style="padding: 12px; text-align: right; border: 1px solid #ddd;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${invoice.items.map(item => `
+                            <tr>
+                                <td style="padding: 12px; border: 1px solid #ddd;">${item.description}</td>
+                                <td style="padding: 12px; text-align: right; border: 1px solid #ddd;">₹${formatNumber(item.rate)}</td>
+                                <td style="padding: 12px; text-align: center; border: 1px solid #ddd;">${item.quantity}</td>
+                                <td style="padding: 12px; text-align: right; border: 1px solid #ddd;">₹${formatNumber(item.amount)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                
+                <div style="display: flex; justify-content: space-between;">
+                    <div style="width: 45%;">
+                        <h3>BANK ACCOUNT DETAILS</h3>
+                        <div style="line-height: 1.6; font-size: 14px;">
+                            Account Name: ${settings.bankName}<br>
+                            Account Number: ${settings.bankAccount}<br>
+                            IFSC Code: ${settings.bankIFSC}<br>
+                            ${settings.bankSWIFT ? `SWIFT Code: ${settings.bankSWIFT}` : ''}
+                        </div>
+                    </div>
+                    <div style="width: 45%; text-align: right;">
+                        <div style="margin-bottom: 10px;"><strong>SUBTOTAL:</strong> ₹${formatNumber(invoice.subtotal)}</div>
+                        <div style="margin-bottom: 10px;"><strong>TAX (${settings.taxRate}%):</strong> ₹${formatNumber(invoice.tax)}</div>
+                        <div style="font-size: 18px; font-weight: bold; border-top: 2px solid #333; padding-top: 10px; margin-top: 10px;">
+                            <strong>INVOICE TOTAL: ₹${formatNumber(invoice.amount)}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn--secondary" onclick="this.closest('.modal').remove()">Close</button>
+                <button class="btn btn--primary" onclick="window.print()">Print</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
 }
 
 // FIXED: Edit invoice functionality
