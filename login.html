@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Invoice Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>Invoice Manager</h1>
+                <p>Sign in to access your invoices</p>
+            </div>
+            <form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username</label>
+                    <input 
+                        type="text" 
+                        class="form-control" 
+                        id="username" 
+                        name="username" 
+                        required 
+                        autocomplete="username"
+                        placeholder="Enter your username"
+                    >
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input 
+                        type="password" 
+                        class="form-control" 
+                        id="password" 
+                        name="password" 
+                        required 
+                        autocomplete="current-password"
+                        placeholder="Enter your password"
+                    >
+                </div>
+                <button type="submit" class="btn btn--primary btn--full-width">Sign In</button>
+                <div id="login-error" class="login-error" style="display: none;"></div>
+            </form>
+            <div class="login-footer">
+                <p>© 2025 Hariprasad Sivakumar. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('login-error');
+            
+            // Hide previous errors
+            errorDiv.style.display = 'none';
+            
+            // Check credentials
+            if (username === 'harihbk' && password === 'MyPage@8013') {
+                // Store login state
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('username', username);
+                localStorage.setItem('loginTime', new Date().getTime());
+                
+                // Redirect to main app
+                window.location.href = 'index.html';
+            } else {
+                // Show error
+                errorDiv.textContent = 'Invalid username or password';
+                errorDiv.style.display = 'block';
+                
+                // Clear password field
+                document.getElementById('password').value = '';
+            }
+        });
+
+        // Check if already logged in
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+            window.location.href = 'index.html';
+        }
+    </script>
+
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1FB8CD 0%, #26A0AD 100%);
+            padding: 20px;
+        }
+
+        .login-card {
+            background: var(--color-surface);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            overflow: hidden;
+        }
+
+        .login-header {
+            text-align: center;
+            padding: 40px 30px 20px;
+            background: linear-gradient(135deg, #1FB8CD 0%, #26A0AD 100%);
+            color: white;
+        }
+
+        .login-header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+        }
+
+        .login-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .login-form {
+            padding: 30px;
+        }
+
+        .login-form .form-group {
+            margin-bottom: 20px;
+        }
+
+        .login-form .form-control {
+            height: 48px;
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .login-form .form-control:focus {
+            border-color: #1FB8CD;
+            box-shadow: 0 0 0 3px rgba(31, 184, 205, 0.1);
+        }
+
+        .login-form .btn {
+            height: 48px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #1FB8CD 0%, #26A0AD 100%);
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .login-form .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(31, 184, 205, 0.3);
+        }
+
+        .login-error {
+            background: rgba(255, 84, 89, 0.1);
+            color: var(--color-error);
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 16px;
+            border: 1px solid rgba(255, 84, 89, 0.2);
+            font-size: 14px;
+        }
+
+        .login-footer {
+            text-align: center;
+            padding: 20px 30px;
+            border-top: 1px solid var(--color-border);
+            background: var(--color-bg-1);
+        }
+
+        .login-footer p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 10px;
+            }
+            
+            .login-form {
+                padding: 20px;
+            }
+            
+            .login-header {
+                padding: 30px 20px 15px;
+            }
+        }
+    </style>
+</body>
+</html>
