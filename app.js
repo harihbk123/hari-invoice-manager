@@ -68,8 +68,6 @@ let appData = {
         profileEmail: 'contact@hariprasadss.com',
         profilePhone: '+91 9876543210',
         profileAddress: '6/91, Mahit Complex, Hosur Road, Attibele, Bengaluru, Karnataka – 562107',
-        gstin: '29GLOPS9921M1ZT',
-        bankNameField: 'Kotak Mahindra Bank',
         bankName: 'Hariprasad Sivakumar',
         bankAccount: '2049315152',
         bankIFSC: 'KKBK0008068',
@@ -215,32 +213,32 @@ function setupDateRangeFilters() {
             <div class="analytics-controls-container">
                 <!-- Period Selection -->
                 <div class="control-group">
-                    <label class="control-label">📊 View</label>
+                    <label class="control-label">📊 View Type</label>
                     <select id="analytics-period" class="modern-select period-select">
-                        <option value="monthly">Monthly</option>
-                        <option value="quarterly">Quarterly</option>
-                        <option value="yearly">Yearly</option>
+                        <option value="monthly">Monthly View</option>
+                        <option value="quarterly">Quarterly View</option>
+                        <option value="yearly">Yearly View</option>
                     </select>
                 </div>
 
                 <!-- Date Range -->
                 <div class="control-group">
-                    <label class="control-label">📅 Period</label>
+                    <label class="control-label">📅 Filter Period</label>
                     <div class="date-range-container">
-                        <input type="month" id="date-from" class="modern-date-input" placeholder="From">
+                        <input type="month" id="date-from" class="modern-date-input" placeholder="From month">
                         <span class="date-separator">to</span>
-                        <input type="month" id="date-to" class="modern-date-input" placeholder="To">
+                        <input type="month" id="date-to" class="modern-date-input" placeholder="To month">
                     </div>
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="control-group">
                     <div class="action-buttons">
-                        <button class="action-btn primary" id="apply-filters">
-                            🔍 Apply
+                        <button class="action-btn apply-btn" id="apply-filters">
+                            <span>🔍</span> Apply Filter
                         </button>
-                        <button class="action-btn secondary" id="clear-filters">
-                            🗑️ Clear
+                        <button class="action-btn clear-btn" id="clear-filters">
+                            <span>🔄</span> Clear Filter
                         </button>
                     </div>
                 </div>
@@ -260,119 +258,157 @@ function setupDateRangeFilters() {
                 .analytics-controls-container {
                     display: flex;
                     align-items: center;
-                    gap: 20px;
-                    padding: 16px 20px;
+                    gap: 24px;
+                    padding: 20px 24px;
                     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-                    border-radius: 12px;
-                    margin: 16px 0;
+                    border-radius: 16px;
+                    margin: 20px 0;
                     border: 1px solid #e2e8f0;
                     flex-wrap: wrap;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
                 }
 
                 .control-group {
                     display: flex;
                     flex-direction: column;
-                    gap: 6px;
-                    min-width: 120px;
+                    gap: 8px;
+                    min-width: 140px;
                 }
 
                 .control-label {
                     font-size: 12px;
-                    font-weight: 600;
+                    font-weight: 700;
                     color: #475569;
                     text-transform: uppercase;
                     letter-spacing: 0.5px;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
                 }
 
                 .modern-select, .modern-date-input {
-                    padding: 8px 12px;
-                    border: 1px solid #cbd5e1;
-                    border-radius: 6px;
+                    padding: 10px 14px;
+                    border: 2px solid #cbd5e1;
+                    border-radius: 8px;
                     background: white;
-                    font-size: 13px;
+                    font-size: 14px;
                     font-weight: 500;
                     color: #1e293b;
                     transition: all 0.2s ease;
                     min-width: 0;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                 }
 
                 .modern-select:focus, .modern-date-input:focus {
                     outline: none;
                     border-color: #3b82f6;
                     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                    transform: translateY(-1px);
                 }
 
                 .period-select {
-                    min-width: 100px;
+                    min-width: 160px;
                 }
 
                 .date-range-container {
                     display: flex;
                     align-items: center;
-                    gap: 8px;
+                    gap: 12px;
+                }
+
+                .modern-date-input {
+                    min-width: 140px;
+                }
+
+                .modern-date-input::placeholder {
+                    color: #94a3b8;
+                    font-style: italic;
                 }
 
                 .date-separator {
                     font-size: 12px;
                     color: #64748b;
-                    font-weight: 500;
+                    font-weight: 600;
                     white-space: nowrap;
+                    padding: 0 4px;
                 }
 
                 .action-buttons {
                     display: flex;
-                    gap: 8px;
+                    gap: 10px;
                 }
 
                 .action-btn {
                     display: flex;
                     align-items: center;
-                    gap: 4px;
-                    padding: 8px 14px;
-                    border: none;
-                    border-radius: 6px;
-                    font-size: 12px;
+                    gap: 6px;
+                    padding: 10px 16px;
+                    border: 2px solid;
+                    border-radius: 8px;
+                    font-size: 13px;
                     font-weight: 600;
                     cursor: pointer;
                     transition: all 0.2s ease;
                     white-space: nowrap;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    min-width: 110px;
+                    justify-content: center;
                 }
 
-                .action-btn.primary {
+                .apply-btn {
                     background: #3b82f6;
                     color: white;
+                    border-color: #3b82f6;
                 }
 
-                .action-btn.primary:hover {
+                .apply-btn:hover {
                     background: #2563eb;
-                    transform: translateY(-1px);
+                    border-color: #2563eb;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
                 }
 
-                .action-btn.secondary {
-                    background: #f1f5f9;
+                .clear-btn {
+                    background: #f8fafc;
                     color: #475569;
-                    border: 1px solid #cbd5e1;
+                    border-color: #cbd5e1;
                 }
 
-                .action-btn.secondary:hover {
+                .clear-btn:hover {
                     background: #e2e8f0;
+                    border-color: #94a3b8;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
                 }
 
                 .filter-status {
                     flex: 1;
-                    min-width: 200px;
-                    padding: 8px 12px;
+                    min-width: 240px;
+                    padding: 12px 16px;
                     background: rgba(59, 130, 246, 0.1);
-                    border: 1px solid rgba(59, 130, 246, 0.2);
-                    border-radius: 6px;
-                    font-size: 12px;
+                    border: 2px solid rgba(59, 130, 246, 0.2);
+                    border-radius: 8px;
+                    font-size: 13px;
                     color: #1e40af;
                     font-weight: 500;
                     display: none;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
                 }
 
                 .filter-status.show {
                     display: block;
+                    animation: slideIn 0.3s ease;
+                }
+
+                @keyframes slideIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
                 }
 
                 .analytics-grid {
@@ -459,15 +495,36 @@ function setupDateRangeFilters() {
                     .analytics-controls-container {
                         flex-direction: column;
                         align-items: stretch;
-                        gap: 12px;
+                        gap: 16px;
+                        padding: 16px;
                     }
 
                     .control-group {
                         min-width: auto;
                     }
 
+                    .date-range-container {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 8px;
+                    }
+
+                    .modern-date-input {
+                        min-width: auto;
+                    }
+
+                    .date-separator {
+                        text-align: center;
+                        margin: 0;
+                    }
+
                     .action-buttons {
-                        justify-content: center;
+                        flex-direction: column;
+                        gap: 8px;
+                    }
+
+                    .action-btn {
+                        min-width: auto;
                     }
 
                     .analytics-grid {
@@ -574,6 +631,7 @@ async function loadDataFromSupabase() {
             throw clientsError;
         }
 
+        // ENHANCED: Load clients with all fields
         appData.clients = (clients || []).map(client => ({
             id: client.id,
             name: client.name || '',
@@ -581,6 +639,8 @@ async function loadDataFromSupabase() {
             phone: client.phone || '',
             address: client.address || '',
             payment_terms: client.payment_terms || 'net30',
+            contact_name: client.contact_name || '', // ADDED: Contact name field
+            company: client.company || client.name || '', // ADDED: Company field
             total_invoices: parseInt(client.total_invoices || 0),
             total_amount: parseFloat(client.total_amount || 0)
         }));
@@ -645,11 +705,9 @@ async function loadDataFromSupabase() {
                 profileEmail: settings.profile_email || appData.settings.profileEmail,
                 profilePhone: settings.profile_phone || appData.settings.profilePhone,
                 profileAddress: settings.profile_address || appData.settings.profileAddress,
-                gstin: settings.gstin || appData.settings.gstin,
                 bankName: settings.bank_name || appData.settings.bankName,
                 bankAccount: settings.bank_account || appData.settings.bankAccount,
                 bankIFSC: settings.bank_ifsc || appData.settings.bankIFSC,
-                bankNameField: settings.bank_name_field || appData.settings.bankNameField,
                 bankSWIFT: settings.bank_swift || appData.settings.bankSWIFT
             };
         }
@@ -713,7 +771,7 @@ function calculateYearlyEarnings(invoices = appData.invoices) {
                  .sort((a, b) => a.month.localeCompare(b.month));
 }
 
-// FIXED: Client saving with comprehensive error handling and proper ID handling
+// FIXED: Client saving with comprehensive error handling and schema flexibility
 async function saveClientToSupabase(clientData) {
     try {
         console.log('Saving client to Supabase:', clientData);
@@ -724,31 +782,77 @@ async function saveClientToSupabase(clientData) {
 
         if (editingClientId) {
             console.log('Updating existing client:', editingClientId);
-            const { data, error } = await supabaseClient
-                .from('clients')
-                .update({
+            
+            // ENHANCED: Try different payload structures to handle schema differences
+            const updatePayloads = [
+                // Primary payload with all fields
+                {
+                    name: clientData.name.trim(),
+                    email: clientData.email.trim(),
+                    phone: clientData.phone?.trim() || '',
+                    address: clientData.address?.trim() || '',
+                    payment_terms: clientData.paymentTerms || 'net30',
+                    contact_name: clientData.contactName?.trim() || '',
+                    company: clientData.company?.trim() || clientData.name.trim(),
+                    updated_at: new Date().toISOString()
+                },
+                // Fallback payload with basic fields only
+                {
                     name: clientData.name.trim(),
                     email: clientData.email.trim(),
                     phone: clientData.phone?.trim() || '',
                     address: clientData.address?.trim() || '',
                     payment_terms: clientData.paymentTerms || 'net30',
                     updated_at: new Date().toISOString()
-                })
-                .eq('id', editingClientId)
-                .select()
-                .single();
+                }
+            ];
 
-            if (error) {
-                console.error('Update client error:', error);
-                throw error;
+            let data, error;
+            
+            for (let i = 0; i < updatePayloads.length; i++) {
+                console.log(`Trying update payload ${i + 1}:`, updatePayloads[i]);
+                
+                const result = await supabaseClient
+                    .from('clients')
+                    .update(updatePayloads[i])
+                    .eq('id', editingClientId)
+                    .select()
+                    .single();
+                
+                data = result.data;
+                error = result.error;
+                
+                if (!error) {
+                    console.log(`Update successful with payload ${i + 1}:`, data);
+                    break;
+                } else {
+                    console.warn(`Update payload ${i + 1} failed:`, error);
+                    if (i === updatePayloads.length - 1) {
+                        throw error; // Last attempt failed
+                    }
+                }
             }
-            console.log('Client updated successfully:', data);
+
             return data;
         } else {
             console.log('Inserting new client');
-            const { data, error } = await supabaseClient
-                .from('clients')
-                .insert([{
+            
+            // ENHANCED: Try different payload structures for insert
+            const insertPayloads = [
+                // Primary payload with all fields
+                {
+                    name: clientData.name.trim(),
+                    email: clientData.email.trim(),
+                    phone: clientData.phone?.trim() || '',
+                    address: clientData.address?.trim() || '',
+                    payment_terms: clientData.paymentTerms || 'net30',
+                    contact_name: clientData.contactName?.trim() || '',
+                    company: clientData.company?.trim() || clientData.name.trim(),
+                    total_invoices: 0,
+                    total_amount: 0
+                },
+                // Fallback payload with basic fields only
+                {
                     name: clientData.name.trim(),
                     email: clientData.email.trim(),
                     phone: clientData.phone?.trim() || '',
@@ -756,19 +860,45 @@ async function saveClientToSupabase(clientData) {
                     payment_terms: clientData.paymentTerms || 'net30',
                     total_invoices: 0,
                     total_amount: 0
-                }])
-                .select()
-                .single();
+                }
+            ];
 
-            if (error) {
-                console.error('Insert client error:', error);
-                throw error;
+            let data, error;
+            
+            for (let i = 0; i < insertPayloads.length; i++) {
+                console.log(`Trying insert payload ${i + 1}:`, insertPayloads[i]);
+                
+                const result = await supabaseClient
+                    .from('clients')
+                    .insert([insertPayloads[i]])
+                    .select()
+                    .single();
+                
+                data = result.data;
+                error = result.error;
+                
+                if (!error) {
+                    console.log(`Insert successful with payload ${i + 1}:`, data);
+                    break;
+                } else {
+                    console.warn(`Insert payload ${i + 1} failed:`, error);
+                    if (i === insertPayloads.length - 1) {
+                        throw error; // Last attempt failed
+                    }
+                }
             }
-            console.log('Client inserted successfully:', data);
+
             return data;
         }
     } catch (error) {
         console.error('Error saving client to Supabase:', error);
+        
+        // Enhanced error message for debugging
+        if (error.message && error.message.includes('column')) {
+            console.error('Schema mismatch detected. Available columns might be different.');
+            throw new Error(`Database schema issue: ${error.message}. Please check if all client fields exist in your Supabase table.`);
+        }
+        
         throw error;
     }
 }
@@ -884,7 +1014,7 @@ async function deleteInvoiceFromSupabase(invoiceId) {
     }
 }
 
-// FIXED: Settings save with proper 0% tax rate handling
+// FIXED: Settings save with proper 0% tax rate handling and removed GSTIN
 async function saveSettingsToSupabase(settingsData) {
     try {
         console.log('Saving settings to Supabase:', settingsData);
@@ -904,6 +1034,7 @@ async function saveSettingsToSupabase(settingsData) {
             .eq('user_id', 'default')
             .maybeSingle();
 
+        // FIXED: Removed problematic fields that don't exist in schema
         const settingsPayload = {
             currency: settingsData.currency || 'INR',
             tax_rate: parseFloat(settingsData.taxRate), // FIXED: Properly handle 0
@@ -912,15 +1043,13 @@ async function saveSettingsToSupabase(settingsData) {
             profile_email: settingsData.profileEmail || '',
             profile_phone: settingsData.profilePhone || '',
             profile_address: settingsData.profileAddress || '',
-            gstin: settingsData.gstin || '',
             bank_name: settingsData.bankName || '',
             bank_account: settingsData.bankAccount || '',
             bank_ifsc: settingsData.bankIFSC || '',
-            bank_name_field: settingsData.bankNameField || '',
             updated_at: new Date().toISOString()
         };
 
-        console.log('Settings payload:', settingsPayload);
+        console.log('Settings payload (without gstin):', settingsPayload);
 
         if (existingSettings) {
             console.log('Updating existing settings');
@@ -1223,18 +1352,29 @@ function renderClients() {
         <div class="client-card" data-client-id="${client.id}" data-client-index="${index}">
             <div class="client-header">
                 <h4 class="client-name">${escapeHtml(client.name)}</h4>
-                <button
-                    class="client-edit-btn"
-                    data-client-id="${client.id}"
-                    data-client-index="${index}"
-                    title="Edit client"
-                >
-                    <span>✏️</span> Edit
-                </button>
+                <div class="client-actions">
+                    <button
+                        class="client-edit-btn"
+                        data-client-id="${client.id}"
+                        data-client-index="${index}"
+                        title="Edit client"
+                    >
+                        <span>✏️</span> Edit
+                    </button>
+                    <button
+                        class="client-delete-btn"
+                        data-client-id="${client.id}"
+                        data-client-name="${escapeHtml(client.name)}"
+                        title="Delete client"
+                    >
+                        <span>🗑️</span> Delete
+                    </button>
+                </div>
             </div>
             <div class="client-details">
                 <div class="client-email">📧 ${escapeHtml(client.email)}</div>
                 ${client.phone ? `<div class="client-phone">📞 ${escapeHtml(client.phone)}</div>` : ''}
+                ${client.contact_name ? `<div class="client-contact">👤 ${escapeHtml(client.contact_name)}</div>` : ''}
                 ${client.address ? `<div class="client-address">📍 ${escapeHtml(client.address)}</div>` : ''}
             </div>
             <div class="client-stats">
@@ -1295,26 +1435,47 @@ function renderClients() {
                 word-break: break-word;
             }
 
-            .client-edit-btn {
+            .client-actions {
+                display: flex;
+                gap: 8px;
+                flex-shrink: 0;
+            }
+
+            .client-edit-btn, .client-delete-btn {
                 display: flex;
                 align-items: center;
                 gap: 4px;
-                padding: 6px 12px;
-                background: var(--color-bg-2);
-                border: 1px solid rgba(var(--color-warning-rgb), 0.3);
+                padding: 6px 10px;
+                border: 1px solid;
                 border-radius: 6px;
-                color: var(--color-warning);
-                font-size: 12px;
+                font-size: 11px;
                 font-weight: 500;
                 cursor: pointer;
                 transition: all 0.2s ease;
                 white-space: nowrap;
-                flex-shrink: 0;
+            }
+
+            .client-edit-btn {
+                background: var(--color-bg-2);
+                border-color: rgba(var(--color-warning-rgb), 0.3);
+                color: var(--color-warning);
             }
 
             .client-edit-btn:hover {
                 background: rgba(var(--color-warning-rgb), 0.1);
                 border-color: rgba(var(--color-warning-rgb), 0.5);
+                transform: translateY(-1px);
+            }
+
+            .client-delete-btn {
+                background: var(--color-bg-2);
+                border-color: rgba(220, 38, 38, 0.3);
+                color: #dc2626;
+            }
+
+            .client-delete-btn:hover {
+                background: rgba(220, 38, 38, 0.1);
+                border-color: rgba(220, 38, 38, 0.5);
                 transform: translateY(-1px);
             }
 
@@ -1373,7 +1534,7 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// COMPLETELY FIXED: Edit client function with proper data isolation
+// COMPLETELY FIXED: Edit client function with dynamic field detection and proper data isolation
 function editClient(clientId) {
     console.log('Editing client with ID:', clientId);
 
@@ -1403,25 +1564,37 @@ function editClient(clientId) {
         form.reset();
     }
 
-    // FIXED: Populate form with specific client data
+    // ENHANCED: Dynamic field detection and population
     setTimeout(() => {
-        const fields = {
-            'client-company': client.name || '',
-            'client-email': client.email || '',
-            'client-phone': client.phone || '',
-            'client-address': client.address || '',
-            'client-terms': client.payment_terms || 'net30'
+        // Try different possible field IDs for each data type
+        const fieldMappings = {
+            name: ['client-company', 'client-name', 'company-name'],
+            email: ['client-email', 'email'],
+            phone: ['client-phone', 'phone'],
+            address: ['client-address', 'address'],
+            payment_terms: ['client-terms', 'payment-terms', 'terms'],
+            contact_name: ['client-contact-name', 'client-contact', 'contact-name', 'contact', 'client-contact-person'],
+            company: ['client-company-name', 'client-business-name', 'business-name']
         };
 
-        Object.entries(fields).forEach(([fieldId, value]) => {
-            const element = document.getElementById(fieldId);
-            if (element) {
-                element.value = value;
-                console.log(`Set ${fieldId} to:`, value);
-            } else {
-                console.warn(`Field ${fieldId} not found`);
+        const populatedFields = {};
+
+        // Populate fields based on available form elements
+        Object.entries(fieldMappings).forEach(([dataKey, possibleIds]) => {
+            const value = client[dataKey] || '';
+            
+            for (const fieldId of possibleIds) {
+                const element = document.getElementById(fieldId);
+                if (element) {
+                    element.value = value;
+                    populatedFields[fieldId] = value;
+                    console.log(`Set ${fieldId} to:`, value);
+                    break; // Found and populated, move to next data key
+                }
             }
         });
+
+        console.log('Populated fields:', populatedFields);
 
         // Update modal UI
         const modalTitle = document.querySelector('#client-modal .modal-header h2');
@@ -1437,6 +1610,66 @@ function editClient(clientId) {
     openClientModal();
 
     showToast(`Editing client: ${client.name}`, 'info');
+}
+
+// ADDED: Delete client function with confirmation
+async function deleteClient(clientId, clientName) {
+    console.log('Deleting client:', { clientId, clientName });
+
+    if (!appData.dataLoaded) {
+        showToast('Data is still loading. Please wait.', 'info');
+        return;
+    }
+
+    // Find client
+    const client = appData.clients.find(c => c.id === clientId);
+    if (!client) {
+        showToast('Client not found. Please refresh the page.', 'error');
+        return;
+    }
+
+    // Check if client has invoices
+    const clientInvoices = appData.invoices.filter(inv => inv.clientId === clientId);
+    if (clientInvoices.length > 0) {
+        showToast(`Cannot delete client "${clientName}" - they have ${clientInvoices.length} invoices. Delete invoices first.`, 'error');
+        return;
+    }
+
+    // Confirm deletion
+    const confirmed = confirm(`Are you sure you want to delete client "${clientName}"?\n\nThis action cannot be undone.`);
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        // Delete from Supabase
+        const { error } = await supabaseClient
+            .from('clients')
+            .delete()
+            .eq('id', clientId);
+
+        if (error) {
+            console.error('Error deleting client from Supabase:', error);
+            throw error;
+        }
+
+        // Remove from local data
+        const index = appData.clients.findIndex(c => c.id === clientId);
+        if (index > -1) {
+            appData.clients.splice(index, 1);
+            appData.totalClients--;
+        }
+
+        // Re-render clients
+        renderClients();
+
+        showToast(`Client "${clientName}" deleted successfully`, 'success');
+        console.log('Client deleted successfully:', clientName);
+
+    } catch (error) {
+        console.error('Error deleting client:', error);
+        showToast(`Error deleting client: ${error.message}`, 'error');
+    }
 }
 
 // COMPLETELY REDESIGNED: Modern Analytics with better layout and dynamic top client
@@ -1664,7 +1897,7 @@ function renderTopClientInsights(invoices) {
     `;
 }
 
-// FIXED: Settings rendering with improved tax rate handling
+// FIXED: Settings rendering with improved tax rate handling and removed GSTIN
 function renderSettings() {
     console.log('Rendering settings...');
 
@@ -1680,11 +1913,9 @@ function renderSettings() {
         'profile-email': settings.profileEmail,
         'profile-phone': settings.profilePhone,
         'profile-address': settings.profileAddress,
-        'profile-gstin': settings.gstin,
         'bank-name': settings.bankName,
         'bank-account': settings.bankAccount,
         'bank-ifsc': settings.bankIFSC,
-        'bank-name-field': settings.bankNameField,
         'bank-swift': settings.bankSWIFT,
         'currency-setting': settings.currency,
         'tax-rate': settings.taxRate, // FIXED: Properly handle 0%
@@ -2134,28 +2365,40 @@ function setupClientForm() {
     }
 }
 
-// COMPLETELY FIXED: Client saving with proper data isolation
+// COMPLETELY FIXED: Client saving with proper data isolation and dynamic field detection
 async function saveClient() {
     console.log('Saving client... Editing ID:', editingClientId);
 
-    const companyInput = document.getElementById('client-company');
-    const emailInput = document.getElementById('client-email');
-    const phoneInput = document.getElementById('client-phone');
-    const addressInput = document.getElementById('client-address');
-    const termsInput = document.getElementById('client-terms');
+    // ENHANCED: Dynamically detect available form fields
+    const formFields = {
+        company: document.getElementById('client-company'),
+        email: document.getElementById('client-email'),
+        phone: document.getElementById('client-phone'),
+        address: document.getElementById('client-address'),
+        terms: document.getElementById('client-terms'),
+        contactName: document.getElementById('client-contact-name') || document.getElementById('client-contact'),
+        companyName: document.getElementById('client-company-name') || document.getElementById('client-business-name')
+    };
 
-    if (!companyInput || !emailInput) {
-        showToast('Required form fields are missing', 'error');
+    console.log('Available form fields:', Object.keys(formFields).filter(key => formFields[key]));
+
+    if (!formFields.company || !formFields.email) {
+        showToast('Required form fields (company and email) are missing', 'error');
         return;
     }
 
+    // ENHANCED: Collect all available form data
     const clientData = {
-        name: companyInput.value.trim(),
-        email: emailInput.value.trim(),
-        phone: phoneInput ? phoneInput.value.trim() : '',
-        address: addressInput ? addressInput.value.trim() : '',
-        paymentTerms: termsInput ? termsInput.value : 'net30'
+        name: formFields.company.value.trim(),
+        email: formFields.email.value.trim(),
+        phone: formFields.phone ? formFields.phone.value.trim() : '',
+        address: formFields.address ? formFields.address.value.trim() : '',
+        paymentTerms: formFields.terms ? formFields.terms.value : 'net30',
+        contactName: formFields.contactName ? formFields.contactName.value.trim() : '',
+        company: formFields.companyName ? formFields.companyName.value.trim() : formFields.company.value.trim()
     };
+
+    console.log('Client data being saved:', clientData);
 
     // Validate required fields
     if (!clientData.name || !clientData.email) {
@@ -2177,13 +2420,16 @@ async function saveClient() {
         saveBtn.textContent = 'Saving...';
         saveBtn.disabled = true;
 
-        // Save to database
+        // Save to database with error details
+        console.log('Attempting to save client to Supabase...');
         const savedClient = await saveClientToSupabase(clientData);
+        console.log('Client saved to Supabase successfully:', savedClient);
 
         if (editingClientId) {
-            // FIXED: Update only the specific client being edited
+            // FIXED: Update only the specific client being edited with all fields
             const index = appData.clients.findIndex(c => c.id === editingClientId);
             if (index > -1) {
+                const oldClient = { ...appData.clients[index] };
                 // Preserve existing statistics and update only the edited fields
                 appData.clients[index] = {
                     ...appData.clients[index], // Keep existing data
@@ -2192,13 +2438,19 @@ async function saveClient() {
                     email: savedClient.email,
                     phone: savedClient.phone || '',
                     address: savedClient.address || '',
-                    payment_terms: savedClient.payment_terms
+                    payment_terms: savedClient.payment_terms,
+                    contact_name: savedClient.contact_name || '', // ADDED: Contact name
+                    company: savedClient.company || savedClient.name || '' // ADDED: Company name
                 };
-                console.log('Updated client at index:', index, appData.clients[index]);
+                console.log('Updated client:', {
+                    before: oldClient,
+                    after: appData.clients[index],
+                    index: index
+                });
             }
             showToast(`Client "${savedClient.name}" updated successfully`, 'success');
         } else {
-            // Add new client to local data
+            // Add new client to local data with all fields
             const newClient = {
                 id: savedClient.id,
                 name: savedClient.name,
@@ -2206,17 +2458,42 @@ async function saveClient() {
                 phone: savedClient.phone || '',
                 address: savedClient.address || '',
                 payment_terms: savedClient.payment_terms,
+                contact_name: savedClient.contact_name || '', // ADDED: Contact name
+                company: savedClient.company || savedClient.name || '', // ADDED: Company name
                 total_invoices: savedClient.total_invoices || 0,
                 total_amount: savedClient.total_amount || 0
             };
 
             appData.clients.push(newClient);
             appData.totalClients++;
+            console.log('Added new client:', newClient);
             showToast(`Client "${newClient.name}" added successfully`, 'success');
         }
 
-        // Refresh views
+        // Refresh views and reload from database to ensure sync
+        console.log('Refreshing client views...');
         renderClients();
+        
+        // ADDED: Optionally reload data from Supabase to ensure sync
+        if (editingClientId) {
+            console.log('Reloading client data from Supabase to verify update...');
+            setTimeout(async () => {
+                try {
+                    const { data: updatedClient } = await supabaseClient
+                        .from('clients')
+                        .select('*')
+                        .eq('id', editingClientId)
+                        .single();
+                    
+                    if (updatedClient) {
+                        console.log('Verified client data from Supabase:', updatedClient);
+                    }
+                } catch (verifyError) {
+                    console.warn('Could not verify client update:', verifyError);
+                }
+            }, 1000);
+        }
+        
         closeModal(document.getElementById('client-modal'));
 
         // Reset form and editing state
@@ -2254,7 +2531,7 @@ function setupSettingsForm() {
     }
 }
 
-// COMPLETELY FIXED: Settings save with proper 0% tax rate validation
+// COMPLETELY FIXED: Settings save with proper 0% tax rate validation and removed GSTIN
 async function saveSettings() {
     console.log('Saving settings...');
 
@@ -2266,11 +2543,9 @@ async function saveSettings() {
         profileEmail: document.getElementById('profile-email'),
         profilePhone: document.getElementById('profile-phone'),
         profileAddress: document.getElementById('profile-address'),
-        gstin: document.getElementById('profile-gstin'),
         bankName: document.getElementById('bank-name'),
         bankAccount: document.getElementById('bank-account'),
         bankIFSC: document.getElementById('bank-ifsc'),
-        bankNameField: document.getElementById('bank-name-field'),
         bankSWIFT: document.getElementById('bank-swift')
     };
 
@@ -2365,11 +2640,9 @@ function resetSettings() {
             profileEmail: 'contact@hariprasadss.com',
             profilePhone: '+91 9876543210',
             profileAddress: '6/91, Mahit Complex, Hosur Road, Attibele, Bengaluru, Karnataka – 562107',
-            gstin: '29GLOPS9921M1ZT',
             bankName: 'HARIPRASAD SIVAKUMAR',
             bankAccount: '',
             bankIFSC: '',
-            bankNameField: '',
             bankSWIFT: ''
         };
         renderSettings();
@@ -2418,13 +2691,13 @@ function showInvoiceModal(invoice) {
                             ${client && client.address ? client.address.replace(/\n/g, '<br>') : ''}
                         </div>
                     </div>
-                    <div style="text-align: right;">
+                        <div style="text-align: right;">
                         <div style="font-weight: bold; margin-bottom: 10px;">FROM:</div>
                         <div style="line-height: 1.6;">
                             ${settings.profileName}<br>
                             ${settings.profileAddress ? settings.profileAddress.replace(/\n/g, '<br>') : ''}<br>
-                            <br>
-                            ${settings.gstin ? `GSTIN: ${settings.gstin}` : ''}
+                            ${settings.profilePhone ? `<br>Phone: ${settings.profilePhone}` : ''}
+                            ${settings.profileEmail ? `<br>Email: ${settings.profileEmail}` : ''}
                         </div>
                     </div>
                 </div>
@@ -2940,7 +3213,26 @@ if (window.location.hostname === 'localhost' || window.location.hostname.include
             console.log('Analytics State:', analyticsState);
             console.log('Current period:', analyticsState.currentPeriod);
             console.log('Filtered data:', analyticsState.filteredData?.length || 0, 'invoices');
+        },
+        debugClients: () => {
+            console.log('All clients:', appData.clients);
+            console.log('Editing client ID:', editingClientId);
+            appData.clients.forEach((client, index) => {
+                console.log(`Client ${index}:`, {
+                    id: client.id,
+                    name: client.name,
+                    email: client.email,
+                    contact_name: client.contact_name,
+                    company: client.company
+                });
+            });
+        },
+        testClientEdit: (clientId) => {
+            console.log('Testing client edit for ID:', clientId);
+            editClient(clientId);
         }
     };
     console.log('🔧 Debug helpers available: window.debugApp');
+    console.log('🔍 Use debugApp.debugClients() to check client data');
+    console.log('🧪 Use debugApp.testClientEdit("client-id") to test editing');
 }
