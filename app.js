@@ -1,12 +1,54 @@
+// Check authentication first
+function checkAuth() {
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    const loginTime = localStorage.getItem('loginTime');
+    
+    if (!isLoggedIn || isLoggedIn !== 'true') {
+        window.location.href = 'login.html';
+        return false;
+    }
+    
+    // Check if login is expired (24 hours)
+    if (loginTime) {
+        const now = new Date().getTime();
+        const loginTimestamp = parseInt(loginTime);
+        const hoursDiff = (now - loginTimestamp) / (1000 * 60 * 60);
+        
+        if (hoursDiff > 24) {
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('username');
+            localStorage.removeItem('loginTime');
+            window.location.href = 'login.html';
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+// Logout function
+function logout() {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('username');
+    localStorage.removeItem('loginTime');
+    window.location.href = 'login.html';
+}
+
+// Only proceed if authenticated
+if (!checkAuth()) {
+    // Stop execution if not authenticated
+    throw new Error('Authentication required');
+}
+
 // Supabase Configuration
 const SUPABASE_URL = 'https://kgdewraoanlaqewpbdlo.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnZGV3cmFvYW5sYXFld3BiZGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3MTg3NDksImV4cCI6MjA2OTI5NDc0OX0.wBgDDHcdK0Q9mN6uEPQFEO8gXiJdnrntLJW3dUdh89M';
 
-// Initialize Supabase client - Fixed
+// Initialize Supabase client
 const { createClient } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Application Data - Will be loaded from Supabase
+// Application Data
 let appData = {
     totalEarnings: 0,
     totalClients: 0,
@@ -17,19 +59,19 @@ let appData = {
     nextInvoiceNumber: 1,
     
     settings: {
-        currency       : 'INR',
-        taxRate        : 18,
-        invoicePrefix  : 'HP-2526',
-        profileName    : 'Hariprasad Sivakumar',
-        profileEmail   : 'contact@hariprasadss.com',
-        profilePhone   : '+91 9876543210',
-        profileAddress : '6/91, Mahit Complex, Hosur Road, Attibele, Bengaluru, Karnataka – 562107',
-        gstin          : '29GLOPS9921M1ZT',
-        bankNameField  : 'Kotak Mahindra Bank',
-        bankName       : 'Hariprasad Sivakumar',
-        bankAccount    : '2049315152',
-        bankIFSC       : 'KKBK0008068',
-        bankSWIFT      : 'KKBKINBBCPC'
+        currency: 'INR',
+        taxRate: 18,
+        invoicePrefix: 'HP-2526',
+        profileName: 'Hariprasad Sivakumar',
+        profileEmail: 'contact@hariprasadss.com',
+        profilePhone: '+91 9876543210',
+        profileAddress: '6/91, Mahit Complex, Hosur Road, Attibele, Bengaluru, Karnataka – 562107',
+        gstin: '29GLOPS9921M1ZT',
+        bankNameField: 'Kotak Mahindra Bank',
+        bankName: 'Hariprasad Sivakumar',
+        bankAccount: '2049315152',
+        bankIFSC: 'KKBK0008068',
+        bankSWIFT: 'KKBKINBBCPC'
     }
 };
 
@@ -48,6 +90,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function initializeApp() {
     try {
+        // Add logout button to header
+        addLogoutButton();
+        
         // Load data from Supabase
         await loadDataFromSupabase();
         
@@ -55,7 +100,7 @@ async function initializeApp() {
         setupModals();
         setupForms();
         setupAnalyticsFilters();
-        setupDateRangeFilters(); // NEW: Add date range filtering
+        setupDateRangeFilters();
         renderDashboard();
         renderInvoices();
         renderClients();
@@ -68,10 +113,23 @@ async function initializeApp() {
     }
 }
 
-// FIXED: Add missing getNextInvoiceNumber function
+function addLogoutButton() {
+    const sidebarHeader = document.querySelector('.sidebar-header');
+    if (sidebarHeader && !document.getElementById('logout-btn')) {
+        const username = localStorage.getItem('username') || 'User';
+        const logoutBtn = document.createElement('button');
+        logoutBtn.id = 'logout-btn';
+        logoutBtn.className = 'btn btn--sm btn--secondary';
+        logoutBtn.innerHTML = `👋 ${username} | Logout`;
+        logoutBtn.style.marginTop = '10px';
+        logoutBtn.style.width = '100%';
+        logoutBtn.onclick = logout;
+        sidebarHeader.appendChild(logoutBtn);
+    }
+}
+
 async function getNextInvoiceNumber() {
     try {
-        // Get the highest invoice number from database
         const { data: invoices, error } = await supabaseClient
             .from('invoices')
             .select('id')
@@ -81,7 +139,6 @@ async function getNextInvoiceNumber() {
         if (error) throw error;
         
         if (invoices && invoices.length > 0) {
-            // Extract number from invoice ID (e.g., "HP-2526-018" -> 18)
             const lastInvoiceId = invoices[0].id;
             const match = lastInvoiceId.match(/(\d+)$/);
             if (match) {
@@ -89,42 +146,223 @@ async function getNextInvoiceNumber() {
             }
         }
         
-        return 1; // Start from 1 if no invoices exist
+        return 1;
     } catch (error) {
         console.error('Error getting next invoice number:', error);
-        return Date.now(); // Fallback to timestamp
+        return Date.now();
     }
 }
 
-// NEW: Date range filtering functions
+// IMPROVED: Better date range filtering UI
 function setupDateRangeFilters() {
-    // Add date range controls to analytics page if they don't exist
     const analyticsHeader = document.querySelector('#analytics-page .page-header');
-    if (analyticsHeader && !document.getElementById('date-from')) {
-        const dateFilterDiv = document.querySelector('.date-filter') || document.createElement('div');
-        dateFilterDiv.className = 'date-filter';
+    if (analyticsHeader && !document.getElementById('date-range-filter')) {
+        const existingDateFilter = document.querySelector('.date-filter');
+        if (existingDateFilter) {
+            existingDateFilter.remove();
+        }
         
-        dateFilterDiv.innerHTML = `
-            <div style="display: flex; gap: 16px; align-items: center;">
-                <div>
-                    <label style="font-size: 12px; display: block; margin-bottom: 4px;">From Month:</label>
-                    <input type="month" class="form-control" id="date-from" style="width: 150px;">
+        const dateRangeDiv = document.createElement('div');
+        dateRangeDiv.id = 'date-range-filter';
+        dateRangeDiv.className = 'date-range-filter';
+        
+        dateRangeDiv.innerHTML = `
+            <div class="filter-card">
+                <div class="filter-header">
+                    <h4>📅 Date Range Filter</h4>
+                    <span class="filter-subtitle">Filter earnings by period</span>
                 </div>
-                <div>
-                    <label style="font-size: 12px; display: block; margin-bottom: 4px;">To Month:</label>
-                    <input type="month" class="form-control" id="date-to" style="width: 150px;">
+                <div class="filter-controls">
+                    <div class="date-inputs">
+                        <div class="date-input-group">
+                            <label class="date-label">From</label>
+                            <input type="month" class="form-control date-input" id="date-from">
+                        </div>
+                        <div class="date-separator">to</div>
+                        <div class="date-input-group">
+                            <label class="date-label">To</label>
+                            <input type="month" class="form-control date-input" id="date-to">
+                        </div>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="btn btn--primary filter-btn" id="apply-date-filter">
+                            <span>🔍</span> Apply Filter
+                        </button>
+                        <button class="btn btn--secondary filter-btn" id="clear-date-filter">
+                            <span>❌</span> Clear
+                        </button>
+                    </div>
                 </div>
-                <button class="btn btn--primary" id="apply-date-filter" style="margin-top: 20px;">Apply Filter</button>
-                <button class="btn btn--secondary" id="clear-date-filter" style="margin-top: 20px;">Clear</button>
-                <select class="form-control" id="analytics-period" style="width: 150px; margin-top: 20px;">
-                    <option value="monthly">Monthly View</option>
-                    <option value="quarterly">Quarterly View</option>
-                    <option value="yearly">Yearly View</option>
+                <div class="filter-result" id="filter-result" style="display: none;"></div>
+            </div>
+            <div class="period-selector">
+                <label class="period-label">View:</label>
+                <select class="form-control period-select" id="analytics-period">
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="yearly">Yearly</option>
                 </select>
             </div>
         `;
         
-        analyticsHeader.appendChild(dateFilterDiv);
+        // Insert after header
+        analyticsHeader.parentNode.insertBefore(dateRangeDiv, analyticsHeader.nextSibling);
+        
+        // Add styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .date-range-filter {
+                margin: 20px 0;
+                display: flex;
+                gap: 20px;
+                align-items: flex-start;
+            }
+            
+            .filter-card {
+                background: var(--color-surface);
+                border-radius: 12px;
+                padding: 20px;
+                border: 1px solid var(--color-border);
+                box-shadow: var(--shadow-sm);
+                flex: 1;
+                transition: all 0.3s ease;
+            }
+            
+            .filter-card:hover {
+                box-shadow: var(--shadow-md);
+            }
+            
+            .filter-header {
+                margin-bottom: 16px;
+            }
+            
+            .filter-header h4 {
+                margin: 0 0 4px 0;
+                color: var(--color-text);
+                font-size: 16px;
+                font-weight: 600;
+            }
+            
+            .filter-subtitle {
+                font-size: 12px;
+                color: var(--color-text-secondary);
+            }
+            
+            .filter-controls {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .date-inputs {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            
+            .date-input-group {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+            
+            .date-label {
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--color-text-secondary);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            
+            .date-input {
+                width: 140px;
+                height: 36px;
+                font-size: 14px;
+                border-radius: 6px;
+            }
+            
+            .date-separator {
+                margin-top: 16px;
+                font-size: 14px;
+                color: var(--color-text-secondary);
+                font-weight: 500;
+            }
+            
+            .filter-actions {
+                display: flex;
+                gap: 10px;
+            }
+            
+            .filter-btn {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 16px;
+                font-size: 14px;
+                border-radius: 6px;
+                font-weight: 500;
+            }
+            
+            .filter-result {
+                margin-top: 12px;
+                padding: 12px;
+                border-radius: 6px;
+                background: var(--color-bg-3);
+                border: 1px solid rgba(34, 197, 94, 0.2);
+                font-size: 14px;
+                font-weight: 500;
+                color: var(--color-success);
+            }
+            
+            .period-selector {
+                background: var(--color-surface);
+                border-radius: 12px;
+                padding: 20px;
+                border: 1px solid var(--color-border);
+                box-shadow: var(--shadow-sm);
+                min-width: 160px;
+            }
+            
+            .period-label {
+                display: block;
+                margin-bottom: 8px;
+                font-size: 14px;
+                font-weight: 600;
+                color: var(--color-text);
+            }
+            
+            .period-select {
+                width: 100%;
+                height: 36px;
+                font-size: 14px;
+                border-radius: 6px;
+            }
+            
+            @media (max-width: 768px) {
+                .date-range-filter {
+                    flex-direction: column;
+                }
+                
+                .date-inputs {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                
+                .date-separator {
+                    text-align: center;
+                    margin: 0;
+                }
+                
+                .date-input {
+                    width: 100%;
+                }
+                
+                .filter-actions {
+                    flex-direction: column;
+                }
+            }
+        `;
+        document.head.appendChild(style);
         
         // Setup event listeners
         document.getElementById('apply-date-filter').addEventListener('click', applyDateRangeFilter);
@@ -135,6 +373,7 @@ function setupDateRangeFilters() {
 function applyDateRangeFilter() {
     const fromDate = document.getElementById('date-from').value;
     const toDate = document.getElementById('date-to').value;
+    const resultDiv = document.getElementById('filter-result');
     
     if (!fromDate || !toDate) {
         showToast('Please select both from and to dates', 'error');
@@ -158,21 +397,31 @@ function applyDateRangeFilter() {
         .filter(inv => inv.status === 'Paid')
         .reduce((sum, inv) => sum + inv.amount, 0);
     
+    const totalInvoices = filteredInvoices.length;
+    
+    // Show result
+    resultDiv.innerHTML = `
+        📊 Found <strong>${totalInvoices}</strong> invoices totaling <strong>₹${formatNumber(totalEarnings)}</strong>
+        <br><small>From ${fromDate} to ${toDate}</small>
+    `;
+    resultDiv.style.display = 'block';
+    
     // Update analytics display
     renderAnalyticsForPeriod(filteredInvoices, fromDate, toDate);
     
-    showToast(`Showing data from ${fromDate} to ${toDate}. Total: ₹${formatNumber(totalEarnings)}`, 'success');
+    showToast(`Filter applied: ${totalInvoices} invoices, ₹${formatNumber(totalEarnings)} total`, 'success');
 }
 
 function clearDateRangeFilter() {
     document.getElementById('date-from').value = '';
     document.getElementById('date-to').value = '';
-    renderAnalytics(); // Render with all data
+    const resultDiv = document.getElementById('filter-result');
+    resultDiv.style.display = 'none';
+    renderAnalytics();
     showToast('Date filter cleared', 'info');
 }
 
 function renderAnalyticsForPeriod(filteredInvoices, fromDate, toDate) {
-    // Calculate monthly earnings for filtered period
     const monthlyData = new Map();
     
     filteredInvoices
@@ -187,7 +436,6 @@ function renderAnalyticsForPeriod(filteredInvoices, fromDate, toDate) {
     const filteredEarnings = Array.from(monthlyData, ([month, amount]) => ({ month, amount }))
                                    .sort((a, b) => a.month.localeCompare(b.month));
 
-    // Update chart with filtered data
     setTimeout(() => {
         const analyticsCtx = document.getElementById('analyticsChart');
         if (analyticsCtx) {
@@ -233,7 +481,6 @@ function renderAnalyticsForPeriod(filteredInvoices, fromDate, toDate) {
     }, 100);
 }
 
-// Supabase Data Loading Functions - Fixed all supabase references
 async function loadDataFromSupabase() {
     console.log('Loading data from Supabase...');
     
@@ -248,11 +495,11 @@ async function loadDataFromSupabase() {
         appData.clients = clients || [];
         appData.totalClients = clients?.length || 0;
 
-        // FIXED: Load invoices with correct sorting for recent invoices
+        // Load invoices
         const { data: invoices, error: invoicesError } = await supabaseClient
             .from('invoices')
             .select('*')
-            .order('date_issued', { ascending: false }); // Keep descending for recent invoices
+            .order('date_issued', { ascending: false });
         
         if (invoicesError) throw invoicesError;
         
@@ -280,7 +527,7 @@ async function loadDataFromSupabase() {
         // Calculate monthly earnings
         calculateMonthlyEarnings();
 
-        // FIXED: Load settings with proper error handling
+        // Load settings
         const { data: settings, error: settingsError } = await supabaseClient
             .from('settings')
             .select('*')
@@ -293,9 +540,9 @@ async function loadDataFromSupabase() {
         
         if (settings) {
             appData.settings = {
-                ...appData.settings, // Keep defaults
+                ...appData.settings,
                 currency: settings.currency || appData.settings.currency,
-                taxRate: parseFloat(settings.tax_rate) || appData.settings.taxRate,
+                taxRate: parseFloat(settings.tax_rate) || 0, // FIXED: Allow 0 tax rate
                 invoicePrefix: settings.invoice_prefix || appData.settings.invoicePrefix,
                 profileName: settings.profile_name || appData.settings.profileName,
                 profileEmail: settings.profile_email || appData.settings.profileEmail,
@@ -311,7 +558,7 @@ async function loadDataFromSupabase() {
         }
 
         console.log('Data loaded successfully from Supabase');
-        console.log('Current tax rate:', appData.settings.taxRate); // Debug log
+        console.log('Current tax rate loaded:', appData.settings.taxRate);
     } catch (error) {
         console.error('Error loading data from Supabase:', error);
         throw error;
@@ -334,7 +581,6 @@ function calculateMonthlyEarnings() {
                                    .sort((a, b) => a.month.localeCompare(b.month));
 }
 
-// FIXED: Analytics period filtering
 function calculateQuarterlyEarnings() {
     const quarterlyData = new Map();
     
@@ -369,7 +615,6 @@ function calculateYearlyEarnings() {
                  .sort((a, b) => a.month.localeCompare(b.month));
 }
 
-// Supabase Database Operations
 async function saveClientToSupabase(clientData) {
     try {
         if (editingClientId) {
@@ -438,7 +683,6 @@ async function saveInvoiceToSupabase(invoiceData) {
             
             if (error) throw error;
             
-            // Update client totals
             await updateClientTotals(invoiceData.clientId);
             return data;
         } else {
@@ -462,7 +706,6 @@ async function saveInvoiceToSupabase(invoiceData) {
             
             if (error) throw error;
 
-            // Update client totals
             await updateClientTotals(invoiceData.clientId);
             return data;
         }
@@ -474,7 +717,6 @@ async function saveInvoiceToSupabase(invoiceData) {
 
 async function updateClientTotals(clientId) {
     try {
-        // Get all invoices for this client
         const { data: invoices, error: invoicesError } = await supabaseClient
             .from('invoices')
             .select('amount, status')
@@ -487,7 +729,6 @@ async function updateClientTotals(clientId) {
             .filter(inv => inv.status === 'Paid')
             .reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
         
-        // Update client record
         const { error: updateError } = await supabaseClient
             .from('clients')
             .update({
@@ -506,7 +747,6 @@ async function updateClientTotals(clientId) {
 
 async function deleteInvoiceFromSupabase(invoiceId) {
     try {
-        // First get the invoice to know which client to update
         const { data: invoice, error: getError } = await supabaseClient
             .from('invoices')
             .select('client_id')
@@ -515,7 +755,6 @@ async function deleteInvoiceFromSupabase(invoiceId) {
         
         if (getError) throw getError;
         
-        // Delete the invoice
         const { error: deleteError } = await supabaseClient
             .from('invoices')
             .delete()
@@ -523,7 +762,6 @@ async function deleteInvoiceFromSupabase(invoiceId) {
         
         if (deleteError) throw deleteError;
         
-        // Update client totals
         await updateClientTotals(invoice.client_id);
         
         return true;
@@ -533,10 +771,8 @@ async function deleteInvoiceFromSupabase(invoiceId) {
     }
 }
 
-// FIXED: Settings save with proper upsert and additional fields
 async function saveSettingsToSupabase(settingsData) {
     try {
-        // First check if settings exist
         const { data: existingSettings, error: checkError } = await supabaseClient
             .from('settings')
             .select('user_id')
@@ -561,7 +797,6 @@ async function saveSettingsToSupabase(settingsData) {
         };
         
         if (existingSettings) {
-            // Update existing settings
             const { data, error } = await supabaseClient
                 .from('settings')
                 .update(settingsPayload)
@@ -572,7 +807,6 @@ async function saveSettingsToSupabase(settingsData) {
             if (error) throw error;
             return data;
         } else {
-            // Insert new settings
             const { data, error } = await supabaseClient
                 .from('settings')
                 .insert([{
@@ -591,7 +825,6 @@ async function saveSettingsToSupabase(settingsData) {
     }
 }
 
-// Navigation
 function setupNavigation() {
     console.log('Setting up navigation...');
     const navLinks = document.querySelectorAll('.nav-link');
@@ -603,17 +836,14 @@ function setupNavigation() {
             const targetPage = link.dataset.page;
             console.log('Navigating to:', targetPage);
             
-            // Update active nav link
             navLinks.forEach(nl => nl.classList.remove('active'));
             link.classList.add('active');
             
-            // Show target page  
             pages.forEach(page => page.classList.remove('active'));
             const targetElement = document.getElementById(`${targetPage}-page`);
             if (targetElement) {
                 targetElement.classList.add('active');
                 
-                // Render page-specific content
                 if (targetPage === 'dashboard') renderDashboard();
                 else if (targetPage === 'invoices') renderInvoices();
                 else if (targetPage === 'clients') renderClients();
@@ -626,7 +856,6 @@ function setupNavigation() {
     });
 }
 
-// Dashboard Rendering
 function renderDashboard() {
     console.log('Rendering dashboard...');
     updateDashboardMetrics();
@@ -634,7 +863,6 @@ function renderDashboard() {
     setTimeout(() => renderCharts(), 100);
 }
 
-// FIXED: Update dashboard metrics with real data
 function updateDashboardMetrics() {
     const totalEarnings = appData.invoices
         .filter(inv => inv.status === 'Paid')
@@ -644,7 +872,6 @@ function updateDashboardMetrics() {
         ? appData.monthlyEarnings.reduce((sum, m) => sum + m.amount, 0) / appData.monthlyEarnings.length 
         : 0;
 
-    // Update metric cards
     const metricCards = document.querySelectorAll('.metric-value');
     if (metricCards.length >= 4) {
         metricCards[0].textContent = `₹${formatNumber(totalEarnings)}`;
@@ -654,12 +881,10 @@ function updateDashboardMetrics() {
     }
 }
 
-// FIXED: Recent invoices now shows newest first
 function renderRecentInvoices() {
     const tbody = document.getElementById('recent-invoices-body');
     if (!tbody) return;
     
-    // Take first 5 invoices (already sorted newest first from database)
     const recentInvoices = appData.invoices.slice(0, 5);
     
     tbody.innerHTML = recentInvoices.map(invoice => `
@@ -678,14 +903,12 @@ function renderCharts(period = 'monthly') {
     
     let earningsData = appData.monthlyEarnings;
     
-    // Get data based on period
     if (period === 'quarterly') {
         earningsData = calculateQuarterlyEarnings();
     } else if (period === 'yearly') {
         earningsData = calculateYearlyEarnings();
     }
     
-    // Monthly Earnings Chart
     const monthlyCtx = document.getElementById('monthlyChart');
     if (monthlyCtx) {
         if (monthlyChart) {
@@ -732,7 +955,6 @@ function renderCharts(period = 'monthly') {
         });
     }
 
-    // Client Revenue Pie Chart
     const clientCtx = document.getElementById('clientChart');
     if (clientCtx) {
         if (clientChart) {
@@ -780,7 +1002,6 @@ function renderCharts(period = 'monthly') {
     }
 }
 
-// FIXED: Analytics setup
 function setupAnalyticsFilters() {
     const periodSelect = document.getElementById('analytics-period');
     if (periodSelect) {
@@ -791,7 +1012,6 @@ function setupAnalyticsFilters() {
     }
 }
 
-// Invoice Management
 function renderInvoices() {
     console.log('Rendering invoices...');
     const tbody = document.getElementById('invoices-body');
@@ -815,12 +1035,9 @@ function renderInvoices() {
         </tr>
     `).join('');
 
-    // Setup filter tabs
     const filterTabs = document.querySelectorAll('.filter-tab');
     filterTabs.forEach(tab => {
-        // Remove existing listeners
         tab.removeEventListener('click', handleFilterClick);
-        // Add new listener
         tab.addEventListener('click', handleFilterClick);
     });
 }
@@ -850,7 +1067,7 @@ function filterInvoices(filter) {
     });
 }
 
-// FIXED: Client Management with edit functionality
+// FIXED: Client rendering with working edit buttons
 function renderClients() {
     console.log('Rendering clients...');
     const grid = document.getElementById('clients-grid');
@@ -860,10 +1077,11 @@ function renderClients() {
         <div class="client-card">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                 <h4>${client.name}</h4>
-                <button class="btn btn--sm btn--secondary" onclick="editClient(${client.id})" style="padding: 4px 8px; font-size: 12px;">Edit</button>
+                <button class="btn btn--sm btn--secondary edit-client-btn" data-client-id="${client.id}" style="padding: 4px 8px; font-size: 12px;">✏️ Edit</button>
             </div>
             <div class="client-email">${client.email}</div>
-            ${client.phone ? `<div style="color: var(--color-text-secondary); font-size: 12px;">${client.phone}</div>` : ''}
+            ${client.phone ? `<div style="color: var(--color-text-secondary); font-size: 12px;">📞 ${client.phone}</div>` : ''}
+            ${client.address ? `<div style="color: var(--color-text-secondary); font-size: 12px; margin-top: 4px;">📍 ${client.address}</div>` : ''}
             <div class="client-stats">
                 <div class="client-stat">
                     <div class="client-stat-value">${client.total_invoices || 0}</div>
@@ -876,19 +1094,31 @@ function renderClients() {
             </div>
         </div>
     `).join('');
+    
+    // FIXED: Add event listeners to edit buttons
+    document.querySelectorAll('.edit-client-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const clientId = parseInt(btn.getAttribute('data-client-id'));
+            editClient(clientId);
+        });
+    });
 }
 
-// NEW: Edit client function
+// FIXED: Edit client function
 function editClient(clientId) {
     console.log('Editing client:', clientId);
     const client = appData.clients.find(c => c.id === clientId);
-    if (!client) return;
+    if (!client) {
+        showToast('Client not found', 'error');
+        return;
+    }
     
     editingClientId = clientId;
     
     // Populate modal with client data
-    document.getElementById('client-company').value = client.name;
-    document.getElementById('client-email').value = client.email;
+    document.getElementById('client-company').value = client.name || '';
+    document.getElementById('client-email').value = client.email || '';
     document.getElementById('client-phone').value = client.phone || '';
     document.getElementById('client-address').value = client.address || '';
     document.getElementById('client-terms').value = client.payment_terms || 'net30';
@@ -904,7 +1134,6 @@ function editClient(clientId) {
     openClientModal();
 }
 
-// FIXED: Analytics with period support
 function renderAnalytics(period = 'monthly') {
     console.log('Rendering analytics for period:', period);
     
@@ -964,7 +1193,6 @@ function renderAnalytics(period = 'monthly') {
     }, 100);
 }
 
-// Settings
 function renderSettings() {
     console.log('Rendering settings...');
     const settings = appData.settings;
@@ -993,11 +1221,9 @@ function renderSettings() {
     });
 }
 
-// Modal Management
 function setupModals() {
     console.log('Setting up modals...');
     
-    // Invoice Modal
     const invoiceModal = document.getElementById('invoice-modal');
     const invoiceModalOverlay = document.getElementById('invoice-modal-overlay');
     const closeInvoiceModal = document.getElementById('close-invoice-modal');
@@ -1018,7 +1244,6 @@ function setupModals() {
         closeInvoiceModal.addEventListener('click', () => closeModal(invoiceModal));
     }
 
-    // Client Modal
     const clientModal = document.getElementById('client-modal');
     const clientModalOverlay = document.getElementById('client-modal-overlay');
     const closeClientModal = document.getElementById('close-client-modal');
@@ -1036,7 +1261,6 @@ function setupModals() {
     }
 }
 
-// FIXED: Invoice modal opening
 async function openInvoiceModal(invoiceId = null) {
     console.log('Opening invoice modal...', invoiceId ? 'for editing' : 'for creation');
     const modal = document.getElementById('invoice-modal');
@@ -1046,14 +1270,12 @@ async function openInvoiceModal(invoiceId = null) {
         editingInvoiceId = invoiceId;
         
         if (invoiceId) {
-            // Edit mode - populate with existing data
             const invoice = appData.invoices.find(inv => inv.id === invoiceId);
             if (invoice) {
                 document.getElementById('invoice-number').value = invoice.id;
                 document.getElementById('issue-date').value = invoice.date;
                 document.getElementById('due-date').value = invoice.dueDate;
                 
-                // Set client
                 const clientSelect = document.getElementById('invoice-client');
                 if (clientSelect) {
                     clientSelect.innerHTML = '<option value="">Select Client</option>' + 
@@ -1062,7 +1284,6 @@ async function openInvoiceModal(invoiceId = null) {
                         ).join('');
                 }
                 
-                // Populate line items
                 const container = document.getElementById('line-items-container');
                 container.innerHTML = '';
                 
@@ -1090,13 +1311,12 @@ async function openInvoiceModal(invoiceId = null) {
                         container.appendChild(lineItem);
                     });
                 } else {
-                    addLineItem(); // Add one empty line item
+                    addLineItem();
                 }
                 
                 calculateInvoiceTotal();
             }
         } else {
-            // Create mode - generate new invoice number
             try {
                 const num = await getNextInvoiceNumber();
                 const invoiceNumInput = document.getElementById('invoice-number');
@@ -1111,7 +1331,6 @@ async function openInvoiceModal(invoiceId = null) {
                 }
             }
             
-            // Set default dates
             const today = new Date().toISOString().split('T')[0];
             const dueDate = new Date();
             dueDate.setDate(dueDate.getDate() + 30);
@@ -1122,14 +1341,12 @@ async function openInvoiceModal(invoiceId = null) {
             if (issueDateField) issueDateField.value = today;
             if (dueDateField) dueDateField.value = dueDate.toISOString().split('T')[0];
             
-            // Clear and populate client dropdown
             const clientSelect = document.getElementById('invoice-client');
             if (clientSelect) {
                 clientSelect.innerHTML = '<option value="">Select Client</option>' + 
                     appData.clients.map(client => `<option value="${client.id}">${client.name}</option>`).join('');
             }
             
-            // Reset line items
             const container = document.getElementById('line-items-container');
             container.innerHTML = '';
             addLineItem();
@@ -1143,14 +1360,12 @@ function openClientModal() {
     if (modal) {
         modal.classList.remove('hidden');
         
-        // Reset modal for new client if not editing
         if (!editingClientId) {
             const form = document.getElementById('client-form');
             if (form) {
                 form.reset();
             }
             
-            // Reset modal title and button
             const modalTitle = document.querySelector('#client-modal .modal-header h2');
             if (modalTitle) modalTitle.textContent = 'Add New Client';
             
@@ -1163,12 +1378,11 @@ function openClientModal() {
 function closeModal(modal) {
     if (modal) {
         modal.classList.add('hidden');
-        editingInvoiceId = null; // Reset editing state
-        editingClientId = null; // Reset client editing state
+        editingInvoiceId = null;
+        editingClientId = null;
     }
 }
 
-// Form Management
 function setupForms() {
     console.log('Setting up forms...');
     setupInvoiceForm();
@@ -1193,7 +1407,6 @@ function setupInvoiceForm() {
         saveDraftBtn.addEventListener('click', () => saveInvoice('Draft'));
     }
 
-    // Setup line item calculations
     document.addEventListener('input', (e) => {
         if (e.target.classList.contains('quantity') || e.target.classList.contains('rate')) {
             calculateLineItem(e.target.closest('.line-item'));
@@ -1201,7 +1414,6 @@ function setupInvoiceForm() {
         }
     });
 
-    // Setup remove buttons
     document.addEventListener('click', (e) => {
         if (e.target.classList.contains('remove-item')) {
             removeLineItem(e.target.closest('.line-item'));
@@ -1259,7 +1471,7 @@ function calculateLineItem(lineItem) {
     }
 }
 
-// FIXED: Tax rate calculation using current settings
+// FIXED: Tax calculation using current settings
 function calculateInvoiceTotal() {
     const lineItems = document.querySelectorAll('.line-item');
     let subtotal = 0;
@@ -1272,7 +1484,8 @@ function calculateInvoiceTotal() {
         }
     });
     
-    // FIXED: Use current tax rate from settings
+    // FIXED: Use current tax rate from loaded settings
+    console.log('Using tax rate for calculation:', appData.settings.taxRate);
     const taxRate = appData.settings.taxRate / 100;
     const tax = subtotal * taxRate;
     const total = subtotal + tax;
@@ -1285,14 +1498,15 @@ function calculateInvoiceTotal() {
     if (taxElement) taxElement.textContent = `₹${formatNumber(tax)}`;
     if (totalElement) totalElement.textContent = `₹${formatNumber(total)}`;
     
-    // Also update the tax rate display
-    const taxLabel = document.querySelector('.total-row:nth-child(2) span:first-child');
-    if (taxLabel) {
-        taxLabel.textContent = `Tax (${appData.settings.taxRate}%):`;
-    }
+    // Update the tax rate display
+    const taxLabels = document.querySelectorAll('.total-row span');
+    taxLabels.forEach(label => {
+        if (label.textContent.includes('Tax')) {
+            label.textContent = `Tax (${appData.settings.taxRate}%):`;
+        }
+    });
 }
 
-// FIXED: Client selection validation
 async function saveInvoice(status) {
     console.log('Saving invoice with status:', status);
     
@@ -1304,6 +1518,7 @@ async function saveInvoice(status) {
     // FIXED: Better client validation
     if (!clientId || isNaN(clientId)) {
         showToast('Please select a client', 'error');
+        clientSelect.focus();
         return;
     }
     
@@ -1340,7 +1555,6 @@ async function saveInvoice(status) {
     }
     
     const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
-    // FIXED: Use current tax rate from settings
     const tax = subtotal * (appData.settings.taxRate / 100);
     const total = subtotal + tax;
     
@@ -1361,27 +1575,22 @@ async function saveInvoice(status) {
     };
     
     try {
-        // Save to Supabase
         await saveInvoiceToSupabase(invoice);
         
         if (editingInvoiceId) {
-            // Update existing invoice in local data
             const index = appData.invoices.findIndex(inv => inv.id === editingInvoiceId);
             if (index > -1) {
                 appData.invoices[index] = invoice;
             }
             showToast(`Invoice ${invoiceNumber} updated successfully`, 'success');
         } else {
-            // Add new invoice to local data
-            appData.invoices.unshift(invoice); // Add to beginning for newest first
+            appData.invoices.unshift(invoice);
             appData.totalInvoices++;
             showToast(`Invoice ${invoiceNumber} ${status === 'Draft' ? 'saved as draft' : 'created'} successfully`, 'success');
         }
         
-        // Update client totals in local data
         const localClient = appData.clients.find(c => c.id === clientId);
         if (localClient) {
-            // Recalculate totals for this client
             const clientInvoices = appData.invoices.filter(inv => inv.clientId === clientId);
             localClient.total_invoices = clientInvoices.length;
             localClient.total_amount = clientInvoices
@@ -1389,10 +1598,8 @@ async function saveInvoice(status) {
                 .reduce((sum, inv) => sum + inv.amount, 0);
         }
         
-        // Recalculate monthly earnings
         calculateMonthlyEarnings();
         
-        // Refresh views
         renderInvoices();
         renderDashboard();
         renderClients();
@@ -1445,11 +1652,9 @@ async function saveClient() {
     }
     
     try {
-        // Save to Supabase
         const savedClient = await saveClientToSupabase(clientData);
         
         if (editingClientId) {
-            // Update existing client in local data
             const index = appData.clients.findIndex(c => c.id === editingClientId);
             if (index > -1) {
                 appData.clients[index] = {
@@ -1463,7 +1668,6 @@ async function saveClient() {
             }
             showToast(`Client ${savedClient.name} updated successfully`, 'success');
         } else {
-            // Add new client to local data
             const newClient = {
                 id: savedClient.id,
                 name: savedClient.name,
@@ -1483,7 +1687,6 @@ async function saveClient() {
         renderClients();
         closeModal(document.getElementById('client-modal'));
         
-        // Reset form
         if (companyInput) companyInput.value = '';
         if (emailInput) emailInput.value = '';
         if (phoneInput) phoneInput.value = '';
@@ -1530,7 +1733,7 @@ async function saveSettings() {
     Object.entries(elements).forEach(([key, element]) => {
         if (element) {
             if (key === 'taxRate') {
-                settingsData[key] = parseFloat(element.value) || 0; // FIXED: Allow 0 tax rate
+                settingsData[key] = parseFloat(element.value) || 0;
             } else {
                 settingsData[key] = element.value;
             }
@@ -1538,14 +1741,19 @@ async function saveSettings() {
     });
     
     try {
-        // Save to Supabase
         await saveSettingsToSupabase(settingsData);
         
-        // FIXED: Update local data immediately
+        // FIXED: Update local data immediately and recalculate
         Object.assign(appData.settings, settingsData);
         
+        console.log('Settings saved, new tax rate:', appData.settings.taxRate);
+        
+        // Recalculate any open invoice totals
+        if (document.getElementById('invoice-modal') && !document.getElementById('invoice-modal').classList.contains('hidden')) {
+            calculateInvoiceTotal();
+        }
+        
         showToast('Settings saved successfully', 'success');
-        console.log('Updated tax rate in settings:', appData.settings.taxRate); // Debug log
     } catch (error) {
         console.error('Error saving settings:', error);
         showToast('Error saving settings. Please try again.', 'error');
@@ -1571,22 +1779,18 @@ function resetSettings() {
     }
 }
 
-// Invoice Actions
 function viewInvoice(invoiceId) {
     console.log('Viewing invoice:', invoiceId);
     const invoice = appData.invoices.find(inv => inv.id === invoiceId);
     if (invoice) {
-        // NEW: Show invoice in a proper format like the PDF
         showInvoiceModal(invoice);
     }
 }
 
-// NEW: Show invoice in proper format
 function showInvoiceModal(invoice) {
     const client = appData.clients.find(c => c.id === invoice.clientId);
     const settings = appData.settings;
     
-    // Create invoice view modal
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.innerHTML = `
@@ -1677,7 +1881,6 @@ function showInvoiceModal(invoice) {
     document.body.appendChild(modal);
 }
 
-// FIXED: Edit invoice functionality
 function editInvoice(invoiceId) {
     console.log('Editing invoice:', invoiceId);
     openInvoiceModal(invoiceId);
@@ -1687,16 +1890,13 @@ async function deleteInvoice(invoiceId) {
     console.log('Deleting invoice:', invoiceId);
     if (confirm(`Are you sure you want to delete invoice ${invoiceId}?`)) {
         try {
-            // Delete from Supabase
             await deleteInvoiceFromSupabase(invoiceId);
             
-            // Update local data
             const index = appData.invoices.findIndex(inv => inv.id === invoiceId);
             if (index > -1) {
                 const invoice = appData.invoices[index];
                 const client = appData.clients.find(c => c.id === invoice.clientId);
                 
-                // Update client totals
                 if (client) {
                     client.total_invoices = Math.max(0, (client.total_invoices || 0) - 1);
                     if (invoice.status === 'Paid') {
@@ -1707,7 +1907,6 @@ async function deleteInvoice(invoiceId) {
                 appData.invoices.splice(index, 1);  
                 appData.totalInvoices = Math.max(0, appData.totalInvoices - 1);
                 
-                // Recalculate monthly earnings
                 calculateMonthlyEarnings();
                 
                 renderInvoices();
@@ -1723,7 +1922,6 @@ async function deleteInvoice(invoiceId) {
     }
 }
 
-// Utility Functions
 function formatNumber(num) {
     return new Intl.NumberFormat('en-IN').format(num);
 }
