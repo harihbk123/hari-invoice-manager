@@ -75,7 +75,7 @@ let appData = {
         bankName: 'Hariprasad Sivakumar',
         bankAccount: '2049315152',
         bankIFSC: 'KKBK0008068',
-        bankSWIFT: 'KKBKINBBCPC'
+        bankSWIFT: 'KKBKINBBCPC' // This is the default client-side value
     }
 };
 
@@ -987,7 +987,7 @@ async function saveSettingsToSupabase(settingsData) {
             bank_account: settingsData.bankAccount || '',
             bank_ifsc: settingsData.bankIFSC || '',
             bank_name_field: settingsData.bankNameField || '',
-            bank_swift: settingsData.bankSWIFT || '',
+            // REMOVED: bank_swift from payload as it's causing schema error
             updated_at: new Date().toISOString()
         };
 
@@ -1664,7 +1664,7 @@ async function openInvoiceModal(invoiceId = null) {
                                     <input type="number" class="form-control quantity" placeholder="Qty" min="1" value="${item.quantity}" required>
                                 </div>
                                 <div class="form-group">
-                                    <input type="number" class="form-control rate" placeholder="Rate" min="0" step="0.01" value="${item.rate}" required>
+                                    <input type="number" class="form-control rate" placeholder="Rate" min="0" step="0.01" required>
                                 </div>
                                 <div class="form-group">
                                     <input type="number" class="form-control amount" placeholder="Amount" value="${item.amount}" readonly>
@@ -2215,7 +2215,7 @@ function resetSettings() {
             bankAccount: '',
             bankIFSC: '',
             bankNameField: '',
-            bankSWIFT: ''
+            bankSWIFT: '' // Reverted to empty string for default, as it's optional now
         };
         renderSettings();
         showToast('Settings reset to default', 'success');
