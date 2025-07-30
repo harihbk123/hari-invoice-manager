@@ -4,8 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice Manager - Hariprasad Sivakumar</title>
+    
+    <!-- Third-party Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- jsPDF for PDF Generation (FIXED: Statically loaded) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- Flatpickr for Analytics Date Picker (IMPROVED UI) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/plugins/monthSelect/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/plugins/monthSelect/index.js"></script>
+    
+    <!-- Main Stylesheet -->
     <link rel="stylesheet" href="style.css">
     
     <!-- Auth Check -->
@@ -31,8 +45,9 @@
     </script>
 </head>
 <body>
-    <!-- Sidebar Navigation -->
+    <!-- App Layout -->
     <div class="app-layout">
+        <!-- Sidebar Navigation -->
         <nav class="sidebar">
             <div class="sidebar-header">
                 <h2>Invoice Manager</h2>
@@ -77,22 +92,18 @@
                     <div class="metric-card">
                         <div class="metric-value">₹0</div>
                         <div class="metric-label">Total Earnings</div>
-                        <div class="metric-change positive">+12.5%</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-value">0</div>
                         <div class="metric-label">Total Clients</div>
-                        <div class="metric-change positive">+2</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-value">0</div>
                         <div class="metric-label">Total Invoices</div>
-                        <div class="metric-change positive">+5</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-value">₹0</div>
                         <div class="metric-label">Average Monthly</div>
-                        <div class="metric-change positive">+8.2%</div>
                     </div>
                 </div>
 
@@ -187,33 +198,6 @@
                     <h1>Analytics</h1>
                 </div>
                 <!-- Date range filters will be added here by JavaScript -->
-
-                <div class="analytics-content">
-                    <div class="chart-container full-width">
-                        <h3>Earnings Trend Analysis</h3>
-                        <div style="position: relative; height: 400px;">
-                            <canvas id="analyticsChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="analytics-stats">
-                        <div class="stat-card">
-                            <h4>Highest Earning Month</h4>
-                            <div class="stat-value">Jan 2025</div>
-                            <div class="stat-amount">₹2,76,576</div>
-                        </div>
-                        <div class="stat-card">
-                            <h4>Top Client</h4>
-                            <div class="stat-value">Rover Resources</div>
-                            <div class="stat-amount">₹6,40,134</div>
-                        </div>
-                        <div class="stat-card">
-                            <h4>Average Invoice</h4>
-                            <div class="stat-value">₹47,838</div>
-                            <div class="stat-amount">Per invoice</div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Settings Page -->
@@ -223,117 +207,111 @@
                 </div>
 
                 <div class="settings-content">
-                    <div class="settings-section">
-                        <h3>Profile Information</h3>
-                        <div class="form-group">
-                            <label class="form-label">Full Name</label>
-                            <input type="text" class="form-control" value="Hariprasad Sivakumar" id="profile-name">
+                    <form id="settings-form">
+                        <div class="settings-section">
+                            <h3>Profile Information</h3>
+                            <div class="form-group">
+                                <label class="form-label" for="profile-name">Full Name</label>
+                                <input type="text" class="form-control" id="profile-name">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="profile-email">Email</label>
+                                <input type="email" class="form-control" id="profile-email">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="profile-phone">Phone</label>
+                                <input type="tel" class="form-control" id="profile-phone">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="profile-address">Address</label>
+                                <textarea class="form-control" id="profile-address" rows="3" placeholder="Enter your business address"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="profile-gstin">GSTIN</label>
+                                <input type="text" class="form-control" id="profile-gstin">
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control" value="contact@hariprasadss.com" id="profile-email">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Phone</label>
-                            <input type="tel" class="form-control" value="+91 9876543210" id="profile-phone">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Address</label>
-                            <textarea class="form-control" id="profile-address" rows="3" placeholder="Enter your business address">6/91, Mahit Complex, Hosur Road, Attibele, Bengaluru, Karnataka – 562107</textarea>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">GSTIN</label>
-                            <input type="text" class="form-control" value="29GLOPS9921M1ZT" id="profile-gstin">
-                        </div>
-                    </div>
 
-                    <div class="settings-section">
-                        <h3>Banking Details</h3>
-                        <div class="banking-info">
-                            <div class="form-group">
-                                <label class="form-label">Account Holder Name</label>
-                                <input type="text" class="form-control" value="HARIPRASAD SIVAKUMAR" id="bank-name">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Account Number</label>
-                                <input type="text" class="form-control" placeholder="Enter account number" id="bank-account">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">IFSC Code</label>
-                                <input type="text" class="form-control" placeholder="Enter IFSC code" id="bank-ifsc">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Bank Name</label>
-                                <input type="text" class="form-control" placeholder="Enter bank name" id="bank-name-field">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">SWIFT Code</label>
-                                <input type="text" class="form-control" placeholder="Enter SWIFT code" id="bank-swift">
+                        <div class="settings-section">
+                            <h3>Banking Details</h3>
+                            <div class="banking-info">
+                                <div class="form-group">
+                                    <label class="form-label" for="bank-name">Account Holder Name</label>
+                                    <input type="text" class="form-control" id="bank-name">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="bank-account">Account Number</label>
+                                    <input type="text" class="form-control" placeholder="Enter account number" id="bank-account">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="bank-ifsc">IFSC Code</label>
+                                    <input type="text" class="form-control" placeholder="Enter IFSC code" id="bank-ifsc">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="bank-swift">SWIFT Code</label>
+                                    <input type="text" class="form-control" placeholder="Enter SWIFT code" id="bank-swift">
+                                </div>
                             </div>
                         </div>
-                        <div class="wise-integration">
-                            <p><strong>💡 Integration Tip:</strong> Connect with <a href="https://wise.com/in/invoice-generator/" target="_blank">Wise Invoice Generator</a> for streamlined payment processing and international transactions.</p>
-                        </div>
-                    </div>
 
-                    <div class="settings-section">
-                        <h3>Invoice Settings</h3>
-                        <div class="form-group">
-                            <label class="form-label">Currency</label>
-                            <select class="form-control" id="currency-setting">
-                                <option value="INR">Indian Rupee (₹)</option>
-                                <option value="USD">US Dollar ($)</option>
-                                <option value="EUR">Euro (€)</option>
-                            </select>
+                        <div class="settings-section">
+                            <h3>Invoice Settings</h3>
+                            <div class="form-group">
+                                <label class="form-label" for="currency-setting">Currency</label>
+                                <select class="form-control" id="currency-setting">
+                                    <option value="INR">Indian Rupee (₹)</option>
+                                    <option value="USD">US Dollar ($)</option>
+                                    <option value="EUR">Euro (€)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="tax-rate">Tax Rate (%)</label>
+                                <input type="number" class="form-control" id="tax-rate" min="0" max="100" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="invoice-prefix">Invoice Prefix</label>
+                                <input type="text" class="form-control" id="invoice-prefix">
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Tax Rate (%)</label>
-                            <input type="number" class="form-control" value="18" id="tax-rate" min="0" max="100" step="0.01">
-                            <small style="color: var(--color-text-secondary); font-size: 12px;">Set to 0 for no tax</small>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Invoice Prefix</label>
-                            <input type="text" class="form-control" value="HP-2526" id="invoice-prefix">
-                        </div>
-                    </div>
 
-                    <div class="settings-actions">
-                        <button class="btn btn--primary" id="save-settings">Save Settings</button>
-                        <button class="btn btn--secondary" id="reset-settings">Reset to Default</button>
-                    </div>
+                        <div class="settings-actions">
+                            <button type="button" class="btn btn--secondary" id="reset-settings">Reset to Default</button>
+                            <button type="submit" class="btn btn--primary" id="save-settings">Save Settings</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </main>
     </div>
 
     <!-- Modals -->
-    <!-- Create Invoice Modal -->
+    <!-- Create/Edit Invoice Modal -->
     <div id="invoice-modal" class="modal hidden">
         <div class="modal-overlay" id="invoice-modal-overlay"></div>
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Create New Invoice</h2>
+                <h2 id="invoice-modal-title">Create New Invoice</h2>
                 <button class="modal-close" id="close-invoice-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="invoice-form">
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Invoice Number</label>
+                            <label class="form-label" for="invoice-number">Invoice Number</label>
                             <input type="text" class="form-control" id="invoice-number" readonly>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Issue Date</label>
+                            <label class="form-label" for="issue-date">Issue Date</label>
                             <input type="date" class="form-control" id="issue-date" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Due Date</label>
+                            <label class="form-label" for="due-date">Due Date</label>
                             <input type="date" class="form-control" id="due-date" required>
                         </div>
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Client</label>
+                        <label class="form-label" for="invoice-client">Client</label>
                         <select class="form-control" id="invoice-client" required>
                             <option value="">Select Client</option>
                         </select>
@@ -342,25 +320,9 @@
                     <div class="line-items">
                         <h4>Line Items</h4>
                         <div id="line-items-container">
-                            <div class="line-item">
-                                <div class="form-row">
-                                    <div class="form-group flex-2">
-                                        <input type="text" class="form-control" placeholder="Description" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <input type="number" class="form-control quantity" placeholder="Qty" min="1" value="1" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <input type="number" class="form-control rate" placeholder="Rate" min="0" step="0.01" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <input type="number" class="form-control amount" placeholder="Amount" readonly>
-                                    </div>
-                                    <button type="button" class="btn btn--secondary remove-item">Remove</button>
-                                </div>
-                            </div>
+                            <!-- Line items will be populated by JS -->
                         </div>
-                        <button type="button" class="btn btn--secondary" id="add-line-item">+ Add Item</button>
+                        <button type="button" class="btn btn--secondary btn--sm" id="add-line-item">+ Add Item</button>
                     </div>
 
                     <div class="invoice-totals">
@@ -369,7 +331,7 @@
                             <span id="invoice-subtotal">₹0.00</span>
                         </div>
                         <div class="total-row">
-                            <span>Tax (18%):</span>
+                            <span id="invoice-tax-label">Tax (0%):</span>
                             <span id="invoice-tax">₹0.00</span>
                         </div>
                         <div class="total-row total">
@@ -381,48 +343,48 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn--secondary" id="save-draft">Save as Draft</button>
-                <button type="button" class="btn btn--primary" id="create-invoice">Create Invoice</button>
+                <button type="submit" class="btn btn--primary" id="save-invoice">Create Invoice</button>
             </div>
         </div>
     </div>
 
-    <!-- Add Client Modal -->
+    <!-- Add/Edit Client Modal -->
     <div id="client-modal" class="modal hidden">
         <div class="modal-overlay" id="client-modal-overlay"></div>
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Add New Client</h2>
+                <h2 id="client-modal-title">Add New Client</h2>
                 <button class="modal-close" id="close-client-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="client-form">
                     <div class="form-group">
-                        <label class="form-label">Company Name</label>
-                        <input type="text" class="form-control" id="client-company" required>
+                        <label class="form-label" for="client-name">Company Name</label>
+                        <input type="text" class="form-control" id="client-name" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Contact Person</label>
-                        <input type="text" class="form-control" id="client-contact">
+                        <label class="form-label" for="client-contact-name">Contact Person</label>
+                        <input type="text" class="form-control" id="client-contact-name">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Email</label>
+                            <label class="form-label" for="client-email">Email</label>
                             <input type="email" class="form-control" id="client-email" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Phone</label>
+                            <label class="form-label" for="client-phone">Phone</label>
                             <input type="tel" class="form-control" id="client-phone">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Address</label>
+                        <label class="form-label" for="client-address">Address</label>
                         <textarea class="form-control" id="client-address" rows="3"></textarea>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Payment Terms</label>
+                        <label class="form-label" for="client-terms">Payment Terms</label>
                         <select class="form-control" id="client-terms">
                             <option value="net15">Net 15 days</option>
-                            <option value="net30">Net 30 days</option>
+                            <option value="net30" selected>Net 30 days</option>
                             <option value="net45">Net 45 days</option>
                             <option value="due_on_receipt">Due on receipt</option>
                         </select>
@@ -431,7 +393,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn--secondary" id="cancel-client">Cancel</button>
-                <button type="button" class="btn btn--primary" id="save-client">Save Client</button>
+                <button type="submit" class="btn btn--primary" id="save-client">Save Client</button>
             </div>
         </div>
     </div>
@@ -439,6 +401,7 @@
     <!-- Toast Notifications -->
     <div id="toast-container" class="toast-container"></div>
 
+    <!-- Main App Script -->
     <script src="app.js"></script>
 </body>
 </html>
