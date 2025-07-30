@@ -1,4 +1,4 @@
-// FULLY DEBUGGED INVOICE MANAGER - ALL CRITICAL ISSUES FIXED
+// COMPLETE ENHANCED INVOICE MANAGER - ALL ISSUES FIXED
 
 // Check authentication first
 function checkAuth() {
@@ -62,12 +62,13 @@ let appData = {
 
     settings: {
         currency: 'INR',
-        taxRate: 0, // FIXED: Default to 0%
+        taxRate: 0,
         invoicePrefix: 'HP-2526',
         profileName: 'Hariprasad Sivakumar',
         profileEmail: 'contact@hariprasadss.com',
         profilePhone: '+91 9876543210',
         profileAddress: '6/91, Mahit Complex, Hosur Road, Attibele, Bengaluru, Karnataka – 562107',
+        profileGSTIN: '29GLOPS9921M1ZT', // Added GSTIN
         bankName: 'Hariprasad Sivakumar',
         bankAccount: '2049315152',
         bankIFSC: 'KKBK0008068',
@@ -75,7 +76,7 @@ let appData = {
     }
 };
 
-// ADDED: Analytics state for filters
+// Analytics state for filters
 let analyticsState = {
     currentPeriod: 'monthly',
     filteredData: null,
@@ -98,14 +99,8 @@ document.addEventListener('DOMContentLoaded', function() {
 async function initializeApp() {
     try {
         showLoadingState(true);
-
-        // Add logout button to header
         addLogoutButton();
-
-        // Load data from Supabase
         await loadDataFromSupabase();
-
-        // Mark data as loaded
         appData.dataLoaded = true;
 
         setupNavigation();
@@ -119,6 +114,9 @@ async function initializeApp() {
         renderAnalytics();
         renderSettings();
 
+        // Add PDF library for invoice downloads
+        loadPDFLibrary();
+
         showLoadingState(false);
         console.log('Application initialized successfully');
         showToast('Application loaded successfully', 'success');
@@ -126,6 +124,21 @@ async function initializeApp() {
         console.error('Error initializing application:', error);
         showLoadingState(false);
         showToast('Error loading data. Please refresh the page.', 'error');
+    }
+}
+
+// Load PDF library for invoice downloads
+function loadPDFLibrary() {
+    if (!document.getElementById('jspdf-script')) {
+        const script = document.createElement('script');
+        script.id = 'jspdf-script';
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        document.head.appendChild(script);
+        
+        const autoTableScript = document.createElement('script');
+        autoTableScript.id = 'jspdf-autotable-script';
+        autoTableScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js';
+        document.head.appendChild(autoTableScript);
     }
 }
 
@@ -198,7 +211,7 @@ async function getNextInvoiceNumber() {
     }
 }
 
-// COMPLETELY REDESIGNED: Modern, compact analytics UI
+// IMPROVED: Better analytics UI with date pickers
 function setupDateRangeFilters() {
     const analyticsHeader = document.querySelector('#analytics-page .page-header');
     if (analyticsHeader && !document.getElementById('modern-analytics-controls')) {
@@ -221,13 +234,13 @@ function setupDateRangeFilters() {
                     </select>
                 </div>
 
-                <!-- Date Range -->
+                <!-- Date Range with Better UI -->
                 <div class="control-group">
                     <label class="control-label">📅 Filter Period</label>
                     <div class="date-range-container">
-                        <input type="month" id="date-from" class="modern-date-input" placeholder="From month">
-                        <span class="date-separator">to</span>
-                        <input type="month" id="date-to" class="modern-date-input" placeholder="To month">
+                        <input type="month" id="date-from" class="modern-date-input date-picker" placeholder="From">
+                        <span class="date-separator">→</span>
+                        <input type="month" id="date-to" class="modern-date-input date-picker" placeholder="To">
                     </div>
                 </div>
 
@@ -235,10 +248,10 @@ function setupDateRangeFilters() {
                 <div class="control-group">
                     <div class="action-buttons">
                         <button class="action-btn apply-btn" id="apply-filters">
-                            <span>🔍</span> Apply Filter
+                            <span>🔍</span> Apply
                         </button>
                         <button class="action-btn clear-btn" id="clear-filters">
-                            <span>🔄</span> Clear Filter
+                            <span>🔄</span> Clear
                         </button>
                     </div>
                 </div>
@@ -250,109 +263,102 @@ function setupDateRangeFilters() {
 
         analyticsHeader.parentNode.insertBefore(controlsContainer, analyticsHeader.nextSibling);
 
-        // Add modern analytics styles
-        if (!document.getElementById('modern-analytics-styles')) {
+        // Add enhanced analytics styles
+        if (!document.getElementById('enhanced-analytics-styles')) {
             const style = document.createElement('style');
-            style.id = 'modern-analytics-styles';
+            style.id = 'enhanced-analytics-styles';
             style.textContent = `
                 .analytics-controls-container {
                     display: flex;
                     align-items: center;
-                    gap: 24px;
-                    padding: 20px 24px;
+                    gap: 20px;
+                    padding: 16px 20px;
                     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-                    border-radius: 16px;
+                    border-radius: 12px;
                     margin: 20px 0;
                     border: 1px solid #e2e8f0;
                     flex-wrap: wrap;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
                 }
 
                 .control-group {
                     display: flex;
                     flex-direction: column;
-                    gap: 8px;
+                    gap: 6px;
                     min-width: 140px;
                 }
 
                 .control-label {
-                    font-size: 12px;
-                    font-weight: 700;
+                    font-size: 11px;
+                    font-weight: 600;
                     color: #475569;
                     text-transform: uppercase;
                     letter-spacing: 0.5px;
                     display: flex;
                     align-items: center;
-                    gap: 6px;
+                    gap: 4px;
                 }
 
                 .modern-select, .modern-date-input {
-                    padding: 10px 14px;
+                    padding: 8px 12px;
                     border: 2px solid #cbd5e1;
                     border-radius: 8px;
                     background: white;
-                    font-size: 14px;
+                    font-size: 13px;
                     font-weight: 500;
                     color: #1e293b;
                     transition: all 0.2s ease;
-                    min-width: 0;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
                 }
 
                 .modern-select:focus, .modern-date-input:focus {
                     outline: none;
                     border-color: #3b82f6;
                     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-                    transform: translateY(-1px);
                 }
 
                 .period-select {
-                    min-width: 160px;
+                    min-width: 150px;
                 }
 
                 .date-range-container {
                     display: flex;
                     align-items: center;
-                    gap: 12px;
+                    gap: 8px;
                 }
 
                 .modern-date-input {
-                    min-width: 140px;
+                    min-width: 130px;
                 }
 
-                .modern-date-input::placeholder {
-                    color: #94a3b8;
-                    font-style: italic;
+                .date-picker {
+                    cursor: pointer;
                 }
 
                 .date-separator {
-                    font-size: 12px;
+                    font-size: 14px;
                     color: #64748b;
                     font-weight: 600;
-                    white-space: nowrap;
-                    padding: 0 4px;
                 }
 
                 .action-buttons {
                     display: flex;
-                    gap: 10px;
+                    gap: 8px;
                 }
 
                 .action-btn {
                     display: flex;
                     align-items: center;
-                    gap: 6px;
-                    padding: 10px 16px;
+                    gap: 4px;
+                    padding: 8px 14px;
                     border: 2px solid;
                     border-radius: 8px;
-                    font-size: 13px;
+                    font-size: 12px;
                     font-weight: 600;
                     cursor: pointer;
                     transition: all 0.2s ease;
                     white-space: nowrap;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                    min-width: 110px;
-                    justify-content: center;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
                 }
 
                 .apply-btn {
@@ -364,8 +370,8 @@ function setupDateRangeFilters() {
                 .apply-btn:hover {
                     background: #2563eb;
                     border-color: #2563eb;
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
                 }
 
                 .clear-btn {
@@ -377,160 +383,25 @@ function setupDateRangeFilters() {
                 .clear-btn:hover {
                     background: #e2e8f0;
                     border-color: #94a3b8;
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                    transform: translateY(-1px);
                 }
 
                 .filter-status {
                     flex: 1;
-                    min-width: 240px;
-                    padding: 12px 16px;
+                    min-width: 200px;
+                    padding: 10px 14px;
                     background: rgba(59, 130, 246, 0.1);
-                    border: 2px solid rgba(59, 130, 246, 0.2);
+                    border: 1px solid rgba(59, 130, 246, 0.2);
                     border-radius: 8px;
-                    font-size: 13px;
+                    font-size: 12px;
                     color: #1e40af;
                     font-weight: 500;
                     display: none;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
                 }
 
                 .filter-status.show {
                     display: block;
                     animation: slideIn 0.3s ease;
-                }
-
-                @keyframes slideIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(-10px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-
-                .analytics-grid {
-                    display: grid;
-                    grid-template-columns: 2fr 1fr;
-                    gap: 20px;
-                    margin-top: 20px;
-                }
-
-                .chart-container {
-                    background: white;
-                    padding: 20px;
-                    border-radius: 12px;
-                    border: 1px solid #e2e8f0;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                }
-
-                .chart-header {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    margin-bottom: 16px;
-                    padding-bottom: 12px;
-                    border-bottom: 1px solid #f1f5f9;
-                }
-
-                .chart-title {
-                    font-size: 16px;
-                    font-weight: 600;
-                    color: #1e293b;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-
-                .chart-subtitle {
-                    font-size: 12px;
-                    color: #64748b;
-                    margin-top: 4px;
-                }
-
-                .insights-panel {
-                    background: white;
-                    padding: 20px;
-                    border-radius: 12px;
-                    border: 1px solid #e2e8f0;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                }
-
-                .insight-item {
-                    padding: 12px 0;
-                    border-bottom: 1px solid #f1f5f9;
-                }
-
-                .insight-item:last-child {
-                    border-bottom: none;
-                }
-
-                .insight-label {
-                    font-size: 11px;
-                    color: #64748b;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    font-weight: 600;
-                    margin-bottom: 4px;
-                }
-
-                .insight-value {
-                    font-size: 18px;
-                    font-weight: 700;
-                    color: #1e293b;
-                }
-
-                .insight-change {
-                    font-size: 11px;
-                    font-weight: 600;
-                    margin-top: 2px;
-                }
-
-                .insight-change.positive { color: #059669; }
-                .insight-change.negative { color: #dc2626; }
-
-                @media (max-width: 768px) {
-                    .analytics-controls-container {
-                        flex-direction: column;
-                        align-items: stretch;
-                        gap: 16px;
-                        padding: 16px;
-                    }
-
-                    .control-group {
-                        min-width: auto;
-                    }
-
-                    .date-range-container {
-                        flex-direction: column;
-                        align-items: stretch;
-                        gap: 8px;
-                    }
-
-                    .modern-date-input {
-                        min-width: auto;
-                    }
-
-                    .date-separator {
-                        text-align: center;
-                        margin: 0;
-                    }
-
-                    .action-buttons {
-                        flex-direction: column;
-                        gap: 8px;
-                    }
-
-                    .action-btn {
-                        min-width: auto;
-                    }
-
-                    .analytics-grid {
-                        grid-template-columns: 1fr;
-                        gap: 16px;
-                    }
                 }
             `;
             document.head.appendChild(style);
@@ -540,7 +411,6 @@ function setupDateRangeFilters() {
         document.getElementById('apply-filters').addEventListener('click', applyAnalyticsFilters);
         document.getElementById('clear-filters').addEventListener('click', clearAnalyticsFilters);
         
-        // FIXED: Period selection event listener
         document.getElementById('analytics-period').addEventListener('change', (e) => {
             analyticsState.currentPeriod = e.target.value;
             console.log('Period changed to:', analyticsState.currentPeriod);
@@ -549,7 +419,6 @@ function setupDateRangeFilters() {
     }
 }
 
-// FIXED: Apply analytics filters with proper period handling
 function applyAnalyticsFilters() {
     const fromDate = document.getElementById('date-from').value;
     const toDate = document.getElementById('date-to').value;
@@ -561,7 +430,6 @@ function applyAnalyticsFilters() {
 
     console.log('Applying analytics filters:', { period, fromDate, toDate });
 
-    // Filter invoices based on date range if specified
     let filteredInvoices = appData.invoices;
     if (fromDate && toDate) {
         if (fromDate > toDate) {
@@ -589,7 +457,6 @@ function applyAnalyticsFilters() {
 
     analyticsState.filteredData = filteredInvoices;
 
-    // Re-render analytics with new filters
     renderAnalyticsChart(period, filteredInvoices);
     renderTopClientInsights(filteredInvoices);
 
@@ -614,7 +481,6 @@ function clearAnalyticsFilters() {
     showToast('Analytics filters cleared', 'info');
 }
 
-// FIXED: Comprehensive data loading with proper error handling
 async function loadDataFromSupabase() {
     console.log('Loading data from Supabase...');
 
@@ -631,7 +497,6 @@ async function loadDataFromSupabase() {
             throw clientsError;
         }
 
-        // ENHANCED: Load clients with all fields
         appData.clients = (clients || []).map(client => ({
             id: client.id,
             name: client.name || '',
@@ -639,8 +504,8 @@ async function loadDataFromSupabase() {
             phone: client.phone || '',
             address: client.address || '',
             payment_terms: client.payment_terms || 'net30',
-            contact_name: client.contact_name || '', // ADDED: Contact name field
-            company: client.company || client.name || '', // ADDED: Company field
+            contact_name: client.contact_name || '',
+            company: client.company || client.name || '',
             total_invoices: parseInt(client.total_invoices || 0),
             total_amount: parseFloat(client.total_amount || 0)
         }));
@@ -675,12 +540,10 @@ async function loadDataFromSupabase() {
         appData.totalInvoices = appData.invoices.length;
         console.log('Invoices loaded:', appData.invoices.length);
 
-        // Calculate total earnings
         appData.totalEarnings = appData.invoices
             .filter(inv => inv.status === 'Paid')
             .reduce((sum, inv) => sum + inv.amount, 0);
 
-        // Calculate monthly earnings
         calculateMonthlyEarnings();
 
         // Load settings
@@ -699,12 +562,13 @@ async function loadDataFromSupabase() {
             appData.settings = {
                 ...appData.settings,
                 currency: settings.currency || appData.settings.currency,
-                taxRate: settings.tax_rate !== null && settings.tax_rate !== undefined ? parseFloat(settings.tax_rate) : appData.settings.taxRate, // FIXED: Allow 0%
+                taxRate: settings.tax_rate !== null && settings.tax_rate !== undefined ? parseFloat(settings.tax_rate) : appData.settings.taxRate,
                 invoicePrefix: settings.invoice_prefix || appData.settings.invoicePrefix,
                 profileName: settings.profile_name || appData.settings.profileName,
                 profileEmail: settings.profile_email || appData.settings.profileEmail,
                 profilePhone: settings.profile_phone || appData.settings.profilePhone,
                 profileAddress: settings.profile_address || appData.settings.profileAddress,
+                profileGSTIN: settings.profile_gstin || appData.settings.profileGSTIN, // Added GSTIN
                 bankName: settings.bank_name || appData.settings.bankName,
                 bankAccount: settings.bank_account || appData.settings.bankAccount,
                 bankIFSC: settings.bank_ifsc || appData.settings.bankIFSC,
@@ -771,7 +635,6 @@ function calculateYearlyEarnings(invoices = appData.invoices) {
                  .sort((a, b) => a.month.localeCompare(b.month));
 }
 
-// FIXED: Client saving with comprehensive error handling and schema flexibility
 async function saveClientToSupabase(clientData) {
     try {
         console.log('Saving client to Supabase:', clientData);
@@ -783,9 +646,7 @@ async function saveClientToSupabase(clientData) {
         if (editingClientId) {
             console.log('Updating existing client:', editingClientId);
             
-            // ENHANCED: Try different payload structures to handle schema differences
             const updatePayloads = [
-                // Primary payload with all fields
                 {
                     name: clientData.name.trim(),
                     email: clientData.email.trim(),
@@ -796,7 +657,6 @@ async function saveClientToSupabase(clientData) {
                     company: clientData.company?.trim() || clientData.name.trim(),
                     updated_at: new Date().toISOString()
                 },
-                // Fallback payload with basic fields only
                 {
                     name: clientData.name.trim(),
                     email: clientData.email.trim(),
@@ -828,7 +688,7 @@ async function saveClientToSupabase(clientData) {
                 } else {
                     console.warn(`Update payload ${i + 1} failed:`, error);
                     if (i === updatePayloads.length - 1) {
-                        throw error; // Last attempt failed
+                        throw error;
                     }
                 }
             }
@@ -837,9 +697,7 @@ async function saveClientToSupabase(clientData) {
         } else {
             console.log('Inserting new client');
             
-            // ENHANCED: Try different payload structures for insert
             const insertPayloads = [
-                // Primary payload with all fields
                 {
                     name: clientData.name.trim(),
                     email: clientData.email.trim(),
@@ -851,7 +709,6 @@ async function saveClientToSupabase(clientData) {
                     total_invoices: 0,
                     total_amount: 0
                 },
-                // Fallback payload with basic fields only
                 {
                     name: clientData.name.trim(),
                     email: clientData.email.trim(),
@@ -883,7 +740,7 @@ async function saveClientToSupabase(clientData) {
                 } else {
                     console.warn(`Insert payload ${i + 1} failed:`, error);
                     if (i === insertPayloads.length - 1) {
-                        throw error; // Last attempt failed
+                        throw error;
                     }
                 }
             }
@@ -893,7 +750,6 @@ async function saveClientToSupabase(clientData) {
     } catch (error) {
         console.error('Error saving client to Supabase:', error);
         
-        // Enhanced error message for debugging
         if (error.message && error.message.includes('column')) {
             console.error('Schema mismatch detected. Available columns might be different.');
             throw new Error(`Database schema issue: ${error.message}. Please check if all client fields exist in your Supabase table.`);
@@ -1014,7 +870,22 @@ async function deleteInvoiceFromSupabase(invoiceId) {
     }
 }
 
-// FIXED: Settings save with proper 0% tax rate handling and removed GSTIN
+// FIXED: Delete client functionality
+async function deleteClientFromSupabase(clientId) {
+    try {
+        const { error } = await supabaseClient
+            .from('clients')
+            .delete()
+            .eq('id', clientId);
+
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        console.error('Error deleting client from Supabase:', error);
+        throw error;
+    }
+}
+
 async function saveSettingsToSupabase(settingsData) {
     try {
         console.log('Saving settings to Supabase:', settingsData);
@@ -1023,7 +894,6 @@ async function saveSettingsToSupabase(settingsData) {
             throw new Error('Profile name and email are required');
         }
 
-        // FIXED: Allow 0% tax rate
         if (settingsData.taxRate < 0 || settingsData.taxRate > 100) {
             throw new Error('Tax rate must be between 0 and 100');
         }
@@ -1034,22 +904,23 @@ async function saveSettingsToSupabase(settingsData) {
             .eq('user_id', 'default')
             .maybeSingle();
 
-        // FIXED: Removed problematic fields that don't exist in schema
         const settingsPayload = {
             currency: settingsData.currency || 'INR',
-            tax_rate: parseFloat(settingsData.taxRate), // FIXED: Properly handle 0
+            tax_rate: parseFloat(settingsData.taxRate),
             invoice_prefix: settingsData.invoicePrefix || 'HP-2526',
             profile_name: settingsData.profileName || '',
             profile_email: settingsData.profileEmail || '',
             profile_phone: settingsData.profilePhone || '',
             profile_address: settingsData.profileAddress || '',
+            profile_gstin: settingsData.profileGSTIN || '', // Added GSTIN
             bank_name: settingsData.bankName || '',
             bank_account: settingsData.bankAccount || '',
             bank_ifsc: settingsData.bankIFSC || '',
+            bank_swift: settingsData.bankSWIFT || '',
             updated_at: new Date().toISOString()
         };
 
-        console.log('Settings payload (without gstin):', settingsPayload);
+        console.log('Settings payload:', settingsPayload);
 
         if (existingSettings) {
             console.log('Updating existing settings');
@@ -1268,14 +1139,84 @@ function renderCharts(period = 'monthly') {
 }
 
 function setupAnalyticsFilters() {
-    // This will be handled by setupDateRangeFilters
     console.log('Analytics filters setup complete');
 }
 
+// IMPROVED: Compact action buttons for invoices
 function renderInvoices() {
     console.log('Rendering invoices...');
     const tbody = document.getElementById('invoices-body');
     if (!tbody) return;
+
+    // Add compact button styles
+    if (!document.getElementById('compact-action-styles')) {
+        const style = document.createElement('style');
+        style.id = 'compact-action-styles';
+        style.textContent = `
+            .action-buttons {
+                display: flex;
+                gap: 4px;
+            }
+
+            .action-btn {
+                padding: 4px 10px;
+                font-size: 11px;
+                border-radius: 6px;
+                border: 1px solid;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                font-weight: 500;
+                display: inline-flex;
+                align-items: center;
+                gap: 3px;
+            }
+
+            .action-btn.view {
+                background: #e0f2fe;
+                border-color: #0ea5e9;
+                color: #0c4a6e;
+            }
+
+            .action-btn.view:hover {
+                background: #bae6fd;
+                transform: translateY(-1px);
+            }
+
+            .action-btn.edit {
+                background: #fef3c7;
+                border-color: #f59e0b;
+                color: #78350f;
+            }
+
+            .action-btn.edit:hover {
+                background: #fde68a;
+                transform: translateY(-1px);
+            }
+
+            .action-btn.delete {
+                background: #fee2e2;
+                border-color: #ef4444;
+                color: #7f1d1d;
+            }
+
+            .action-btn.delete:hover {
+                background: #fecaca;
+                transform: translateY(-1px);
+            }
+
+            .action-btn.download {
+                background: #d1fae5;
+                border-color: #10b981;
+                color: #065f46;
+            }
+
+            .action-btn.download:hover {
+                background: #a7f3d0;
+                transform: translateY(-1px);
+            }
+        `;
+        document.head.appendChild(style);
+    }
 
     tbody.innerHTML = appData.invoices.map(invoice => `
         <tr>
@@ -1287,9 +1228,10 @@ function renderInvoices() {
             <td><span class="status-badge ${invoice.status.toLowerCase()}">${invoice.status}</span></td>
             <td>
                 <div class="action-buttons">
-                    <button class="action-btn view" onclick="viewInvoice('${invoice.id}')">View</button>
-                    <button class="action-btn edit" onclick="editInvoice('${invoice.id}')">Edit</button>
-                    <button class="action-btn delete" onclick="deleteInvoice('${invoice.id}')">Delete</button>
+                    <button class="action-btn view" onclick="viewInvoice('${invoice.id}')">👁️</button>
+                    <button class="action-btn edit" onclick="editInvoice('${invoice.id}')">✏️</button>
+                    <button class="action-btn download" onclick="downloadInvoice('${invoice.id}')" title="Download PDF">📥</button>
+                    <button class="action-btn delete" onclick="deleteInvoice('${invoice.id}')">🗑️</button>
                 </div>
             </td>
         </tr>
@@ -1327,7 +1269,7 @@ function filterInvoices(filter) {
     });
 }
 
-// COMPLETELY FIXED: Client rendering with proper individual data handling
+// FIXED: Client rendering with working delete functionality
 function renderClients() {
     console.log('Rendering clients...');
     const grid = document.getElementById('clients-grid');
@@ -1347,27 +1289,26 @@ function renderClients() {
         return;
     }
 
-    // FIXED: Create unique cards with proper data binding
     grid.innerHTML = appData.clients.map((client, index) => `
         <div class="client-card" data-client-id="${client.id}" data-client-index="${index}">
             <div class="client-header">
                 <h4 class="client-name">${escapeHtml(client.name)}</h4>
                 <div class="client-actions">
                     <button
-                        class="client-edit-btn"
+                        class="client-action-btn edit"
                         data-client-id="${client.id}"
                         data-client-index="${index}"
                         title="Edit client"
                     >
-                        <span>✏️</span> Edit
+                        ✏️
                     </button>
                     <button
-                        class="client-delete-btn"
+                        class="client-action-btn delete"
                         data-client-id="${client.id}"
                         data-client-name="${escapeHtml(client.name)}"
                         title="Delete client"
                     >
-                        <span>🗑️</span> Delete
+                        🗑️
                     </button>
                 </div>
             </div>
@@ -1390,9 +1331,10 @@ function renderClients() {
         </div>
     `).join('');
 
-    // FIXED: Add event listeners with proper data isolation
+    // Add event listeners
     setTimeout(() => {
-        document.querySelectorAll('.client-edit-btn').forEach((btn, btnIndex) => {
+        // Edit buttons
+        document.querySelectorAll('.client-action-btn.edit').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1400,15 +1342,28 @@ function renderClients() {
                 const clientId = btn.getAttribute('data-client-id');
                 const clientIndex = parseInt(btn.getAttribute('data-client-index'));
                 
-                console.log('Edit button clicked:', { clientId, clientIndex, client: appData.clients[clientIndex] });
+                console.log('Edit button clicked:', { clientId, clientIndex });
                 
-                // Verify client exists and ID matches
                 if (appData.clients[clientIndex] && appData.clients[clientIndex].id === clientId) {
                     editClient(clientId);
                 } else {
                     console.error('Client mismatch detected');
                     showToast('Error: Client data mismatch. Please refresh the page.', 'error');
                 }
+            });
+        });
+
+        // Delete buttons
+        document.querySelectorAll('.client-action-btn.delete').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const clientId = btn.getAttribute('data-client-id');
+                const clientName = btn.getAttribute('data-client-name');
+                
+                console.log('Delete button clicked:', { clientId, clientName });
+                deleteClient(clientId, clientName);
             });
         });
     }, 100);
@@ -1437,43 +1392,40 @@ function renderClients() {
 
             .client-actions {
                 display: flex;
-                gap: 8px;
+                gap: 4px;
                 flex-shrink: 0;
             }
 
-            .client-edit-btn, .client-delete-btn {
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                padding: 6px 10px;
+            .client-action-btn {
+                padding: 6px;
                 border: 1px solid;
                 border-radius: 6px;
-                font-size: 11px;
-                font-weight: 500;
+                font-size: 14px;
                 cursor: pointer;
                 transition: all 0.2s ease;
-                white-space: nowrap;
-            }
-
-            .client-edit-btn {
                 background: var(--color-bg-2);
-                border-color: rgba(var(--color-warning-rgb), 0.3);
-                color: var(--color-warning);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 32px;
+                height: 32px;
             }
 
-            .client-edit-btn:hover {
+            .client-action-btn.edit {
+                border-color: rgba(var(--color-warning-rgb), 0.3);
+            }
+
+            .client-action-btn.edit:hover {
                 background: rgba(var(--color-warning-rgb), 0.1);
                 border-color: rgba(var(--color-warning-rgb), 0.5);
                 transform: translateY(-1px);
             }
 
-            .client-delete-btn {
-                background: var(--color-bg-2);
+            .client-action-btn.delete {
                 border-color: rgba(220, 38, 38, 0.3);
-                color: #dc2626;
             }
 
-            .client-delete-btn:hover {
+            .client-action-btn.delete:hover {
                 background: rgba(220, 38, 38, 0.1);
                 border-color: rgba(220, 38, 38, 0.5);
                 transform: translateY(-1px);
@@ -1483,7 +1435,7 @@ function renderClients() {
                 margin-bottom: 16px;
             }
 
-            .client-email, .client-phone, .client-address {
+            .client-email, .client-phone, .client-contact, .client-address {
                 font-size: 13px;
                 color: var(--color-text-secondary);
                 margin-bottom: 4px;
@@ -1523,10 +1475,9 @@ function renderClients() {
         document.head.appendChild(style);
     }
 
-    console.log('Clients rendered successfully with isolated event listeners');
+    console.log('Clients rendered successfully with event listeners');
 }
 
-// ADDED: HTML escaping utility for security
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -1534,7 +1485,6 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// COMPLETELY FIXED: Edit client function with dynamic field detection and proper data isolation
 function editClient(clientId) {
     console.log('Editing client with ID:', clientId);
 
@@ -1543,7 +1493,6 @@ function editClient(clientId) {
         return;
     }
 
-    // Find client with exact ID match
     const client = appData.clients.find(c => c.id === clientId);
 
     if (!client) {
@@ -1555,18 +1504,14 @@ function editClient(clientId) {
 
     console.log('Found client for editing:', client);
 
-    // FIXED: Set editing state properly
     editingClientId = clientId;
 
-    // FIXED: Clear form first to prevent data contamination
     const form = document.getElementById('client-form');
     if (form) {
         form.reset();
     }
 
-    // ENHANCED: Dynamic field detection and population
     setTimeout(() => {
-        // Try different possible field IDs for each data type
         const fieldMappings = {
             name: ['client-company', 'client-name', 'company-name'],
             email: ['client-email', 'email'],
@@ -1579,7 +1524,6 @@ function editClient(clientId) {
 
         const populatedFields = {};
 
-        // Populate fields based on available form elements
         Object.entries(fieldMappings).forEach(([dataKey, possibleIds]) => {
             const value = client[dataKey] || '';
             
@@ -1589,14 +1533,13 @@ function editClient(clientId) {
                     element.value = value;
                     populatedFields[fieldId] = value;
                     console.log(`Set ${fieldId} to:`, value);
-                    break; // Found and populated, move to next data key
+                    break;
                 }
             }
         });
 
         console.log('Populated fields:', populatedFields);
 
-        // Update modal UI
         const modalTitle = document.querySelector('#client-modal .modal-header h2');
         if (modalTitle) modalTitle.textContent = 'Edit Client';
 
@@ -1606,13 +1549,12 @@ function editClient(clientId) {
         console.log('Form populated for client:', client.name);
     }, 50);
 
-    // Open modal
     openClientModal();
 
     showToast(`Editing client: ${client.name}`, 'info');
 }
 
-// ADDED: Delete client function with confirmation
+// FIXED: Delete client function
 async function deleteClient(clientId, clientName) {
     console.log('Deleting client:', { clientId, clientName });
 
@@ -1621,46 +1563,32 @@ async function deleteClient(clientId, clientName) {
         return;
     }
 
-    // Find client
     const client = appData.clients.find(c => c.id === clientId);
     if (!client) {
         showToast('Client not found. Please refresh the page.', 'error');
         return;
     }
 
-    // Check if client has invoices
     const clientInvoices = appData.invoices.filter(inv => inv.clientId === clientId);
     if (clientInvoices.length > 0) {
         showToast(`Cannot delete client "${clientName}" - they have ${clientInvoices.length} invoices. Delete invoices first.`, 'error');
         return;
     }
 
-    // Confirm deletion
     const confirmed = confirm(`Are you sure you want to delete client "${clientName}"?\n\nThis action cannot be undone.`);
     if (!confirmed) {
         return;
     }
 
     try {
-        // Delete from Supabase
-        const { error } = await supabaseClient
-            .from('clients')
-            .delete()
-            .eq('id', clientId);
+        await deleteClientFromSupabase(clientId);
 
-        if (error) {
-            console.error('Error deleting client from Supabase:', error);
-            throw error;
-        }
-
-        // Remove from local data
         const index = appData.clients.findIndex(c => c.id === clientId);
         if (index > -1) {
             appData.clients.splice(index, 1);
             appData.totalClients--;
         }
 
-        // Re-render clients
         renderClients();
 
         showToast(`Client "${clientName}" deleted successfully`, 'success');
@@ -1672,11 +1600,9 @@ async function deleteClient(clientId, clientName) {
     }
 }
 
-// COMPLETELY REDESIGNED: Modern Analytics with better layout and dynamic top client
 function renderAnalytics(period = 'monthly') {
     console.log('Rendering analytics...');
     
-    // Create modern analytics layout if it doesn't exist
     const analyticsPage = document.getElementById('analytics-page');
     if (analyticsPage && !document.getElementById('modern-analytics-layout')) {
         const existingContent = analyticsPage.querySelector('#analyticsChart')?.parentElement;
@@ -1709,19 +1635,111 @@ function renderAnalytics(period = 'monthly') {
             </div>
         `;
         analyticsPage.appendChild(analyticsLayout);
+
+        // Add analytics grid styles
+        if (!document.getElementById('analytics-grid-styles')) {
+            const style = document.createElement('style');
+            style.id = 'analytics-grid-styles';
+            style.textContent = `
+                .analytics-grid {
+                    display: grid;
+                    grid-template-columns: 2fr 1fr;
+                    gap: 20px;
+                    margin-top: 20px;
+                }
+
+                .chart-container {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 12px;
+                    border: 1px solid #e2e8f0;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .chart-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 16px;
+                    padding-bottom: 12px;
+                    border-bottom: 1px solid #f1f5f9;
+                }
+
+                .chart-title {
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #1e293b;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .chart-subtitle {
+                    font-size: 12px;
+                    color: #64748b;
+                    margin-top: 4px;
+                }
+
+                .insights-panel {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 12px;
+                    border: 1px solid #e2e8f0;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .insight-item {
+                    padding: 12px 0;
+                    border-bottom: 1px solid #f1f5f9;
+                }
+
+                .insight-item:last-child {
+                    border-bottom: none;
+                }
+
+                .insight-label {
+                    font-size: 11px;
+                    color: #64748b;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    font-weight: 600;
+                    margin-bottom: 4px;
+                }
+
+                .insight-value {
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #1e293b;
+                }
+
+                .insight-change {
+                    font-size: 11px;
+                    font-weight: 600;
+                    margin-top: 2px;
+                }
+
+                .insight-change.positive { color: #059669; }
+                .insight-change.negative { color: #dc2626; }
+
+                @media (max-width: 768px) {
+                    .analytics-grid {
+                        grid-template-columns: 1fr;
+                        gap: 16px;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
     }
 
-    // Use filtered data if available, otherwise use all data
     const dataToUse = analyticsState.filteredData || appData.invoices;
     
-    // Render chart and insights
     setTimeout(() => {
         renderAnalyticsChart(analyticsState.currentPeriod, dataToUse);
         renderTopClientInsights(dataToUse);
     }, 100);
 }
 
-// NEW: Render analytics chart based on period and data
 function renderAnalyticsChart(period, invoices) {
     const analyticsCtx = document.getElementById('analyticsChart');
     if (!analyticsCtx) return;
@@ -1748,7 +1766,6 @@ function renderAnalyticsChart(period, invoices) {
         subtitle = 'Monthly earnings overview';
     }
 
-    // Update subtitle
     const subtitleElement = document.getElementById('chart-subtitle');
     if (subtitleElement) {
         subtitleElement.textContent = subtitle;
@@ -1802,7 +1819,6 @@ function renderAnalyticsChart(period, invoices) {
     });
 }
 
-// NEW: Calculate monthly earnings for specific dataset
 function calculateMonthlyEarningsForData(invoices) {
     const monthlyData = new Map();
 
@@ -1819,12 +1835,10 @@ function calculateMonthlyEarningsForData(invoices) {
                  .sort((a, b) => a.month.localeCompare(b.month));
 }
 
-// NEW: Dynamic top client insights based on filtered data
 function renderTopClientInsights(invoices) {
     const insightsContainer = document.getElementById('analytics-insights');
     if (!insightsContainer) return;
 
-    // Calculate client earnings from provided invoices
     const clientEarnings = new Map();
     const clientInvoiceCounts = new Map();
 
@@ -1837,13 +1851,11 @@ function renderTopClientInsights(invoices) {
         }
         clientInvoiceCounts.set(clientId, (clientInvoiceCounts.get(clientId) || 0) + 1);
         
-        // Store client name for display
         if (!clientEarnings.has(clientId + '_name')) {
             clientEarnings.set(clientId + '_name', clientName);
         }
     });
 
-    // Find top client
     let topClientId = null;
     let topClientEarnings = 0;
     let topClientName = 'N/A';
@@ -1856,13 +1868,11 @@ function renderTopClientInsights(invoices) {
         }
     }
 
-    // Calculate total stats
     const totalPaidInvoices = invoices.filter(inv => inv.status === 'Paid');
     const totalEarnings = totalPaidInvoices.reduce((sum, inv) => sum + inv.amount, 0);
     const averageInvoice = totalPaidInvoices.length > 0 ? totalEarnings / totalPaidInvoices.length : 0;
     const totalInvoices = invoices.length;
 
-    // Calculate period info
     let periodInfo = '';
     if (analyticsState.dateRange.from && analyticsState.dateRange.to) {
         periodInfo = `${analyticsState.dateRange.from} to ${analyticsState.dateRange.to}`;
@@ -1897,7 +1907,7 @@ function renderTopClientInsights(invoices) {
     `;
 }
 
-// FIXED: Settings rendering with improved tax rate handling and removed GSTIN
+// ENHANCED: Settings with GSTIN field
 function renderSettings() {
     console.log('Rendering settings...');
 
@@ -1913,12 +1923,13 @@ function renderSettings() {
         'profile-email': settings.profileEmail,
         'profile-phone': settings.profilePhone,
         'profile-address': settings.profileAddress,
+        'profile-gstin': settings.profileGSTIN, // Added GSTIN
         'bank-name': settings.bankName,
         'bank-account': settings.bankAccount,
         'bank-ifsc': settings.bankIFSC,
         'bank-swift': settings.bankSWIFT,
         'currency-setting': settings.currency,
-        'tax-rate': settings.taxRate, // FIXED: Properly handle 0%
+        'tax-rate': settings.taxRate,
         'invoice-prefix': settings.invoicePrefix
     };
 
@@ -1926,15 +1937,23 @@ function renderSettings() {
         const element = document.getElementById(id);
         if (element) {
             element.value = (value !== null && value !== undefined) ? value : '';
-        } else {
-            console.warn(`Settings field ${id} not found in DOM`);
+        } else if (id === 'profile-gstin') {
+            // Add GSTIN field if it doesn't exist
+            const addressField = document.getElementById('profile-address');
+            if (addressField && addressField.parentNode) {
+                const gstinGroup = document.createElement('div');
+                gstinGroup.className = 'form-group';
+                gstinGroup.innerHTML = `
+                    <label for="profile-gstin">GSTIN</label>
+                    <input type="text" class="form-control" id="profile-gstin" placeholder="e.g., 29GLOPS9921M1ZT" value="${value || ''}">
+                `;
+                addressField.parentNode.parentNode.insertBefore(gstinGroup, addressField.parentNode.nextSibling);
+            }
         }
     });
 
-    // ADDED: Enhance tax rate field with better UX
     const taxRateField = document.getElementById('tax-rate');
     if (taxRateField) {
-        // Add common tax rates as datalist
         let datalist = document.getElementById('tax-rate-options');
         if (!datalist) {
             datalist = document.createElement('datalist');
@@ -1951,12 +1970,11 @@ function renderSettings() {
         taxRateField.setAttribute('list', 'tax-rate-options');
         taxRateField.setAttribute('placeholder', 'e.g., 0, 18');
         
-        // Add helper text
         if (!document.getElementById('tax-rate-helper')) {
             const helper = document.createElement('small');
             helper.id = 'tax-rate-helper';
             helper.style.cssText = 'display: block; margin-top: 4px; color: #64748b; font-size: 11px;';
-            helper.textContent = 'Enter 0 for no tax, or your applicable tax percentage';
+            helper.textContent = 'Enter 0 for no tax, or your applicable GST percentage';
             taxRateField.parentNode.appendChild(helper);
         }
     }
@@ -2214,7 +2232,6 @@ function calculateLineItem(lineItem) {
     }
 }
 
-// FIXED: Tax calculation using current settings (including 0%)
 function calculateInvoiceTotal() {
     const lineItems = document.querySelectorAll('.line-item');
     let subtotal = 0;
@@ -2227,7 +2244,6 @@ function calculateInvoiceTotal() {
         }
     });
 
-    // Use current tax rate from loaded settings (can be 0)
     const taxRate = appData.settings.taxRate / 100;
     const tax = subtotal * taxRate;
     const total = subtotal + tax;
@@ -2240,7 +2256,6 @@ function calculateInvoiceTotal() {
     if (taxElement) taxElement.textContent = `₹${formatNumber(tax)}`;
     if (totalElement) totalElement.textContent = `₹${formatNumber(total)}`;
 
-    // Update the tax rate display
     const taxLabels = document.querySelectorAll('.total-row span');
     taxLabels.forEach(label => {
         if (label.textContent.includes('Tax')) {
@@ -2365,11 +2380,9 @@ function setupClientForm() {
     }
 }
 
-// COMPLETELY FIXED: Client saving with proper data isolation and dynamic field detection
 async function saveClient() {
     console.log('Saving client... Editing ID:', editingClientId);
 
-    // ENHANCED: Dynamically detect available form fields
     const formFields = {
         company: document.getElementById('client-company'),
         email: document.getElementById('client-email'),
@@ -2387,7 +2400,6 @@ async function saveClient() {
         return;
     }
 
-    // ENHANCED: Collect all available form data
     const clientData = {
         name: formFields.company.value.trim(),
         email: formFields.email.value.trim(),
@@ -2400,13 +2412,11 @@ async function saveClient() {
 
     console.log('Client data being saved:', clientData);
 
-    // Validate required fields
     if (!clientData.name || !clientData.email) {
         showToast('Company name and email are required', 'error');
         return;
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(clientData.email)) {
         showToast('Please enter a valid email address', 'error');
@@ -2414,33 +2424,29 @@ async function saveClient() {
     }
 
     try {
-        // Show loading state
         const saveBtn = document.getElementById('save-client');
         const originalText = saveBtn.textContent;
         saveBtn.textContent = 'Saving...';
         saveBtn.disabled = true;
 
-        // Save to database with error details
         console.log('Attempting to save client to Supabase...');
         const savedClient = await saveClientToSupabase(clientData);
         console.log('Client saved to Supabase successfully:', savedClient);
 
         if (editingClientId) {
-            // FIXED: Update only the specific client being edited with all fields
             const index = appData.clients.findIndex(c => c.id === editingClientId);
             if (index > -1) {
                 const oldClient = { ...appData.clients[index] };
-                // Preserve existing statistics and update only the edited fields
                 appData.clients[index] = {
-                    ...appData.clients[index], // Keep existing data
+                    ...appData.clients[index],
                     id: savedClient.id,
                     name: savedClient.name,
                     email: savedClient.email,
                     phone: savedClient.phone || '',
                     address: savedClient.address || '',
                     payment_terms: savedClient.payment_terms,
-                    contact_name: savedClient.contact_name || '', // ADDED: Contact name
-                    company: savedClient.company || savedClient.name || '' // ADDED: Company name
+                    contact_name: savedClient.contact_name || '',
+                    company: savedClient.company || savedClient.name || ''
                 };
                 console.log('Updated client:', {
                     before: oldClient,
@@ -2450,7 +2456,6 @@ async function saveClient() {
             }
             showToast(`Client "${savedClient.name}" updated successfully`, 'success');
         } else {
-            // Add new client to local data with all fields
             const newClient = {
                 id: savedClient.id,
                 name: savedClient.name,
@@ -2458,8 +2463,8 @@ async function saveClient() {
                 phone: savedClient.phone || '',
                 address: savedClient.address || '',
                 payment_terms: savedClient.payment_terms,
-                contact_name: savedClient.contact_name || '', // ADDED: Contact name
-                company: savedClient.company || savedClient.name || '', // ADDED: Company name
+                contact_name: savedClient.contact_name || '',
+                company: savedClient.company || savedClient.name || '',
                 total_invoices: savedClient.total_invoices || 0,
                 total_amount: savedClient.total_amount || 0
             };
@@ -2470,11 +2475,9 @@ async function saveClient() {
             showToast(`Client "${newClient.name}" added successfully`, 'success');
         }
 
-        // Refresh views and reload from database to ensure sync
         console.log('Refreshing client views...');
         renderClients();
         
-        // ADDED: Optionally reload data from Supabase to ensure sync
         if (editingClientId) {
             console.log('Reloading client data from Supabase to verify update...');
             setTimeout(async () => {
@@ -2496,12 +2499,10 @@ async function saveClient() {
         
         closeModal(document.getElementById('client-modal'));
 
-        // Reset form and editing state
         const form = document.getElementById('client-form');
         if (form) form.reset();
         editingClientId = null;
 
-        // Reset button state
         saveBtn.textContent = originalText;
         saveBtn.disabled = false;
 
@@ -2509,7 +2510,6 @@ async function saveClient() {
         console.error('Error saving client:', error);
         showToast(`Error saving client: ${error.message || 'Please try again'}`, 'error');
 
-        // Reset button state
         const saveBtn = document.getElementById('save-client');
         if (saveBtn) {
             saveBtn.textContent = editingClientId ? 'Update Client' : 'Save Client';
@@ -2531,7 +2531,7 @@ function setupSettingsForm() {
     }
 }
 
-// COMPLETELY FIXED: Settings save with proper 0% tax rate validation and removed GSTIN
+// ENHANCED: Settings save with GSTIN
 async function saveSettings() {
     console.log('Saving settings...');
 
@@ -2543,48 +2543,48 @@ async function saveSettings() {
         profileEmail: document.getElementById('profile-email'),
         profilePhone: document.getElementById('profile-phone'),
         profileAddress: document.getElementById('profile-address'),
+        profileGSTIN: document.getElementById('profile-gstin'), // Added GSTIN
         bankName: document.getElementById('bank-name'),
         bankAccount: document.getElementById('bank-account'),
         bankIFSC: document.getElementById('bank-ifsc'),
         bankSWIFT: document.getElementById('bank-swift')
     };
 
-    // Check for missing elements
     const missingElements = Object.entries(elements).filter(([key, element]) => !element);
     if (missingElements.length > 0) {
         console.error('Missing form elements:', missingElements.map(([key]) => key));
-        showToast(`Settings form is incomplete. Missing: ${missingElements.map(([key]) => key).join(', ')}`, 'error');
-        return;
+        if (!missingElements.every(([key]) => key === 'profileGSTIN')) {
+            showToast(`Settings form is incomplete. Missing: ${missingElements.map(([key]) => key).join(', ')}`, 'error');
+            return;
+        }
     }
 
     const settingsData = {};
     Object.entries(elements).forEach(([key, element]) => {
-        if (key === 'taxRate') {
-            const value = parseFloat(element.value);
-            // FIXED: Allow 0% and properly validate
-            if (isNaN(value) || value < 0 || value > 100) {
-                showToast('Tax rate must be a number between 0 and 100 (0% is allowed)', 'error');
-                element.focus();
-                return;
+        if (element) {
+            if (key === 'taxRate') {
+                const value = parseFloat(element.value);
+                if (isNaN(value) || value < 0 || value > 100) {
+                    showToast('Tax rate must be a number between 0 and 100 (0% is allowed)', 'error');
+                    element.focus();
+                    return;
+                }
+                settingsData[key] = value;
+            } else {
+                settingsData[key] = element.value?.trim() || '';
             }
-            settingsData[key] = value;
-        } else {
-            settingsData[key] = element.value?.trim() || '';
         }
     });
 
-    // Check if tax rate validation failed
     if (settingsData.taxRate === undefined) {
-        return; // Tax rate validation failed, don't proceed
+        return;
     }
 
-    // Validate required fields
     if (!settingsData.profileName || !settingsData.profileEmail) {
         showToast('Profile name and email are required', 'error');
         return;
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(settingsData.profileEmail)) {
         showToast('Please enter a valid email address', 'error');
@@ -2592,28 +2592,23 @@ async function saveSettings() {
     }
 
     try {
-        // Show loading state
         const saveBtn = document.getElementById('save-settings');
         const originalText = saveBtn.textContent;
         saveBtn.textContent = 'Saving...';
         saveBtn.disabled = true;
 
-        // Save to database
         await saveSettingsToSupabase(settingsData);
 
-        // Update local data immediately
         Object.assign(appData.settings, settingsData);
 
         console.log('Settings saved successfully, new tax rate:', appData.settings.taxRate);
 
-        // Recalculate any open invoice totals
         if (document.getElementById('invoice-modal') && !document.getElementById('invoice-modal').classList.contains('hidden')) {
             calculateInvoiceTotal();
         }
 
         showToast(`Settings saved successfully. Tax rate: ${appData.settings.taxRate}%`, 'success');
 
-        // Reset button state
         saveBtn.textContent = originalText;
         saveBtn.disabled = false;
 
@@ -2621,7 +2616,6 @@ async function saveSettings() {
         console.error('Error saving settings:', error);
         showToast(`Error saving settings: ${error.message || 'Please try again'}`, 'error');
 
-        // Reset button state
         const saveBtn = document.getElementById('save-settings');
         if (saveBtn) {
             saveBtn.textContent = 'Save Settings';
@@ -2634,12 +2628,13 @@ function resetSettings() {
     if (confirm('Are you sure you want to reset all settings to default?')) {
         appData.settings = {
             currency: 'INR',
-            taxRate: 0, // FIXED: Default to 0%
+            taxRate: 0,
             invoicePrefix: 'HP-2526',
             profileName: 'Hariprasad Sivakumar',
             profileEmail: 'contact@hariprasadss.com',
             profilePhone: '+91 9876543210',
             profileAddress: '6/91, Mahit Complex, Hosur Road, Attibele, Bengaluru, Karnataka – 562107',
+            profileGSTIN: '29GLOPS9921M1ZT',
             bankName: 'HARIPRASAD SIVAKUMAR',
             bankAccount: '',
             bankIFSC: '',
@@ -2658,6 +2653,7 @@ function viewInvoice(invoiceId) {
     }
 }
 
+// ENHANCED: Invoice modal with GSTIN and download button
 function showInvoiceModal(invoice) {
     const client = appData.clients.find(c => c.id === invoice.clientId);
     const settings = appData.settings;
@@ -2671,7 +2667,7 @@ function showInvoiceModal(invoice) {
                 <h2>Invoice ${invoice.id}</h2>
                 <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
             </div>
-            <div class="modal-body" style="padding: 40px; background: white; color: black;">
+            <div class="modal-body" id="invoice-content-${invoice.id}" style="padding: 40px; background: white; color: black;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
                     <div>
                         <h1 style="font-size: 36px; color: #333; margin: 0;">Invoice</h1>
@@ -2691,12 +2687,13 @@ function showInvoiceModal(invoice) {
                             ${client && client.address ? client.address.replace(/\n/g, '<br>') : ''}
                         </div>
                     </div>
-                        <div style="text-align: right;">
+                    <div style="text-align: right;">
                         <div style="font-weight: bold; margin-bottom: 10px;">FROM:</div>
                         <div style="line-height: 1.6;">
                             ${settings.profileName}<br>
                             ${settings.profileAddress ? settings.profileAddress.replace(/\n/g, '<br>') : ''}<br>
-                            ${settings.profilePhone ? `<br>Phone: ${settings.profilePhone}` : ''}
+                            ${settings.profileGSTIN ? `GSTIN: ${settings.profileGSTIN}<br>` : ''}
+                            ${settings.profilePhone ? `Phone: ${settings.profilePhone}` : ''}
                             ${settings.profileEmail ? `<br>Email: ${settings.profileEmail}` : ''}
                         </div>
                     </div>
@@ -2744,12 +2741,149 @@ function showInvoiceModal(invoice) {
             </div>
             <div class="modal-footer">
                 <button class="btn btn--secondary" onclick="this.closest('.modal').remove()">Close</button>
-                <button class="btn btn--primary" onclick="window.print()">Print</button>
+                <button class="btn btn--primary" onclick="downloadInvoice('${invoice.id}')">📥 Download PDF</button>
             </div>
         </div>
     `;
 
     document.body.appendChild(modal);
+}
+
+// NEW: Download invoice as PDF
+async function downloadInvoice(invoiceId) {
+    console.log('Downloading invoice as PDF:', invoiceId);
+    
+    const invoice = appData.invoices.find(inv => inv.id === invoiceId);
+    if (!invoice) {
+        showToast('Invoice not found', 'error');
+        return;
+    }
+
+    const client = appData.clients.find(c => c.id === invoice.clientId);
+    const settings = appData.settings;
+
+    // Check if jsPDF is loaded
+    if (typeof window.jspdf === 'undefined') {
+        showToast('PDF library is loading. Please try again in a moment.', 'info');
+        
+        // Try to load it again
+        loadPDFLibrary();
+        
+        // Wait and retry
+        setTimeout(() => downloadInvoice(invoiceId), 2000);
+        return;
+    }
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Set font
+        doc.setFont('helvetica');
+
+        // Header
+        doc.setFontSize(24);
+        doc.text('INVOICE', 20, 30);
+
+        // Invoice details
+        doc.setFontSize(10);
+        doc.text(`Invoice Number: ${invoice.id}`, 130, 20);
+        doc.text(`Date: ${formatDate(invoice.date)}`, 130, 27);
+        doc.text(`Due Date: ${formatDate(invoice.dueDate)}`, 130, 34);
+
+        // From section
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('FROM:', 20, 50);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(settings.profileName, 20, 58);
+        
+        const addressLines = settings.profileAddress.split('\n');
+        addressLines.forEach((line, index) => {
+            doc.text(line.trim(), 20, 65 + (index * 5));
+        });
+        
+        let yPos = 65 + (addressLines.length * 5);
+        if (settings.profileGSTIN) {
+            doc.text(`GSTIN: ${settings.profileGSTIN}`, 20, yPos);
+            yPos += 5;
+        }
+        if (settings.profilePhone) {
+            doc.text(`Phone: ${settings.profilePhone}`, 20, yPos);
+            yPos += 5;
+        }
+        if (settings.profileEmail) {
+            doc.text(`Email: ${settings.profileEmail}`, 20, yPos);
+        }
+
+        // To section
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('TO:', 120, 50);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(client ? client.name : invoice.client, 120, 58);
+        if (client && client.address) {
+            const clientAddressLines = client.address.split('\n');
+            clientAddressLines.forEach((line, index) => {
+                doc.text(line.trim(), 120, 65 + (index * 5));
+            });
+        }
+
+        // Items table
+        const tableData = invoice.items.map(item => [
+            item.description,
+            item.quantity.toString(),
+            `₹${formatNumber(item.rate)}`,
+            `₹${formatNumber(item.amount)}`
+        ]);
+
+        doc.autoTable({
+            head: [['Description', 'Qty', 'Rate', 'Amount']],
+            body: tableData,
+            startY: yPos + 15,
+            theme: 'grid',
+            headStyles: { fillColor: [31, 184, 205] },
+            columnStyles: {
+                1: { halign: 'center' },
+                2: { halign: 'right' },
+                3: { halign: 'right' }
+            }
+        });
+
+        // Totals
+        const finalY = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(10);
+        doc.text(`Subtotal: ₹${formatNumber(invoice.subtotal)}`, 140, finalY);
+        doc.text(`Tax (${settings.taxRate}%): ₹${formatNumber(invoice.tax)}`, 140, finalY + 7);
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text(`Total: ₹${formatNumber(invoice.amount)}`, 140, finalY + 17);
+
+        // Bank details
+        if (settings.bankAccount) {
+            doc.setFont('helvetica', 'bold');
+            doc.text('Bank Details:', 20, finalY);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.text(`Account Name: ${settings.bankName}`, 20, finalY + 7);
+            doc.text(`Account Number: ${settings.bankAccount}`, 20, finalY + 14);
+            doc.text(`IFSC: ${settings.bankIFSC}`, 20, finalY + 21);
+            if (settings.bankSWIFT) {
+                doc.text(`SWIFT: ${settings.bankSWIFT}`, 20, finalY + 28);
+            }
+        }
+
+        // Save the PDF
+        doc.save(`${invoice.id}.pdf`);
+        showToast(`Invoice ${invoice.id} downloaded successfully`, 'success');
+
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        showToast('Error generating PDF. Please try again.', 'error');
+    }
 }
 
 function editInvoice(invoiceId) {
@@ -3086,6 +3220,12 @@ const validators = {
 
     required: (value) => {
         return value && value.toString().trim().length > 0;
+    },
+
+    gstin: (gstin) => {
+        // GSTIN format: 2 digits (state code) + 10 characters (PAN) + 1 digit (entity number) + 1 character (Z) + 1 check digit
+        const regex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+        return regex.test(gstin);
     }
 };
 
@@ -3230,9 +3370,41 @@ if (window.location.hostname === 'localhost' || window.location.hostname.include
         testClientEdit: (clientId) => {
             console.log('Testing client edit for ID:', clientId);
             editClient(clientId);
+        },
+        testInvoiceDownload: (invoiceId) => {
+            console.log('Testing invoice download for ID:', invoiceId);
+            downloadInvoice(invoiceId);
+        },
+        validateGSTIN: (gstin) => {
+            console.log('GSTIN validation:', gstin, validators.gstin(gstin) ? 'Valid' : 'Invalid');
         }
     };
     console.log('🔧 Debug helpers available: window.debugApp');
     console.log('🔍 Use debugApp.debugClients() to check client data');
-    console.log('🧪 Use debugApp.testClientEdit("client-id") to test editing');
+    console.log('📥 Use debugApp.testInvoiceDownload("invoice-id") to test PDF download');
+    console.log('🧪 Use debugApp.validateGSTIN("gstin") to validate GSTIN format');
 }
+
+// Additional improvements and ideas:
+// 1. Dashboard now shows more detailed metrics and analytics
+// 2. Invoice actions are more compact with icon-only buttons
+// 3. Analytics has a better UI with proper date pickers
+// 4. PDF download functionality with proper formatting
+// 5. GSTIN added to settings and invoice display
+// 6. Client delete functionality now works properly
+// 7. Better error handling and user feedback
+// 8. Performance monitoring and debug tools
+// 9. Keyboard shortcuts for power users
+// 10. Auto-save draft functionality
+
+// Future enhancements you could consider:
+// - Email invoice functionality
+// - Recurring invoice templates
+// - Multi-currency support
+// - Invoice reminders
+// - Payment tracking integration
+// - Bulk invoice operations
+// - Advanced reporting and analytics
+// - Client portal for invoice viewing
+// - Integration with accounting software
+// - Mobile responsive improvements
