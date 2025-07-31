@@ -2750,142 +2750,312 @@ function showInvoiceModal(invoice) {
 }
 
 // NEW: Download invoice as PDF
-async function downloadInvoice(invoiceId) {
-    console.log('Downloading invoice as PDF:', invoiceId);
-    
-    const invoice = appData.invoices.find(inv => inv.id === invoiceId);
-    if (!invoice) {
-        showToast('Invoice not found', 'error');
-        return;
-    }
-
-    const client = appData.clients.find(c => c.id === invoice.clientId);
-    const settings = appData.settings;
-
-    // Check if jsPDF is loaded
-    if (typeof window.jspdf === 'undefined') {
-        showToast('PDF library is loading. Please try again in a moment.', 'info');
-        
-        // Try to load it again
-        loadPDFLibrary();
-        
-        // Wait and retry
-        setTimeout(() => downloadInvoice(invoiceId), 2000);
-        return;
-    }
-
+// Enhanced PDF Invoice Generation with Modern Design
+async function generateInvoicePDF(invoiceId) {
     try {
+        const invoice = appData.invoices.find(inv => inv.id === invoiceId);
+        if (!invoice) {
+            showToast('Invoice not found', 'error');
+            return;
+        }
+
+        const client = appData.clients.find(c => c.id === invoice.clientId);
+        if (!client) {
+            showToast('Client not found', 'error');
+            return;
+        }
+
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
-        // Set font
-        doc.setFont('helvetica');
+        // Enhanced color scheme
+        const primaryColor = [33, 128, 141]; // Teal
+        const secondaryColor = [245, 245, 245]; // Light gray
+        const accentColor = [230, 129, 97]; // Orange
+        const textColor = [31, 33, 33]; // Dark charcoal
 
-        // Header
-        doc.setFontSize(24);
-        doc.text('INVOICE', 20, 30);
+        // Page dimensions
+        const pageWidth = doc.internal.pageSize.width;
+        const pageHeight = doc.internal.pageSize.height;
+        const margin = 20;
 
-        // Invoice details
-        doc.setFontSize(10);
-        doc.text(`Invoice Number: ${invoice.id}`, 130, 20);
-        doc.text(`Date: ${formatDate(invoice.date)}`, 130, 27);
-        doc.text(`Due Date: ${formatDate(invoice.dueDate)}`, 130, 34);
+        // Header Section with modern design
+        function drawHeader() {
+            // Company branding section
+            doc.setFillColor(...primaryColor);
+            doc.rect(0, 0, pageWidth, 45, 'F');
 
-        // From section
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('FROM:', 20, 50);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        doc.text(settings.profileName, 20, 58);
-        
-        const addressLines = settings.profileAddress.split('\n');
-        addressLines.forEach((line, index) => {
-            doc.text(line.trim(), 20, 65 + (index * 5));
-        });
-        
-        let yPos = 65 + (addressLines.length * 5);
-        if (settings.profileGSTIN) {
-            doc.text(`GSTIN: ${settings.profileGSTIN}`, 20, yPos);
+            // Company name
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(24);
+            doc.setFont('helvetica', 'bold');
+            doc.text(appData.settings.profileName || 'Your Company', margin, 25);
+
+            // Invoice title
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'normal');
+            doc.text('INVOICE', pageWidth - margin - 30, 25);
+
+            // Invoice details in header
+            doc.setFontSize(10);
+            doc.text(`Invoice #: ${appData.settings.invoicePrefix}-${String(invoice.number).padStart(4, '0')}`, pageWidth - margin - 50, 35);
+            doc.text(`Date: ${new Date(invoice.date).toLocaleDateString()}`, pageWidth - margin - 50, 42);
+        }
+
+        // Company Info Section
+        function drawCompanyInfo() {
+            doc.setTextColor(...textColor);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+
+            let yPos = 60;
+            doc.text('From:', margin, yPos);
+            yPos += 8;
+
+            doc.setFont('helvetica', 'bold');
+            doc.text(appData.settings.profileName || 'Your Company', margin, yPos);
+            yPos += 6;
+
+            doc.setFont('helvetica', 'normal');
+            const addressLines = (appData.settings.profileAddress || 'Your Address').split(',');
+            addressLines.forEach(line => {
+                doc.text(line.trim(), margin, yPos);
+                yPos += 5;
+            });
+
+            doc.text(appData.settings.profileEmail || 'email@company.com', margin, yPos);
             yPos += 5;
-        }
-        if (settings.profilePhone) {
-            doc.text(`Phone: ${settings.profilePhone}`, 20, yPos);
-            yPos += 5;
-        }
-        if (settings.profileEmail) {
-            doc.text(`Email: ${settings.profileEmail}`, 20, yPos);
+            doc.text(appData.settings.profilePhone || '+1 234 567 8900', margin, yPos);
+
+            if (appData.settings.profileGSTIN) {
+                yPos += 5;
+                doc.text(`GSTIN: ${appData.settings.profileGSTIN}`, margin, yPos);
+            }
         }
 
-        // To section
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('TO:', 120, 50);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        doc.text(client ? client.name : invoice.client, 120, 58);
-        if (client && client.address) {
-            const clientAddressLines = client.address.split('\n');
-            clientAddressLines.forEach((line, index) => {
-                doc.text(line.trim(), 120, 65 + (index * 5));
+        // Bill To Section
+        function drawBillTo() {
+            doc.setTextColor(...textColor);
+            doc.setFontSize(10);
+
+            let yPos = 60;
+            let xPos = pageWidth / 2 + 10;
+
+            doc.text('Bill To:', xPos, yPos);
+            yPos += 8;
+
+            doc.setFont('helvetica', 'bold');
+            doc.text(client.name, xPos, yPos);
+            yPos += 6;
+
+            doc.setFont('helvetica', 'normal');
+            if (client.company) {
+                doc.text(client.company, xPos, yPos);
+                yPos += 5;
+            }
+
+            if (client.address) {
+                const clientAddressLines = client.address.split(',');
+                clientAddressLines.forEach(line => {
+                    doc.text(line.trim(), xPos, yPos);
+                    yPos += 5;
+                });
+            }
+
+            doc.text(client.email, xPos, yPos);
+            yPos += 5;
+
+            if (client.phone) {
+                doc.text(client.phone, xPos, yPos);
+            }
+        }
+
+        // Invoice Details Section
+        function drawInvoiceDetails() {
+            const yStart = 130;
+
+            // Section background
+            doc.setFillColor(...secondaryColor);
+            doc.rect(margin, yStart - 5, pageWidth - 2 * margin, 25, 'F');
+
+            doc.setTextColor(...textColor);
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Invoice Details', margin + 5, yStart + 5);
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+
+            const details = [
+                [`Invoice Number:`, `${appData.settings.invoicePrefix}-${String(invoice.number).padStart(4, '0')}`],
+                [`Issue Date:`, new Date(invoice.date).toLocaleDateString()],
+                [`Due Date:`, new Date(invoice.dueDate).toLocaleDateString()],
+                [`Status:`, invoice.status.toUpperCase()]
+            ];
+
+            let yPos = yStart + 15;
+            details.forEach(([label, value]) => {
+                doc.text(label, margin + 5, yPos);
+                doc.text(value, margin + 60, yPos);
+                yPos += 6;
             });
         }
 
-        // Items table
-        const tableData = invoice.items.map(item => [
-            item.description,
-            item.quantity.toString(),
-            `₹${formatNumber(item.rate)}`,
-            `₹${formatNumber(item.amount)}`
-        ]);
+        // Enhanced Items Table
+        function drawItemsTable() {
+            const tableStartY = 180;
+            const tableHeaders = ['Description', 'Quantity', 'Rate', 'Amount'];
+            const colWidths = [80, 25, 30, 35];
+            const rowHeight = 10;
 
-        doc.autoTable({
-            head: [['Description', 'Qty', 'Rate', 'Amount']],
-            body: tableData,
-            startY: yPos + 15,
-            theme: 'grid',
-            headStyles: { fillColor: [31, 184, 205] },
-            columnStyles: {
-                1: { halign: 'center' },
-                2: { halign: 'right' },
-                3: { halign: 'right' }
-            }
-        });
+            // Table header
+            doc.setFillColor(...primaryColor);
+            doc.rect(margin, tableStartY, pageWidth - 2 * margin, rowHeight, 'F');
 
-        // Totals
-        const finalY = doc.lastAutoTable.finalY + 10;
-        doc.setFontSize(10);
-        doc.text(`Subtotal: ₹${formatNumber(invoice.subtotal)}`, 140, finalY);
-        doc.text(`Tax (${settings.taxRate}%): ₹${formatNumber(invoice.tax)}`, 140, finalY + 7);
-        
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(12);
-        doc.text(`Total: ₹${formatNumber(invoice.amount)}`, 140, finalY + 17);
-
-        // Bank details
-        if (settings.bankAccount) {
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.text('Bank Details:', 20, finalY);
+
+            let xPos = margin + 5;
+            tableHeaders.forEach((header, i) => {
+                doc.text(header, xPos, tableStartY + 7);
+                xPos += colWidths[i];
+            });
+
+            // Table rows
+            doc.setTextColor(...textColor);
             doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.text(`Account Name: ${settings.bankName}`, 20, finalY + 7);
-            doc.text(`Account Number: ${settings.bankAccount}`, 20, finalY + 14);
-            doc.text(`IFSC: ${settings.bankIFSC}`, 20, finalY + 21);
-            if (settings.bankSWIFT) {
-                doc.text(`SWIFT: ${settings.bankSWIFT}`, 20, finalY + 28);
-            }
+
+            let yPos = tableStartY + rowHeight;
+            let subtotal = 0;
+
+            invoice.lineItems.forEach((item, index) => {
+                // Alternate row colors
+                if (index % 2 === 0) {
+                    doc.setFillColor(250, 250, 250);
+                    doc.rect(margin, yPos, pageWidth - 2 * margin, rowHeight, 'F');
+                }
+
+                const amount = item.quantity * item.rate;
+                subtotal += amount;
+
+                xPos = margin + 5;
+                doc.text(item.description, xPos, yPos + 7);
+                xPos += colWidths[0];
+                doc.text(item.quantity.toString(), xPos, yPos + 7);
+                xPos += colWidths[1];
+                doc.text(`${appData.settings.currency} ${item.rate.toFixed(2)}`, xPos, yPos + 7);
+                xPos += colWidths[2];
+                doc.text(`${appData.settings.currency} ${amount.toFixed(2)}`, xPos, yPos + 7);
+
+                yPos += rowHeight;
+            });
+
+            return { yPos, subtotal };
         }
 
+        // Enhanced Totals Section
+        function drawTotals(yPos, subtotal) {
+            const totalsStartY = yPos + 10;
+            const taxAmount = subtotal * (appData.settings.taxRate / 100);
+            const total = subtotal + taxAmount;
+
+            // Totals background
+            doc.setFillColor(248, 249, 250);
+            doc.rect(pageWidth - 100, totalsStartY, 80, 40, 'F');
+
+            doc.setTextColor(...textColor);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+
+            const totalsData = [
+                ['Subtotal:', `${appData.settings.currency} ${subtotal.toFixed(2)}`],
+                [`Tax (${appData.settings.taxRate}%):`, `${appData.settings.currency} ${taxAmount.toFixed(2)}`],
+            ];
+
+            let totalYPos = totalsStartY + 8;
+            totalsData.forEach(([label, value]) => {
+                doc.text(label, pageWidth - 95, totalYPos);
+                doc.text(value, pageWidth - 40, totalYPos, { align: 'right' });
+                totalYPos += 8;
+            });
+
+            // Total amount highlight
+            doc.setFillColor(...accentColor);
+            doc.rect(pageWidth - 100, totalYPos, 80, 12, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Total:', pageWidth - 95, totalYPos + 8);
+            doc.text(`${appData.settings.currency} ${total.toFixed(2)}`, pageWidth - 40, totalYPos + 8, { align: 'right' });
+
+            return total;
+        }
+
+        // Payment Information
+        function drawPaymentInfo(yPos) {
+            const paymentStartY = yPos + 20;
+
+            doc.setTextColor(...textColor);
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Payment Information', margin, paymentStartY);
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+
+            let paymentYPos = paymentStartY + 10;
+            const paymentDetails = [
+                [`Bank Name:`, appData.settings.bankName || 'Your Bank'],
+                [`Account Number:`, appData.settings.bankAccount || 'XXXX-XXXX-XXXX'],
+                [`IFSC Code:`, appData.settings.bankIFSC || 'BANKIFSC'],
+                [`SWIFT Code:`, appData.settings.bankSWIFT || 'BANKSWIFT']
+            ];
+
+            paymentDetails.forEach(([label, value]) => {
+                doc.text(label, margin, paymentYPos);
+                doc.text(value, margin + 40, paymentYPos);
+                paymentYPos += 6;
+            });
+        }
+
+        // Footer
+        function drawFooter() {
+            const footerY = pageHeight - 30;
+
+            doc.setFillColor(...primaryColor);
+            doc.rect(0, footerY, pageWidth, 30, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+
+            doc.text('Thank you for your business!', pageWidth / 2, footerY + 12, { align: 'center' });
+            doc.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, footerY + 20, { align: 'center' });
+        }
+
+        // Generate the PDF
+        drawHeader();
+        drawCompanyInfo();
+        drawBillTo();
+        drawInvoiceDetails();
+
+        const { yPos, subtotal } = drawItemsTable();
+        const total = drawTotals(yPos, subtotal);
+        drawPaymentInfo(yPos + 60);
+        drawFooter();
+
         // Save the PDF
-        doc.save(`${invoice.id}.pdf`);
-        showToast(`Invoice ${invoice.id} downloaded successfully`, 'success');
+        const fileName = `Invoice-${appData.settings.invoicePrefix}-${String(invoice.number).padStart(4, '0')}.pdf`;
+        doc.save(fileName);
+
+        showToast('Invoice PDF generated successfully!', 'success');
 
     } catch (error) {
         console.error('Error generating PDF:', error);
         showToast('Error generating PDF. Please try again.', 'error');
     }
 }
-
 function editInvoice(invoiceId) {
     console.log('Editing invoice:', invoiceId);
     openInvoiceModal(invoiceId);
