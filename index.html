@@ -3,585 +3,516 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice Manager Pro 2025</title>
+    <meta name="description" content="Modern Invoice Management System">
+    <meta name="theme-color" content="#218287">
+    <meta name="color-scheme" content="light dark">
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="InvoiceManager">
+    
+    <title>InvoiceManager Pro</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Chart.js for Analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-<body>
-    <!-- Toast Notifications -->
-    <div id="toastContainer" class="toast-container"></div>
+<body data-color-scheme="light">
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-spinner"></div>
+        <p>Loading InvoiceManager...</p>
+    </div>
 
-    <!-- Main Layout -->
-    <div class="app-layout">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <i class="fas fa-receipt"></i>
-                    <span>InvoicePro</span>
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+    <!-- Login Page -->
+    <div id="loginPage" class="login-page hidden">
+        <div class="login-container">
+            <div class="login-card">
+                <header class="login-header">
+                    <h1>InvoiceManager Pro</h1>
+                    <p>Streamline your business invoicing</p>
+                </header>
+                
+                <form id="loginForm" class="login-form" novalidate>
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            class="form-control" 
+                            required 
+                            autocomplete="email"
+                            aria-describedby="emailError"
+                        >
+                        <div id="emailError" class="error-message" role="alert"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="password-input-wrapper">
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                class="form-control" 
+                                required 
+                                autocomplete="current-password"
+                                aria-describedby="passwordError"
+                            >
+                            <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+                                <span class="password-toggle-icon">👁️</span>
+                            </button>
+                        </div>
+                        <div id="passwordError" class="error-message" role="alert"></div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn--primary btn--full-width" id="loginBtn">
+                        <span class="btn-text">Sign In</span>
+                        <span class="btn-spinner hidden"></span>
+                    </button>
+                </form>
+                
+                <div class="login-footer">
+                    <p>Don't have an account? <a href="#" id="showSignup">Sign up</a></p>
                 </div>
-                <button class="sidebar-toggle" id="sidebarToggle">
-                    <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app" class="app hidden">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" role="navigation" aria-label="Main navigation">
+            <div class="sidebar-header">
+                <h1 class="sidebar-logo">InvoiceManager</h1>
+                <button class="sidebar-toggle" aria-label="Toggle sidebar">
+                    <span class="hamburger"></span>
                 </button>
             </div>
             
-            <nav class="sidebar-nav">
-                <a href="#dashboard" class="nav-item active" data-section="dashboard">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="#invoices" class="nav-item" data-section="invoices">
-                    <i class="fas fa-file-invoice"></i>
-                    <span>Invoices</span>
-                </a>
-                <a href="#clients" class="nav-item" data-section="clients">
-                    <i class="fas fa-users"></i>
-                    <span>Clients</span>
-                </a>
-                <a href="#analytics" class="nav-item" data-section="analytics">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Analytics</span>
-                </a>
-                <a href="#settings" class="nav-item" data-section="settings">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
-            </nav>
-        </aside>
+            <ul class="sidebar-nav" role="menubar">
+                <li role="none">
+                    <a href="#dashboard" class="sidebar-nav-item active" role="menuitem" data-section="dashboard">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                </li>
+                <li role="none">
+                    <a href="#invoices" class="sidebar-nav-item" role="menuitem" data-section="invoices">
+                        <span class="nav-icon">📄</span>
+                        <span class="nav-text">Invoices</span>
+                    </a>
+                </li>
+                <li role="none">
+                    <a href="#clients" class="sidebar-nav-item" role="menuitem" data-section="clients">
+                        <span class="nav-icon">👥</span>
+                        <span class="nav-text">Clients</span>
+                    </a>
+                </li>
+                <li role="none">
+                    <a href="#analytics" class="sidebar-nav-item" role="menuitem" data-section="analytics">
+                        <span class="nav-icon">📈</span>
+                        <span class="nav-text">Analytics</span>
+                    </a>
+                </li>
+                <li role="none">
+                    <a href="#settings" class="sidebar-nav-item" role="menuitem" data-section="settings">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-text">Settings</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <button class="theme-toggle" aria-label="Toggle dark mode">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <button class="logout-btn" aria-label="Logout">
+                    <span class="logout-icon">🚪</span>
+                </button>
+            </div>
+        </nav>
 
         <!-- Main Content -->
-        <div class="main-content">
-            <!-- Header -->
-            <header class="header">
-                <div class="header-left">
-                    <button class="mobile-menu-toggle" id="mobileMenuToggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <h1 class="page-title" id="pageTitle">Dashboard</h1>
-                </div>
-                
-                <div class="header-right">
-                    <button class="theme-toggle" id="themeToggle" title="Toggle theme">
-                        <i class="fas fa-moon"></i>
-                    </button>
-                    <div class="user-profile">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23326bd1'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='40' fill='white' text-anchor='middle' dominant-baseline='middle'%3EH%3C/text%3E%3C/svg%3E" alt="User" class="avatar">
-                        <div class="user-info">
-                            <span class="user-name">Hariprasad S</span>
-                            <span class="user-role">Administrator</span>
-                        </div>
-                        <button class="logout-btn" title="Logout">
-                            <i class="fas fa-sign-out-alt"></i>
+        <main class="main-content" role="main">
+            <header class="main-header">
+                <div class="header-content">
+                    <h1 id="pageTitle">Dashboard</h1>
+                    <div class="header-actions">
+                        <button class="btn btn--outline" id="searchBtn" aria-label="Search">
+                            <span>🔍</span>
+                        </button>
+                        <button class="btn btn--primary" id="newInvoiceBtn">
+                            <span>+ New Invoice</span>
                         </button>
                     </div>
                 </div>
             </header>
 
-            <!-- Content Sections -->
-            <main class="content">
-                <!-- Dashboard Section -->
-                <section id="dashboard" class="section active">
-                    <div class="section-header">
-                        <h2>Dashboard Overview</h2>
-                        <div class="quick-actions">
-                            <button class="btn btn--primary" id="newInvoiceBtn">
-                                <i class="fas fa-plus"></i> New Invoice
-                            </button>
-                            <button class="btn btn--secondary" id="newClientBtn">
-                                <i class="fas fa-user-plus"></i> New Client
-                            </button>
-                        </div>
+            <!-- Dashboard Section -->
+            <section id="dashboardSection" class="content-section active">
+                <div class="dashboard-grid">
+                    <!-- Stats Cards -->
+                    <div class="stats-grid">
+                        <article class="stat-card">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-content">
+                                <h3 class="stat-value" id="totalEarnings">₹0</h3>
+                                <p class="stat-label">Total Earnings</p>
+                            </div>
+                        </article>
+                        
+                        <article class="stat-card">
+                            <div class="stat-icon">📄</div>
+                            <div class="stat-content">
+                                <h3 class="stat-value" id="totalInvoices">0</h3>
+                                <p class="stat-label">Total Invoices</p>
+                            </div>
+                        </article>
+                        
+                        <article class="stat-card">
+                            <div class="stat-icon">⏳</div>
+                            <div class="stat-content">
+                                <h3 class="stat-value" id="pendingAmount">₹0</h3>
+                                <p class="stat-label">Pending Amount</p>
+                            </div>
+                        </article>
+                        
+                        <article class="stat-card">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-content">
+                                <h3 class="stat-value" id="totalClients">0</h3>
+                                <p class="stat-label">Active Clients</p>
+                            </div>
+                        </article>
                     </div>
 
-                    <!-- KPI Cards -->
-                    <div class="kpi-grid">
-                        <div class="kpi-card" style="background: var(--color-bg-1)">
-                            <div class="kpi-icon">
-                                <i class="fas fa-dollar-sign"></i>
-                            </div>
-                            <div class="kpi-content">
-                                <h3 id="totalRevenue">₹31,160</h3>
-                                <p>Total Revenue</p>
-                                <span class="trend positive">
-                                    <i class="fas fa-arrow-up"></i> +12.5%
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <div class="kpi-card" style="background: var(--color-bg-2)">
-                            <div class="kpi-icon">
-                                <i class="fas fa-file-invoice"></i>
-                            </div>
-                            <div class="kpi-content">
-                                <h3 id="totalInvoices">3</h3>
-                                <p>Total Invoices</p>
-                                <span class="trend positive">
-                                    <i class="fas fa-arrow-up"></i> +2
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <div class="kpi-card" style="background: var(--color-bg-3)">
-                            <div class="kpi-icon">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <div class="kpi-content">
-                                <h3 id="totalClients">3</h3>
-                                <p>Active Clients</p>
-                                <span class="trend neutral">
-                                    <i class="fas fa-minus"></i> 0%
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <div class="kpi-card" style="background: var(--color-bg-4)">
-                            <div class="kpi-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="kpi-content">
-                                <h3 id="pendingAmount">₹21,712</h3>
-                                <p>Pending Payments</p>
-                                <span class="trend negative">
-                                    <i class="fas fa-arrow-down"></i> -5.2%
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Charts Section -->
+                    <!-- Charts -->
                     <div class="charts-grid">
                         <div class="chart-card">
-                            <div class="chart-header">
-                                <h3>Monthly Earnings</h3>
-                                <div class="chart-controls">
-                                    <select class="form-control" id="earningsFilter">
-                                        <option value="6">Last 6 months</option>
-                                        <option value="12">Last 12 months</option>
-                                    </select>
-                                </div>
-                            </div>
+                            <h3>Monthly Revenue</h3>
                             <div class="chart-container" style="position: relative; height: 300px;">
-                                <canvas id="earningsChart"></canvas>
+                                <canvas id="revenueChart"></canvas>
                             </div>
                         </div>
                         
                         <div class="chart-card">
-                            <div class="chart-header">
-                                <h3>Invoice Status Distribution</h3>
-                            </div>
+                            <h3>Invoice Status</h3>
                             <div class="chart-container" style="position: relative; height: 300px;">
                                 <canvas id="statusChart"></canvas>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Recent Invoices -->
-                    <div class="recent-invoices card">
-                        <div class="card__header">
-                            <h3>Recent Invoices</h3>
-                            <a href="#invoices" class="view-all" data-section="invoices">View All</a>
-                        </div>
-                        <div class="card__body">
-                            <div class="table-container">
-                                <table class="data-table" id="recentInvoicesTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Invoice #</th>
-                                            <th>Client</th>
-                                            <th>Date</th>
-                                            <th>Amount</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
+                    <!-- Recent Activity -->
+                    <div class="recent-activity">
+                        <h3>Recent Invoices</h3>
+                        <div id="recentInvoices" class="recent-list">
+                            <!-- Dynamic content -->
                         </div>
                     </div>
-                </section>
+                </div>
+            </section>
 
-                <!-- Invoices Section -->
-                <section id="invoices" class="section">
-                    <div class="section-header">
-                        <h2>Invoice Management</h2>
-                        <div class="section-actions">
-                            <div class="search-box">
-                                <i class="fas fa-search"></i>
-                                <input type="text" placeholder="Search invoices..." id="invoiceSearch">
-                            </div>
-                            <select class="form-control" id="invoiceStatusFilter">
-                                <option value="">All Status</option>
-                                <option value="draft">Draft</option>
-                                <option value="pending">Pending</option>
-                                <option value="paid">Paid</option>
-                                <option value="overdue">Overdue</option>
-                            </select>
-                            <button class="btn btn--primary" id="createInvoiceBtn">
-                                <i class="fas fa-plus"></i> Create Invoice
-                            </button>
+            <!-- Invoices Section -->
+            <section id="invoicesSection" class="content-section">
+                <div class="section-header">
+                    <div class="section-actions">
+                        <div class="search-box">
+                            <input type="text" id="invoiceSearch" class="form-control" placeholder="Search invoices...">
                         </div>
+                        <select id="statusFilter" class="form-control">
+                            <option value="">All Status</option>
+                            <option value="paid">Paid</option>
+                            <option value="pending">Pending</option>
+                            <option value="overdue">Overdue</option>
+                        </select>
                     </div>
+                </div>
+                
+                <div class="invoices-grid" id="invoicesGrid">
+                    <!-- Dynamic invoice cards -->
+                </div>
+            </section>
 
-                    <div class="invoices-container">
-                        <div class="table-container">
-                            <table class="data-table" id="invoicesTable">
-                                <thead>
-                                    <tr>
-                                        <th><input type="checkbox" id="selectAllInvoices"></th>
-                                        <th>Invoice #</th>
-                                        <th>Client</th>
-                                        <th>Date</th>
-                                        <th>Due Date</th>
-                                        <th>Amount</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
+            <!-- Clients Section -->
+            <section id="clientsSection" class="content-section">
+                <div class="section-header">
+                    <div class="section-actions">
+                        <div class="search-box">
+                            <input type="text" id="clientSearch" class="form-control" placeholder="Search clients...">
+                        </div>
+                        <button class="btn btn--primary" id="newClientBtn">+ New Client</button>
+                    </div>
+                </div>
+                
+                <div class="clients-grid" id="clientsGrid">
+                    <!-- Dynamic client cards -->
+                </div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section id="analyticsSection" class="content-section">
+                <div class="analytics-dashboard">
+                    <div class="analytics-header">
+                        <h2>Business Analytics</h2>
+                        <select id="analyticsRange" class="form-control">
+                            <option value="30">Last 30 Days</option>
+                            <option value="90">Last 3 Months</option>
+                            <option value="365">Last Year</option>
+                        </select>
+                    </div>
+                    
+                    <div class="analytics-grid">
+                        <div class="chart-card large">
+                            <h3>Revenue Trend</h3>
+                            <div class="chart-container" style="position: relative; height: 400px;">
+                                <canvas id="trendChart"></canvas>
+                            </div>
                         </div>
                         
-                        <div class="bulk-actions" id="bulkActions" style="display: none;">
-                            <span class="selected-count">0 selected</span>
-                            <button class="btn btn--secondary" id="bulkMarkPaid">Mark as Paid</button>
-                            <button class="btn btn--outline" id="bulkDelete">Delete</button>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Clients Section -->
-                <section id="clients" class="section">
-                    <div class="section-header">
-                        <h2>Client Management</h2>
-                        <div class="section-actions">
-                            <div class="search-box">
-                                <i class="fas fa-search"></i>
-                                <input type="text" placeholder="Search clients..." id="clientSearch">
-                            </div>
-                            <select class="form-control" id="clientStatusFilter">
-                                <option value="">All Status</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                            <button class="btn btn--primary" id="addClientBtn">
-                                <i class="fas fa-user-plus"></i> Add Client
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="clients-grid" id="clientsGrid"></div>
-                </section>
-
-                <!-- Analytics Section -->
-                <section id="analytics" class="section">
-                    <div class="section-header">
-                        <h2>Analytics & Reports</h2>
-                        <div class="section-actions">
-                            <div class="date-range-picker">
-                                <input type="date" id="startDate" class="form-control">
-                                <input type="date" id="endDate" class="form-control">
-                                <button class="btn btn--outline" id="applyDateFilter">Apply</button>
-                            </div>
-                            <button class="btn btn--secondary" id="exportReport">
-                                <i class="fas fa-download"></i> Export
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="analytics-grid">
-                        <div class="analytics-card">
-                            <div class="card__header">
-                                <h3>Revenue Trends</h3>
-                            </div>
-                            <div class="card__body">
-                                <div class="chart-container" style="position: relative; height: 350px;">
-                                    <canvas id="revenueChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="analytics-card">
-                            <div class="card__header">
-                                <h3>Client Performance</h3>
-                            </div>
-                            <div class="card__body">
-                                <div class="chart-container" style="position: relative; height: 350px;">
-                                    <canvas id="clientChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="analytics-card">
-                            <div class="card__header">
-                                <h3>Payment Status</h3>
-                            </div>
-                            <div class="card__body">
-                                <div class="chart-container" style="position: relative; height: 350px;">
-                                    <canvas id="paymentChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="analytics-card">
-                            <div class="card__header">
-                                <h3>Monthly Growth</h3>
-                            </div>
-                            <div class="card__body">
-                                <div class="chart-container" style="position: relative; height: 350px;">
-                                    <canvas id="growthChart"></canvas>
-                                </div>
+                        <div class="chart-card">
+                            <h3>Client Distribution</h3>
+                            <div class="chart-container" style="position: relative; height: 300px;">
+                                <canvas id="clientChart"></canvas>
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
+            </section>
 
-                <!-- Settings Section -->
-                <section id="settings" class="section">
-                    <div class="section-header">
-                        <h2>Settings & Configuration</h2>
-                        <button class="btn btn--primary" id="saveSettings">
-                            <i class="fas fa-save"></i> Save Changes
-                        </button>
+            <!-- Settings Section -->
+            <section id="settingsSection" class="content-section">
+                <div class="settings-container">
+                    <div class="settings-nav">
+                        <button class="settings-tab active" data-tab="profile">Business Profile</button>
+                        <button class="settings-tab" data-tab="banking">Banking Details</button>
+                        <button class="settings-tab" data-tab="preferences">Preferences</button>
                     </div>
-
-                    <div class="settings-container">
-                        <div class="settings-tabs">
-                            <button class="tab-btn active" data-tab="business">Business Profile</button>
-                            <button class="tab-btn" data-tab="banking">Banking Info</button>
-                            <button class="tab-btn" data-tab="invoice">Invoice Settings</button>
-                            <button class="tab-btn" data-tab="preferences">Preferences</button>
+                    
+                    <div class="settings-content">
+                        <div id="profileTab" class="settings-panel active">
+                            <form id="profileForm" class="settings-form">
+                                <div class="form-group">
+                                    <label for="profileName" class="form-label">Business Name</label>
+                                    <input type="text" id="profileName" class="form-control" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="profileEmail" class="form-label">Email</label>
+                                    <input type="email" id="profileEmail" class="form-control" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="profilePhone" class="form-label">Phone</label>
+                                    <input type="tel" id="profilePhone" class="form-control" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="profileAddress" class="form-label">Address</label>
+                                    <textarea id="profileAddress" class="form-control" rows="3" required></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="profileGSTIN" class="form-label">GSTIN</label>
+                                    <input type="text" id="profileGSTIN" class="form-control">
+                                </div>
+                                
+                                <button type="submit" class="btn btn--primary">Save Profile</button>
+                            </form>
                         </div>
-
-                        <div class="settings-content">
-                            <!-- Business Profile Tab -->
-                            <div class="tab-content active" id="business">
-                                <div class="settings-form">
-                                    <div class="form-group">
-                                        <label class="form-label">Business Name</label>
-                                        <input type="text" class="form-control" id="businessName">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Email Address</label>
-                                        <input type="email" class="form-control" id="businessEmail">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Phone Number</label>
-                                        <input type="tel" class="form-control" id="businessPhone">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Business Address</label>
-                                        <textarea class="form-control" id="businessAddress" rows="3"></textarea>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">GSTIN</label>
-                                        <input type="text" class="form-control" id="gstin">
-                                    </div>
+                        
+                        <div id="bankingTab" class="settings-panel">
+                            <form id="bankingForm" class="settings-form">
+                                <div class="form-group">
+                                    <label for="bankName" class="form-label">Account Holder Name</label>
+                                    <input type="text" id="bankName" class="form-control" required>
                                 </div>
-                            </div>
-
-                            <!-- Banking Info Tab -->
-                            <div class="tab-content" id="banking">
-                                <div class="settings-form">
-                                    <div class="form-group">
-                                        <label class="form-label">Bank Name</label>
-                                        <input type="text" class="form-control" id="bankName">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Account Number</label>
-                                        <input type="text" class="form-control" id="accountNumber">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">IFSC Code</label>
-                                        <input type="text" class="form-control" id="ifscCode">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">SWIFT Code</label>
-                                        <input type="text" class="form-control" id="swiftCode">
-                                    </div>
+                                
+                                <div class="form-group">
+                                    <label for="bankAccount" class="form-label">Account Number</label>
+                                    <input type="text" id="bankAccount" class="form-control" required>
                                 </div>
-                            </div>
-
-                            <!-- Invoice Settings Tab -->
-                            <div class="tab-content" id="invoice">
-                                <div class="settings-form">
-                                    <div class="form-group">
-                                        <label class="form-label">Invoice Prefix</label>
-                                        <input type="text" class="form-control" id="invoicePrefix">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Default Tax Rate (%)</label>
-                                        <input type="number" class="form-control" id="taxRate" min="0" max="100">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Currency Symbol</label>
-                                        <select class="form-control" id="currency">
-                                            <option value="₹">₹ (Indian Rupee)</option>
-                                            <option value="$">$ (US Dollar)</option>
-                                            <option value="€">€ (Euro)</option>
-                                            <option value="£">£ (British Pound)</option>
-                                        </select>
-                                    </div>
+                                
+                                <div class="form-group">
+                                    <label for="bankIFSC" class="form-label">IFSC Code</label>
+                                    <input type="text" id="bankIFSC" class="form-control" required>
                                 </div>
-                            </div>
-
-                            <!-- Preferences Tab -->
-                            <div class="tab-content" id="preferences">
-                                <div class="settings-form">
-                                    <div class="form-group">
-                                        <label class="form-label">Theme</label>
-                                        <select class="form-control" id="themeSelect">
-                                            <option value="system">System Default</option>
-                                            <option value="light">Light</option>
-                                            <option value="dark">Dark</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Language</label>
-                                        <select class="form-control" id="language">
-                                            <option value="en">English</option>
-                                            <option value="hi">Hindi</option>
-                                            <option value="es">Spanish</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Date Format</label>
-                                        <select class="form-control" id="dateFormat">
-                                            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                                            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                                        </select>
-                                    </div>
+                                
+                                <div class="form-group">
+                                    <label for="bankSWIFT" class="form-label">SWIFT Code</label>
+                                    <input type="text" id="bankSWIFT" class="form-control">
                                 </div>
-                            </div>
+                                
+                                <button type="submit" class="btn btn--primary">Save Banking Details</button>
+                            </form>
+                        </div>
+                        
+                        <div id="preferencesTab" class="settings-panel">
+                            <form id="preferencesForm" class="settings-form">
+                                <div class="form-group">
+                                    <label for="currency" class="form-label">Currency</label>
+                                    <select id="currency" class="form-control" required>
+                                        <option value="INR">INR (₹)</option>
+                                        <option value="USD">USD ($)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                        <option value="GBP">GBP (£)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="taxRate" class="form-label">Default Tax Rate (%)</label>
+                                    <input type="number" id="taxRate" class="form-control" min="0" max="100" step="0.01">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="invoicePrefix" class="form-label">Invoice Prefix</label>
+                                    <input type="text" id="invoicePrefix" class="form-control" required>
+                                </div>
+                                
+                                <button type="submit" class="btn btn--primary">Save Preferences</button>
+                            </form>
                         </div>
                     </div>
-                </section>
-            </main>
-        </div>
+                </div>
+            </section>
+        </main>
     </div>
 
-    <!-- Modals -->
     <!-- Invoice Modal -->
-    <div class="modal hidden" id="invoiceModal">
+    <div id="invoiceModal" class="modal hidden" role="dialog" aria-labelledby="invoiceModalTitle" aria-modal="true">
+        <div class="modal-backdrop"></div>
         <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="invoiceModalTitle">Create New Invoice</h3>
-                <button class="modal-close" id="closeInvoiceModal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="invoiceForm">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label">Client</label>
-                            <select class="form-control" id="invoiceClient" required>
-                                <option value="">Select Client</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Invoice Date</label>
-                            <input type="date" class="form-control" id="invoiceDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Due Date</label>
-                            <input type="date" class="form-control" id="invoiceDueDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Status</label>
-                            <select class="form-control" id="invoiceStatus">
-                                <option value="draft">Draft</option>
-                                <option value="pending">Pending</option>
-                                <option value="paid">Paid</option>
-                            </select>
-                        </div>
+            <header class="modal-header">
+                <h2 id="invoiceModalTitle">Create Invoice</h2>
+                <button class="modal-close" aria-label="Close modal">&times;</button>
+            </header>
+            
+            <form id="invoiceForm" class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="clientSelect" class="form-label">Client</label>
+                        <select id="clientSelect" class="form-control" required>
+                            <option value="">Select a client</option>
+                        </select>
                     </div>
-
-                    <div class="line-items-section">
-                        <div class="section-header">
-                            <h4>Line Items</h4>
-                            <button type="button" class="btn btn--outline" id="addLineItem">
-                                <i class="fas fa-plus"></i> Add Item
-                            </button>
-                        </div>
-                        <div class="line-items" id="lineItems">
-                            <div class="line-item">
-                                <input type="text" placeholder="Description" class="form-control item-description" required>
-                                <input type="number" placeholder="Qty" class="form-control item-quantity" value="1" min="1" required>
-                                <input type="number" placeholder="Rate" class="form-control item-rate" min="0" step="0.01" required>
-                                <input type="number" placeholder="Amount" class="form-control item-amount" readonly>
-                                <button type="button" class="btn-remove-item" title="Remove item">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
+                    
+                    <div class="form-group">
+                        <label for="invoiceDate" class="form-label">Invoice Date</label>
+                        <input type="date" id="invoiceDate" class="form-control" required>
                     </div>
-
-                    <div class="invoice-totals">
-                        <div class="totals-row">
-                            <span>Subtotal:</span>
-                            <span id="invoiceSubtotal">₹0.00</span>
-                        </div>
-                        <div class="totals-row">
-                            <span>Tax (18%):</span>
-                            <span id="invoiceTax">₹0.00</span>
-                        </div>
-                        <div class="totals-row total">
-                            <span>Total:</span>
-                            <span id="invoiceTotal">₹0.00</span>
-                        </div>
+                    
+                    <div class="form-group">
+                        <label for="dueDate" class="form-label">Due Date</label>
+                        <input type="date" id="dueDate" class="form-control" required>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
+                    
+                    <div class="form-group">
+                        <label for="invoiceStatus" class="form-label">Status</label>
+                        <select id="invoiceStatus" class="form-control" required>
+                            <option value="pending">Pending</option>
+                            <option value="paid">Paid</option>
+                            <option value="overdue">Overdue</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="line-items-section">
+                    <h3>Line Items</h3>
+                    <div id="lineItems" class="line-items">
+                        <!-- Dynamic line items -->
+                    </div>
+                    <button type="button" class="btn btn--outline" id="addLineItem">+ Add Item</button>
+                </div>
+                
+                <div class="invoice-totals">
+                    <div class="totals-row">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">₹0.00</span>
+                    </div>
+                    <div class="totals-row">
+                        <span>Tax:</span>
+                        <span id="taxAmount">₹0.00</span>
+                    </div>
+                    <div class="totals-row total">
+                        <span>Total:</span>
+                        <span id="totalAmount">₹0.00</span>
+                    </div>
+                </div>
+            </form>
+            
+            <footer class="modal-footer">
                 <button type="button" class="btn btn--outline" id="cancelInvoice">Cancel</button>
-                <button type="submit" form="invoiceForm" class="btn btn--primary" id="saveInvoice">Save Invoice</button>
-            </div>
+                <button type="submit" form="invoiceForm" class="btn btn--primary">Save Invoice</button>
+            </footer>
         </div>
     </div>
 
     <!-- Client Modal -->
-    <div class="modal hidden" id="clientModal">
+    <div id="clientModal" class="modal hidden" role="dialog" aria-labelledby="clientModalTitle" aria-modal="true">
+        <div class="modal-backdrop"></div>
         <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="clientModalTitle">Add New Client</h3>
-                <button class="modal-close" id="closeClientModal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="clientForm">
-                    <div class="form-group">
-                        <label class="form-label">Client Name</label>
-                        <input type="text" class="form-control" id="clientName" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="clientEmail" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Phone Number</label>
-                        <input type="tel" class="form-control" id="clientPhone">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Address</label>
-                        <textarea class="form-control" id="clientAddress" rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Status</label>
-                        <select class="form-control" id="clientStatus">
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
+            <header class="modal-header">
+                <h2 id="clientModalTitle">Add Client</h2>
+                <button class="modal-close" aria-label="Close modal">&times;</button>
+            </header>
+            
+            <form id="clientForm" class="modal-body">
+                <div class="form-group">
+                    <label for="clientName" class="form-label">Client Name</label>
+                    <input type="text" id="clientName" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="clientEmail" class="form-label">Email</label>
+                    <input type="email" id="clientEmail" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="clientPhone" class="form-label">Phone</label>
+                    <input type="tel" id="clientPhone" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label for="clientAddress" class="form-label">Address</label>
+                    <textarea id="clientAddress" class="form-control" rows="3"></textarea>
+                </div>
+            </form>
+            
+            <footer class="modal-footer">
                 <button type="button" class="btn btn--outline" id="cancelClient">Cancel</button>
-                <button type="submit" form="clientForm" class="btn btn--primary" id="saveClient">Save Client</button>
+                <button type="submit" form="clientForm" class="btn btn--primary">Save Client</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal hidden" role="dialog" aria-labelledby="confirmModalTitle" aria-modal="true">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2 id="confirmModalTitle">Confirm Action</h2>
+                <button class="modal-close" aria-label="Close modal">&times;</button>
+            </header>
+            
+            <div class="modal-body">
+                <p id="confirmModalMessage">Are you sure you want to perform this action?</p>
             </div>
+            
+            <footer class="modal-footer">
+                <button type="button" class="btn btn--outline" id="confirmCancel">Cancel</button>
+                <button type="button" class="btn btn--primary" id="confirmAction">Confirm</button>
+            </footer>
         </div>
     </div>
 
