@@ -1383,106 +1383,154 @@ function renderClients() {
         const style = document.createElement('style');
         style.id = 'enhanced-client-styles';
         style.textContent = `
-            .client-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                margin-bottom: 12px;
-            }
-
-            .client-name {
-                margin: 0;
-                color: var(--color-text);
-                font-size: 18px;
-                font-weight: 600;
-                flex: 1;
-                margin-right: 12px;
-                word-break: break-word;
-            }
-
-            .client-actions {
-                display: flex;
-                gap: 4px;
-                flex-shrink: 0;
-            }
-
-            .client-action-btn {
-                padding: 6px;
-                border: 1px solid;
-                border-radius: 6px;
-                font-size: 14px;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                background: var(--color-bg-2);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 32px;
-                height: 32px;
-            }
-
-            .client-action-btn.edit {
-                border-color: rgba(var(--color-warning-rgb), 0.3);
-            }
-
-            .client-action-btn.edit:hover {
-                background: rgba(var(--color-warning-rgb), 0.1);
-                border-color: rgba(var(--color-warning-rgb), 0.5);
-                transform: translateY(-1px);
-            }
-
-            .client-action-btn.delete {
-                border-color: rgba(220, 38, 38, 0.3);
-            }
-
-            .client-action-btn.delete:hover {
-                background: rgba(220, 38, 38, 0.1);
-                border-color: rgba(220, 38, 38, 0.5);
-                transform: translateY(-1px);
-            }
-
-            .client-details {
-                margin-bottom: 16px;
-            }
-
-            .client-email, .client-phone, .client-contact, .client-address {
-                font-size: 13px;
-                color: var(--color-text-secondary);
-                margin-bottom: 4px;
-                display: flex;
-                align-items: flex-start;
-                gap: 6px;
-                word-break: break-all;
-            }
-
-            .client-stats {
-                display: flex;
-                justify-content: space-between;
-                padding-top: 16px;
-                border-top: 1px solid var(--color-border);
-            }
-
-            .client-stat {
-                text-align: center;
-                flex: 1;
-            }
-
-            .client-stat-value {
-                font-size: 16px;
-                font-weight: 600;
-                color: var(--color-text);
-                margin-bottom: 4px;
-            }
-
-            .client-stat-label {
-                font-size: 11px;
-                color: var(--color-text-secondary);
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                font-weight: 500;
-            }
-        `;
-        document.head.appendChild(style);
+    .modern-card {
+        background: linear-gradient(135deg, var(--color-surface) 0%, rgba(var(--color-teal-500-rgb), 0.02) 100%);
+        border: 1px solid var(--color-border);
+        border-radius: 16px;
+        padding: 0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .modern-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--color-primary), var(--color-teal-400));
+    }
+    
+    .modern-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1);
+        border-color: var(--color-primary);
+    }
+    
+    .client-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 20px 16px;
+    }
+    
+    .client-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-teal-400));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 8px rgba(var(--color-teal-500-rgb), 0.3);
+    }
+    
+    .client-initial {
+        color: white;
+        font-weight: 600;
+        font-size: 18px;
+    }
+    
+    .client-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .modern-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--color-border);
+        background: var(--color-surface);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: var(--color-text-secondary);
+    }
+    
+    .modern-btn:hover {
+        background: var(--color-bg-1);
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+        transform: scale(1.05);
+    }
+    
+    .delete-btn:hover {
+        background: rgba(var(--color-error-rgb), 0.1);
+        border-color: var(--color-error);
+        color: var(--color-error);
+    }
+    
+    .client-info {
+        padding: 0 20px 16px;
+    }
+    
+    .client-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--color-text);
+        margin: 0 0 12px 0;
+    }
+    
+    .client-details {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--color-text-secondary);
+    }
+    
+    .detail-item svg {
+        opacity: 0.6;
+        flex-shrink: 0;
+    }
+    
+    .modern-stats {
+        display: flex;
+        align-items: center;
+        padding: 16px 20px;
+        background: rgba(var(--color-teal-500-rgb), 0.05);
+        border-top: 1px solid var(--color-border);
+    }
+    
+    .stat-item {
+        flex: 1;
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--color-text);
+        margin-bottom: 4px;
+    }
+    
+    .stat-label {
+        font-size: 11px;
+        color: var(--color-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+    }
+    
+    .stat-divider {
+        width: 1px;
+        height: 32px;
+        background: var(--color-border);
+        margin: 0 16px;
+    }
+`;        document.head.appendChild(style);
     }
 
     console.log('Clients rendered successfully with event listeners');
