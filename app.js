@@ -2778,68 +2778,114 @@ async function downloadInvoice(invoiceId) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
-        // Set font
+        // Set default font
         doc.setFont('helvetica');
 
-       // Header with better spacing
-doc.setFontSize(28);
-doc.setFont('helvetica', 'bold');
-doc.text('INVOICE', 20, 25);
+        // === HEADER SECTION ===
+        // Main Invoice Title
+        doc.setFontSize(32);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(31, 184, 205); // Teal color
+        doc.text('INVOICE', 20, 30);
 
-// Add invoice status if needed
-doc.setFontSize(10);
-doc.setFont('helvetica', 'normal');
-doc.setTextColor(100, 100, 100);
-doc.text(`Status: ${invoice.status}`, 20, 35);
-doc.setTextColor(0, 0, 0); // Reset to black
-
-        // Invoice details
+        // Invoice Status Badge
         doc.setFontSize(10);
-doc.text(`Invoice Number: ${invoice.id}`, 140, 25);
-doc.text(`Issue Date: ${formatDate(invoice.date)}`, 140, 35);
-doc.text(`Due Date: ${formatDate(invoice.dueDate)}`, 140, 45);
-
-// From section - more space from header
-doc.setFontSize(12);
-doc.setFont('helvetica', 'bold');
-doc.text('FROM:', 20, 65);
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        doc.text(settings.profileName, 20, 58);
-        
-const addressLines = settings.profileAddress.split('\n');
-addressLines.forEach((line, index) => {
-    doc.text(line.trim(), 20, 75 + (index * 6)); // More spacing between lines
-});
-        
-        let yPos = 65 + (addressLines.length * 5);
-        if (settings.profileGSTIN) {
-            doc.text(`GSTIN: ${settings.profileGSTIN}`, 20, yPos);
-            yPos += 5;
-        }
-        if (settings.profilePhone) {
-            doc.text(`Phone: ${settings.profilePhone}`, 20, yPos);
-            yPos += 5;
-        }
-        if (settings.profileEmail) {
-            doc.text(`Email: ${settings.profileEmail}`, 20, yPos);
-        }
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Status: ${invoice.status}`, 20, 40);
 
-        // To section
+        // Reset color
+        doc.setTextColor(0, 0, 0);
+
+        // Invoice Details Box (Right side)
+        doc.setFillColor(248, 250, 252); // Light gray background
+        doc.rect(130, 15, 65, 35, 'F'); // Filled rectangle
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('INVOICE DETAILS', 135, 25);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.text(`Number: ${invoice.id}`, 135, 32);
+        doc.text(`Issue Date: ${formatDate(invoice.date)}`, 135, 38);
+        doc.text(`Due Date: ${formatDate(invoice.dueDate)}`, 135, 44);
+
+        // === FROM SECTION ===
+        let currentY = 65;
+        
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        doc.text('TO:', 120, 50);
+        doc.setTextColor(31, 184, 205);
+        doc.text('FROM:', 20, currentY);
+        doc.setTextColor(0, 0, 0);
+        
+        currentY += 10;
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text(settings.profileName, 20, currentY);
+        
+        // Address lines
+        currentY += 6;
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        doc.text(client ? client.name : invoice.client, 120, 58);
+        doc.setFontSize(9);
+        
+        if (settings.profileAddress) {
+            const addressLines = settings.profileAddress.split('\n');
+            addressLines.forEach((line) => {
+                if (line.trim()) {
+                    doc.text(line.trim(), 20, currentY);
+                    currentY += 5;
+                }
+            });
+        }
+        
+        // Contact details
+        if (settings.profileGSTIN) {
+            doc.text(`GSTIN: ${settings.profileGSTIN}`, 20, currentY);
+            currentY += 5;
+        }
+        if (settings.profilePhone) {
+            doc.text(`Phone: ${settings.profilePhone}`, 20, currentY);
+            currentY += 5;
+        }
+        if (settings.profileEmail) {
+            doc.text(`Email: ${settings.profileEmail}`, 20, currentY);
+            currentY += 5;
+        }
+
+        // === TO SECTION ===
+        let toY = 65;
+        
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(31, 184, 205);
+        doc.text('TO:', 120, toY);
+        doc.setTextColor(0, 0, 0);
+        
+        toY += 10;
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text(client ? client.name : invoice.client, 120, toY);
+        
+        // Client address
+        toY += 6;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        
         if (client && client.address) {
             const clientAddressLines = client.address.split('\n');
-            clientAddressLines.forEach((line, index) => {
-                doc.text(line.trim(), 120, 65 + (index * 5));
+            clientAddressLines.forEach((line) => {
+                if (line.trim()) {
+                    doc.text(line.trim(), 120, toY);
+                    toY += 5;
+                }
             });
         }
 
-        // Items table
+        // === ITEMS TABLE ===
+        const tableStartY = Math.max(currentY, toY) + 15;
+        
         const tableData = invoice.items.map(item => [
             item.description,
             item.quantity.toString(),
@@ -2847,44 +2893,85 @@ addressLines.forEach((line, index) => {
             `₹${formatNumber(item.amount)}`
         ]);
 
-doc.autoTable({
-    head: [['Description', 'Qty', 'Rate', 'Amount']],
-    body: tableData,
-    startY: yPos + 25, // More space before table
-    margin: { left: 20, right: 20 }, // Add margins
-    styles: { cellPadding: 8, fontSize: 10 }, // Better cell padding
-            theme: 'grid',
-            headStyles: { fillColor: [31, 184, 205] },
+        doc.autoTable({
+            head: [['Description', 'Qty', 'Rate', 'Amount']],
+            body: tableData,
+            startY: tableStartY,
+            margin: { left: 20, right: 20 },
+            styles: { 
+                cellPadding: 6,
+                fontSize: 10,
+                lineColor: [200, 200, 200],
+                lineWidth: 0.5
+            },
+            headStyles: { 
+                fillColor: [31, 184, 205],
+                textColor: [255, 255, 255],
+                fontStyle: 'bold',
+                fontSize: 11
+            },
             columnStyles: {
-                1: { halign: 'center' },
-                2: { halign: 'right' },
-                3: { halign: 'right' }
+                0: { cellWidth: 80 }, // Description
+                1: { halign: 'center', cellWidth: 20 }, // Qty
+                2: { halign: 'right', cellWidth: 35 }, // Rate
+                3: { halign: 'right', cellWidth: 40 } // Amount
+            },
+            alternateRowStyles: {
+                fillColor: [248, 250, 252]
             }
         });
 
-        // Totals
-        const finalY = doc.lastAutoTable.finalY + 10;
+        // === TOTALS SECTION ===
+        const finalY = doc.lastAutoTable.finalY + 20;
+        
+        // Totals box
+        doc.setFillColor(248, 250, 252);
+        doc.rect(130, finalY - 5, 65, 35, 'F');
+        
         doc.setFontSize(10);
-        doc.text(`Subtotal: ₹${formatNumber(invoice.subtotal)}`, 140, finalY);
-        doc.text(`Tax (${settings.taxRate}%): ₹${formatNumber(invoice.tax)}`, 140, finalY + 7);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Subtotal:`, 135, finalY + 5);
+        doc.text(`₹${formatNumber(invoice.subtotal)}`, 185, finalY + 5, { align: 'right' });
+        
+        doc.text(`Tax (${settings.taxRate}%):`, 135, finalY + 12);
+        doc.text(`₹${formatNumber(invoice.tax)}`, 185, finalY + 12, { align: 'right' });
+        
+        // Total line
+        doc.setLineWidth(1);
+        doc.line(135, finalY + 16, 190, finalY + 16);
         
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.text(`Total: ₹${formatNumber(invoice.amount)}`, 140, finalY + 17);
+        doc.text(`TOTAL:`, 135, finalY + 25);
+        doc.text(`₹${formatNumber(invoice.amount)}`, 185, finalY + 25, { align: 'right' });
 
-        // Bank details
+        // === BANK DETAILS SECTION ===
         if (settings.bankAccount) {
+            const bankY = finalY + 10;
+            
             doc.setFont('helvetica', 'bold');
-            doc.text('Bank Details:', 20, finalY);
+            doc.setFontSize(11);
+            doc.setTextColor(31, 184, 205);
+            doc.text('PAYMENT DETAILS', 20, bankY);
+            doc.setTextColor(0, 0, 0);
+            
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(9);
-            doc.text(`Account Name: ${settings.bankName}`, 20, finalY + 7);
-            doc.text(`Account Number: ${settings.bankAccount}`, 20, finalY + 14);
-            doc.text(`IFSC: ${settings.bankIFSC}`, 20, finalY + 21);
+            doc.text(`Account Name: ${settings.bankName}`, 20, bankY + 8);
+            doc.text(`Account Number: ${settings.bankAccount}`, 20, bankY + 14);
+            doc.text(`IFSC Code: ${settings.bankIFSC}`, 20, bankY + 20);
+            
             if (settings.bankSWIFT) {
-                doc.text(`SWIFT: ${settings.bankSWIFT}`, 20, finalY + 28);
+                doc.text(`SWIFT Code: ${settings.bankSWIFT}`, 20, bankY + 26);
             }
         }
+
+        // === FOOTER ===
+        const pageHeight = doc.internal.pageSize.height;
+        doc.setFontSize(8);
+        doc.setTextColor(128, 128, 128);
+        doc.text('Thank you for your business!', 20, pageHeight - 20);
+        doc.text(`Generated on ${new Date().toLocaleDateString()}`, 20, pageHeight - 15);
 
         // Save the PDF
         doc.save(`${invoice.id}.pdf`);
