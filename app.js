@@ -2936,13 +2936,13 @@ async function downloadInvoice(invoiceId) {
             });
         }
 
-        // Items table
+        // Items table - FIXED AMOUNTS
         const tableY = 95;
         const tableData = invoice.items.map(item => [
             item.description,
             item.quantity.toString(),
-            `₹${formatNumber(item.rate)}`,
-            `₹${formatNumber(item.amount)}`
+            `₹${item.rate.toFixed(2)}`,
+            `₹${item.amount.toFixed(2)}`
         ]);
 
         doc.autoTable({
@@ -2966,19 +2966,19 @@ async function downloadInvoice(invoiceId) {
             }
         });
 
-        // Totals
+        // Totals - FIXED AMOUNTS
         const totalsY = doc.lastAutoTable.finalY + 15;
         doc.setFontSize(9);
         
         doc.text('Subtotal:', 140, totalsY);
-        doc.text(`₹${formatNumber(invoice.subtotal)}`, 185, totalsY, { align: 'right' });
+        doc.text(`₹${invoice.subtotal.toFixed(2)}`, 185, totalsY, { align: 'right' });
         
         doc.text(`Tax (${settings.taxRate}%):`, 140, totalsY + 6);
-        doc.text(`₹${formatNumber(invoice.tax)}`, 185, totalsY + 6, { align: 'right' });
+        doc.text(`₹${invoice.tax.toFixed(2)}`, 185, totalsY + 6, { align: 'right' });
         
         doc.setFont('helvetica', 'bold');
         doc.text('TOTAL:', 140, totalsY + 15);
-        doc.text(`₹${formatNumber(invoice.amount)}`, 185, totalsY + 15, { align: 'right' });
+        doc.text(`₹${invoice.amount.toFixed(2)}`, 185, totalsY + 15, { align: 'right' });
 
         // Bank details
         if (settings.bankAccount) {
