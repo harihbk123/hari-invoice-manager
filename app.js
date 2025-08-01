@@ -223,44 +223,78 @@ function setupDateRangeFilters() {
         const controlsContainer = document.createElement('div');
         controlsContainer.id = 'modern-analytics-controls';
         controlsContainer.innerHTML = `
-            <div class="analytics-controls-container">
-                <!-- Period Selection -->
-                <div class="control-group">
-                    <label class="control-label">📊 View Type</label>
-                    <select id="analytics-period" class="modern-select period-select">
-                        <option value="monthly">Monthly View</option>
-                        <option value="quarterly">Quarterly View</option>
-                        <option value="yearly">Yearly View</option>
-                    </select>
+    <div class="modern-analytics-controls">
+        <div class="controls-header">
+            <div class="header-content">
+                <div class="header-icon">📊</div>
+                <div class="header-text">
+                    <h3>Analytics Dashboard</h3>
+                    <p>Customize your view and analyze performance</p>
                 </div>
-
-                <!-- Date Range with Better UI -->
-                <div class="control-group">
-                    <label class="control-label">📅 Filter Period</label>
-                    <div class="date-range-container">
-                        <input type="month" id="date-from" class="modern-date-input date-picker" placeholder="From">
-                        <span class="date-separator">→</span>
-                        <input type="month" id="date-to" class="modern-date-input date-picker" placeholder="To">
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="control-group">
-                    <div class="action-buttons">
-                        <button class="action-btn apply-btn" id="apply-filters">
-                            <span>🔍</span> Apply
-                        </button>
-                        <button class="action-btn clear-btn" id="clear-filters">
-                            <span>🔄</span> Clear
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Status -->
-                <div class="filter-status" id="analytics-status"></div>
             </div>
-        `;
+        </div>
+        
+        <div class="controls-body">
+            <div class="control-section">
+                <label class="modern-label">
+                    <span class="label-icon">📈</span>
+                    <span class="label-text">View Type</span>
+                </label>
+                <div class="modern-select-wrapper">
+                    <select id="analytics-period" class="modern-select-input">
+                        <option value="monthly">Monthly Breakdown</option>
+                        <option value="quarterly">Quarterly Overview</option>
+                        <option value="yearly">Annual Summary</option>
+                    </select>
+                    <div class="select-arrow">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M7 10l5 5 5-5z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
 
+            <div class="control-section">
+                <label class="modern-label">
+                    <span class="label-icon">📅</span>
+                    <span class="label-text">Date Range</span>
+                </label>
+                <div class="date-range-inputs">
+                    <div class="date-input-wrapper">
+                        <input type="month" id="date-from" class="modern-date-input" placeholder="From">
+                        <span class="input-label">From</span>
+                    </div>
+                    <div class="range-connector">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M16.01 11H4v2h12.01v3L20 12l-3.99-4z"/>
+                        </svg>
+                    </div>
+                    <div class="date-input-wrapper">
+                        <input type="month" id="date-to" class="modern-date-input" placeholder="To">
+                        <span class="input-label">To</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-actions">
+                <button class="modern-action-btn primary-btn" id="apply-filters">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    </svg>
+                    <span>Apply Filters</span>
+                </button>
+                <button class="modern-action-btn secondary-btn" id="clear-filters">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                    <span>Clear</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="analytics-status-bar" id="analytics-status"></div>
+    </div>
+`;
         analyticsHeader.parentNode.insertBefore(controlsContainer, analyticsHeader.nextSibling);
 
         // Add enhanced analytics styles
