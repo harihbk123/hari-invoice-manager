@@ -2853,7 +2853,7 @@ async function downloadInvoice(invoiceId) {
     const client = appData.clients.find(c => c.id === invoice.clientId);
     const settings = appData.settings;
 
-    if (typeof window.jsPdf === 'undefined') {
+    if (typeof window.jspdf === 'undefined') {
         showToast('PDF library is loading. Please try again in a moment.', 'info');
         loadPDFLibrary();
         setTimeout(() => downloadInvoice(invoiceId), 2000);
