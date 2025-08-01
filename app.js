@@ -3116,17 +3116,20 @@ async function downloadInvoice(invoiceId) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
+        // Set font
+        doc.setFont('helvetica');
+
         // Title
         doc.setFontSize(20);
         doc.setFont('helvetica', 'bold');
         doc.text('INVOICE', 20, 25);
 
-        // Invoice details (top right)
+        // Invoice details (top right) - NO formatDate calls
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         doc.text(`Invoice: ${invoice.id}`, 140, 20);
-        doc.text(`Date: ${formatDate(invoice.date)}`, 140, 26);
-        doc.text(`Due: ${formatDate(invoice.dueDate)}`, 140, 32);
+        doc.text(`Date: ${invoice.date}`, 140, 26);
+        doc.text(`Due: ${invoice.dueDate}`, 140, 32);
 
         // FROM section
         doc.setFontSize(10);
@@ -3188,14 +3191,22 @@ async function downloadInvoice(invoiceId) {
             });
         }
 
-        // Items table - FIXED AMOUNTS
+        // Items table - CLEAN NUMBER FORMATTING
         const tableY = 95;
-        const tableData = invoice.items.map(item => [
-            item.description,
-            item.quantity.toString(),
-            `₹${item.rate.toFixed(2)}`,
-            `₹${item.amount.toFixed(2)}`
-        ]);
+        
+        // Process numbers cleanly without formatNumber
+        const tableData = invoice.items.map(item => {
+            const rate = parseFloat(item.rate || 0);
+            const amount = parseFloat(item.amount || 0);
+            const qty = parseInt(item.quantity || 1);
+            
+            return [
+                item.description || '',
+                qty.toString(),
+                `₹${rate.toFixed(2)}`,
+                `₹${amount.toFixed(2)}`
+            ];
+        });
 
         doc.autoTable({
             head: [['Description', 'Qty', 'Rate', 'Amount']],
@@ -3218,19 +3229,25 @@ async function downloadInvoice(invoiceId) {
             }
         });
 
-        // Totals - FIXED AMOUNTS
+        // Totals - CLEAN NUMBER FORMATTING
         const totalsY = doc.lastAutoTable.finalY + 15;
         doc.setFontSize(9);
         
-        doc.text('Subtotal:', 140, totalsY);
-        doc.text(`₹${invoice.subtotal.toFixed(2)}`, 185, totalsY, { align: 'right' });
+        // Parse all amounts as numbers first
+        const subtotal = parseFloat(invoice.subtotal || 0);
+        const tax = parseFloat(invoice.tax || 0);
+        const total = parseFloat(invoice.amount || 0);
+        const taxRate = parseFloat(settings.taxRate || 0);
         
-        doc.text(`Tax (${settings.taxRate}%):`, 140, totalsY + 6);
-        doc.text(`₹${invoice.tax.toFixed(2)}`, 185, totalsY + 6, { align: 'right' });
+        doc.text('Subtotal:', 140, totalsY);
+        doc.text(`₹${subtotal.toFixed(2)}`, 185, totalsY, { align: 'right' });
+        
+        doc.text(`Tax (${taxRate}%):`, 140, totalsY + 6);
+        doc.text(`₹${tax.toFixed(2)}`, 185, totalsY + 6, { align: 'right' });
         
         doc.setFont('helvetica', 'bold');
         doc.text('TOTAL:', 140, totalsY + 15);
-        doc.text(`₹${invoice.amount.toFixed(2)}`, 185, totalsY + 15, { align: 'right' });
+        doc.text(`₹${total.toFixed(2)}`, 185, totalsY + 15, { align: 'right' });
 
         // Bank details
         if (settings.bankAccount) {
@@ -3251,6 +3268,7 @@ async function downloadInvoice(invoiceId) {
         doc.setFontSize(7);
         doc.text('Thank you for your business!', 20, 270);
 
+        // Save with clean filename
         doc.save(`Invoice-${invoice.id}.pdf`);
         showToast(`Invoice ${invoice.id} downloaded successfully`, 'success');
 
