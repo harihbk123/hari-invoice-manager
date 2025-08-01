@@ -2853,7 +2853,7 @@ async function downloadInvoice(invoiceId) {
     const client = appData.clients.find(c => c.id === invoice.clientId);
     const settings = appData.settings;
 
-    if (typeof window.jspdf === 'undefined') {
+    if (typeof window.jsPdf === 'undefined') {
         showToast('PDF library is loading. Please try again in a moment.', 'info');
         loadPDFLibrary();
         setTimeout(() => downloadInvoice(invoiceId), 2000);
@@ -2863,9 +2863,6 @@ async function downloadInvoice(invoiceId) {
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-
-        // Simple, clean layout
-        doc.setFont('helvetica');
 
         // Title
         doc.setFontSize(20);
@@ -2884,29 +2881,33 @@ async function downloadInvoice(invoiceId) {
         doc.setFont('helvetica', 'bold');
         doc.text('FROM:', 20, 45);
         
+        let yPos = 52;
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        doc.text(settings.profileName, 20, 52);
         
-        // Handle address properly
-        let yPos = 58;
+        // Profile name
+        doc.text(settings.profileName, 20, yPos);
+        yPos += 6;
+        
+        // Address with proper wrapping
         if (settings.profileAddress) {
-            const lines = settings.profileAddress.split('\n');
-            lines.forEach(line => {
-                if (line.trim()) {
-                    doc.text(line.trim(), 20, yPos);
-                    yPos += 5;
-                }
+            doc.setFontSize(8);
+            const addressLines = doc.splitTextToSize(settings.profileAddress, 80);
+            addressLines.forEach(line => {
+                doc.text(line, 20, yPos);
+                yPos += 4;
             });
         }
         
+        // Contact details
+        doc.setFontSize(8);
         if (settings.profileGSTIN) {
             doc.text(`GSTIN: ${settings.profileGSTIN}`, 20, yPos);
-            yPos += 5;
+            yPos += 4;
         }
         if (settings.profilePhone) {
             doc.text(`Ph: ${settings.profilePhone}`, 20, yPos);
-            yPos += 5;
+            yPos += 4;
         }
         if (settings.profileEmail) {
             doc.text(`Email: ${settings.profileEmail}`, 20, yPos);
@@ -2917,22 +2918,25 @@ async function downloadInvoice(invoiceId) {
         doc.setFont('helvetica', 'bold');
         doc.text('TO:', 110, 45);
         
+        let toYPos = 52;
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        doc.text(client ? client.name : invoice.client, 110, 52);
         
-        let toYPos = 58;
+        // Client name
+        doc.text(client ? client.name : invoice.client, 110, toYPos);
+        toYPos += 6;
+        
+        // Client address with proper wrapping
         if (client && client.address) {
-            const clientLines = client.address.split('\n');
-            clientLines.forEach(line => {
-                if (line.trim()) {
-                    doc.text(line.trim(), 110, toYPos);
-                    toYPos += 5;
-                }
+            doc.setFontSize(8);
+            const clientAddressLines = doc.splitTextToSize(client.address, 80);
+            clientAddressLines.forEach(line => {
+                doc.text(line, 110, toYPos);
+                toYPos += 4;
             });
         }
 
-        // Items table - much simpler
+        // Items table
         const tableY = 95;
         const tableData = invoice.items.map(item => [
             item.description,
@@ -2962,7 +2966,7 @@ async function downloadInvoice(invoiceId) {
             }
         });
 
-        // Totals - simple right-aligned
+        // Totals
         const totalsY = doc.lastAutoTable.finalY + 15;
         doc.setFontSize(9);
         
@@ -2976,7 +2980,7 @@ async function downloadInvoice(invoiceId) {
         doc.text('TOTAL:', 140, totalsY + 15);
         doc.text(`₹${formatNumber(invoice.amount)}`, 185, totalsY + 15, { align: 'right' });
 
-        // Bank details - bottom left, small
+        // Bank details
         if (settings.bankAccount) {
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(8);
