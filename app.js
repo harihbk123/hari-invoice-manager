@@ -2841,7 +2841,6 @@ function showInvoiceModal(invoice) {
     document.body.appendChild(modal);
 }
 
-// NEW: Download invoice as PDF
 async function downloadInvoice(invoiceId) {
     console.log('Downloading invoice as PDF:', invoiceId);
     
@@ -2857,11 +2856,7 @@ async function downloadInvoice(invoiceId) {
     // Check if jsPDF is loaded
     if (typeof window.jspdf === 'undefined') {
         showToast('PDF library is loading. Please try again in a moment.', 'info');
-        
-        // Try to load it again
         loadPDFLibrary();
-        
-        // Wait and retry
         setTimeout(() => downloadInvoice(invoiceId), 2000);
         return;
     }
@@ -2870,113 +2865,120 @@ async function downloadInvoice(invoiceId) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
-        // Set default font
-        doc.setFont('helvetica');
+        // Page dimensions
+        const pageWidth = doc.internal.pageSize.width;
+        const pageHeight = doc.internal.pageSize.height;
+        const margin = 20;
+        const contentWidth = pageWidth - (margin * 2);
+
+        // Colors
+        const primaryColor = [31, 184, 205];
+        const textColor = [33, 37, 41];
+        const lightGray = [248, 249, 250];
 
         // === HEADER SECTION ===
-        // Main Invoice Title
-        doc.setFontSize(32);
+        // Main title
+        doc.setFontSize(36);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(31, 184, 205); // Teal color
-        doc.text('INVOICE', 20, 30);
+        doc.setTextColor(...primaryColor);
+        doc.text('INVOICE', margin, 35);
 
-        // Invoice Status Badge
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(100, 100, 100);
-        doc.text(`Status: ${invoice.status}`, 20, 40);
-
-        // Reset color
-        doc.setTextColor(0, 0, 0);
-
-        // Invoice Details Box (Right side)
-        doc.setFillColor(248, 250, 252); // Light gray background
-        doc.rect(130, 15, 65, 35, 'F'); // Filled rectangle
-        
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('INVOICE DETAILS', 135, 25);
-        
-        doc.setFont('helvetica', 'normal');
+        // Status badge
         doc.setFontSize(9);
-        doc.text(`Number: ${invoice.id}`, 135, 32);
-        doc.text(`Issue Date: ${formatDate(invoice.date)}`, 135, 38);
-        doc.text(`Due Date: ${formatDate(invoice.dueDate)}`, 135, 44);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(128, 128, 128);
+        doc.text(`Status: ${invoice.status}`, margin, 45);
 
-        // === FROM SECTION ===
-        let currentY = 65;
+        // Invoice details box
+        const detailsBoxX = pageWidth - 80;
+        const detailsBoxY = 20;
+        doc.setFillColor(...lightGray);
+        doc.roundedRect(detailsBoxX, detailsBoxY, 75, 40, 3, 3, 'F');
         
+        doc.setTextColor(...textColor);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('INVOICE DETAILS', detailsBoxX + 5, detailsBoxY + 10);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.text(`Number: ${invoice.id}`, detailsBoxX + 5, detailsBoxY + 18);
+        doc.text(`Issue: ${formatDate(invoice.date)}`, detailsBoxX + 5, detailsBoxY + 25);
+        doc.text(`Due: ${formatDate(invoice.dueDate)}`, detailsBoxX + 5, detailsBoxY + 32);
+
+        // === FROM/TO SECTION ===
+        let yPosition = 75;
+
+        // FROM section
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(31, 184, 205);
-        doc.text('FROM:', 20, currentY);
-        doc.setTextColor(0, 0, 0);
+        doc.setTextColor(...primaryColor);
+        doc.text('FROM:', margin, yPosition);
         
-        currentY += 10;
+        yPosition += 8;
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.text(settings.profileName, 20, currentY);
+        doc.setTextColor(...textColor);
+        doc.text(settings.profileName, margin, yPosition);
         
-        // Address lines
-        currentY += 6;
+        yPosition += 6;
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
         
+        // Address handling
         if (settings.profileAddress) {
             const addressLines = settings.profileAddress.split('\n');
-            addressLines.forEach((line) => {
+            addressLines.forEach(line => {
                 if (line.trim()) {
-                    doc.text(line.trim(), 20, currentY);
-                    currentY += 5;
+                    doc.text(line.trim(), margin, yPosition);
+                    yPosition += 4;
                 }
             });
         }
         
         // Contact details
-        if (settings.profileGSTIN) {
-            doc.text(`GSTIN: ${settings.profileGSTIN}`, 20, currentY);
-            currentY += 5;
-        }
-        if (settings.profilePhone) {
-            doc.text(`Phone: ${settings.profilePhone}`, 20, currentY);
-            currentY += 5;
-        }
-        if (settings.profileEmail) {
-            doc.text(`Email: ${settings.profileEmail}`, 20, currentY);
-            currentY += 5;
-        }
+        const contactDetails = [
+            settings.profileGSTIN ? `GSTIN: ${settings.profileGSTIN}` : null,
+            settings.profilePhone ? `Phone: ${settings.profilePhone}` : null,
+            settings.profileEmail ? `Email: ${settings.profileEmail}` : null
+        ].filter(Boolean);
+        
+        contactDetails.forEach(detail => {
+            doc.text(detail, margin, yPosition);
+            yPosition += 4;
+        });
 
-        // === TO SECTION ===
-        let toY = 65;
+        // TO section
+        const toX = pageWidth / 2 + 10;
+        let toY = 75;
         
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(31, 184, 205);
-        doc.text('TO:', 120, toY);
-        doc.setTextColor(0, 0, 0);
+        doc.setTextColor(...primaryColor);
+        doc.text('TO:', toX, toY);
         
-        toY += 10;
+        toY += 8;
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.text(client ? client.name : invoice.client, 120, toY);
+        doc.setTextColor(...textColor);
+        doc.text(client ? client.name : invoice.client, toX, toY);
         
-        // Client address
         toY += 6;
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
         
         if (client && client.address) {
             const clientAddressLines = client.address.split('\n');
-            clientAddressLines.forEach((line) => {
+            clientAddressLines.forEach(line => {
                 if (line.trim()) {
-                    doc.text(line.trim(), 120, toY);
-                    toY += 5;
+                    doc.text(line.trim(), toX, toY);
+                    toY += 4;
                 }
             });
         }
 
         // === ITEMS TABLE ===
-        const tableStartY = Math.max(currentY, toY) + 15;
+        const tableStartY = Math.max(yPosition, toY) + 20;
         
         const tableData = invoice.items.map(item => [
             item.description,
@@ -2986,87 +2988,102 @@ async function downloadInvoice(invoiceId) {
         ]);
 
         doc.autoTable({
-            head: [['Description', 'Qty', 'Rate', 'Amount']],
+            head: [['DESCRIPTION', 'QTY', 'RATE', 'AMOUNT']],
             body: tableData,
             startY: tableStartY,
-            margin: { left: 20, right: 20 },
-            styles: { 
-                cellPadding: 6,
-                fontSize: 10,
-                lineColor: [200, 200, 200],
-                lineWidth: 0.5
+            margin: { left: margin, right: margin },
+            styles: {
+                fontSize: 9,
+                cellPadding: 8,
+                lineColor: [220, 220, 220],
+                lineWidth: 0.5,
+                textColor: textColor
             },
-            headStyles: { 
-                fillColor: [31, 184, 205],
+            headStyles: {
+                fillColor: primaryColor,
                 textColor: [255, 255, 255],
                 fontStyle: 'bold',
-                fontSize: 11
+                fontSize: 10
             },
             columnStyles: {
-                0: { cellWidth: 80 }, // Description
-                1: { halign: 'center', cellWidth: 20 }, // Qty
-                2: { halign: 'right', cellWidth: 35 }, // Rate
-                3: { halign: 'right', cellWidth: 40 } // Amount
+                0: { cellWidth: contentWidth * 0.5 },
+                1: { halign: 'center', cellWidth: contentWidth * 0.15 },
+                2: { halign: 'right', cellWidth: contentWidth * 0.17 },
+                3: { halign: 'right', cellWidth: contentWidth * 0.18 }
             },
             alternateRowStyles: {
-                fillColor: [248, 250, 252]
+                fillColor: [252, 252, 252]
             }
         });
 
         // === TOTALS SECTION ===
         const finalY = doc.lastAutoTable.finalY + 20;
+        const totalsX = pageWidth - 90;
         
-        // Totals box
-        doc.setFillColor(248, 250, 252);
-        doc.rect(130, finalY - 5, 65, 35, 'F');
+        // Totals background
+        doc.setFillColor(...lightGray);
+        doc.roundedRect(totalsX, finalY - 5, 85, 45, 3, 3, 'F');
         
+        doc.setTextColor(...textColor);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Subtotal:`, 135, finalY + 5);
-        doc.text(`₹${formatNumber(invoice.subtotal)}`, 185, finalY + 5, { align: 'right' });
         
-        doc.text(`Tax (${settings.taxRate}%):`, 135, finalY + 12);
-        doc.text(`₹${formatNumber(invoice.tax)}`, 185, finalY + 12, { align: 'right' });
+        // Subtotal
+        doc.text('Subtotal:', totalsX + 5, finalY + 8);
+        doc.text(`₹${formatNumber(invoice.subtotal)}`, totalsX + 80, finalY + 8, { align: 'right' });
+        
+        // Tax
+        doc.text(`Tax (${settings.taxRate}%):`, totalsX + 5, finalY + 18);
+        doc.text(`₹${formatNumber(invoice.tax)}`, totalsX + 80, finalY + 18, { align: 'right' });
         
         // Total line
         doc.setLineWidth(1);
-        doc.line(135, finalY + 16, 190, finalY + 16);
+        doc.setDrawColor(...primaryColor);
+        doc.line(totalsX + 5, finalY + 23, totalsX + 80, finalY + 23);
         
+        // Total amount
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.text(`TOTAL:`, 135, finalY + 25);
-        doc.text(`₹${formatNumber(invoice.amount)}`, 185, finalY + 25, { align: 'right' });
+        doc.setTextColor(...primaryColor);
+        doc.text('TOTAL:', totalsX + 5, finalY + 33);
+        doc.text(`₹${formatNumber(invoice.amount)}`, totalsX + 80, finalY + 33, { align: 'right' });
 
-        // === BANK DETAILS SECTION ===
+        // === PAYMENT DETAILS ===
         if (settings.bankAccount) {
-            const bankY = finalY + 10;
+            const bankY = finalY + 15;
             
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(11);
-            doc.setTextColor(31, 184, 205);
-            doc.text('PAYMENT DETAILS', 20, bankY);
-            doc.setTextColor(0, 0, 0);
+            doc.setTextColor(...primaryColor);
+            doc.text('PAYMENT DETAILS', margin, bankY);
             
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(9);
-            doc.text(`Account Name: ${settings.bankName}`, 20, bankY + 8);
-            doc.text(`Account Number: ${settings.bankAccount}`, 20, bankY + 14);
-            doc.text(`IFSC Code: ${settings.bankIFSC}`, 20, bankY + 20);
+            doc.setTextColor(...textColor);
             
-            if (settings.bankSWIFT) {
-                doc.text(`SWIFT Code: ${settings.bankSWIFT}`, 20, bankY + 26);
-            }
+            const bankDetails = [
+                `Account Name: ${settings.bankName}`,
+                `Account Number: ${settings.bankAccount}`,
+                `IFSC Code: ${settings.bankIFSC}`,
+                settings.bankSWIFT ? `SWIFT Code: ${settings.bankSWIFT}` : null
+            ].filter(Boolean);
+            
+            bankDetails.forEach((detail, index) => {
+                doc.text(detail, margin, bankY + 10 + (index * 5));
+            });
         }
 
         // === FOOTER ===
-        const pageHeight = doc.internal.pageSize.height;
         doc.setFontSize(8);
         doc.setTextColor(128, 128, 128);
-        doc.text('Thank you for your business!', 20, pageHeight - 20);
-        doc.text(`Generated on ${new Date().toLocaleDateString()}`, 20, pageHeight - 15);
+        doc.text('Thank you for your business!', margin, pageHeight - 25);
+        doc.text(`Generated on ${new Date().toLocaleDateString('en-IN')}`, margin, pageHeight - 20);
+        
+        // Company signature line
+        doc.text('Hariprasad Sivakumar', pageWidth - 60, pageHeight - 25, { align: 'right' });
 
         // Save the PDF
-        doc.save(`${invoice.id}.pdf`);
+        doc.save(`Invoice-${invoice.id}.pdf`);
         showToast(`Invoice ${invoice.id} downloaded successfully`, 'success');
 
     } catch (error) {
@@ -3074,7 +3091,6 @@ async function downloadInvoice(invoiceId) {
         showToast('Error generating PDF. Please try again.', 'error');
     }
 }
-
 function editInvoice(invoiceId) {
     console.log('Editing invoice:', invoiceId);
     openInvoiceModal(invoiceId);
