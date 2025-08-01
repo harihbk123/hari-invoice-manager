@@ -2853,7 +2853,6 @@ async function downloadInvoice(invoiceId) {
     const client = appData.clients.find(c => c.id === invoice.clientId);
     const settings = appData.settings;
 
-    // Check if jsPDF is loaded
     if (typeof window.jspdf === 'undefined') {
         showToast('PDF library is loading. Please try again in a moment.', 'info');
         loadPDFLibrary();
@@ -2865,121 +2864,76 @@ async function downloadInvoice(invoiceId) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
-        // Page dimensions
-        const pageWidth = doc.internal.pageSize.width;
-        const pageHeight = doc.internal.pageSize.height;
-        const margin = 20;
-        const contentWidth = pageWidth - (margin * 2);
+        // Simple, clean layout
+        doc.setFont('helvetica');
 
-        // Colors
-        const primaryColor = [31, 184, 205];
-        const textColor = [33, 37, 41];
-        const lightGray = [248, 249, 250];
-
-        // === HEADER SECTION ===
-        // Main title
-        doc.setFontSize(36);
+        // Title
+        doc.setFontSize(20);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...primaryColor);
-        doc.text('INVOICE', margin, 35);
+        doc.text('INVOICE', 20, 25);
 
-        // Status badge
+        // Invoice details (top right)
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(128, 128, 128);
-        doc.text(`Status: ${invoice.status}`, margin, 45);
-
-        // Invoice details box
-        const detailsBoxX = pageWidth - 80;
-        const detailsBoxY = 20;
-        doc.setFillColor(...lightGray);
-        doc.roundedRect(detailsBoxX, detailsBoxY, 75, 40, 3, 3, 'F');
-        
-        doc.setTextColor(...textColor);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('INVOICE DETAILS', detailsBoxX + 5, detailsBoxY + 10);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
-        doc.text(`Number: ${invoice.id}`, detailsBoxX + 5, detailsBoxY + 18);
-        doc.text(`Issue: ${formatDate(invoice.date)}`, detailsBoxX + 5, detailsBoxY + 25);
-        doc.text(`Due: ${formatDate(invoice.dueDate)}`, detailsBoxX + 5, detailsBoxY + 32);
-
-        // === FROM/TO SECTION ===
-        let yPosition = 75;
+        doc.text(`Invoice: ${invoice.id}`, 140, 20);
+        doc.text(`Date: ${formatDate(invoice.date)}`, 140, 26);
+        doc.text(`Due: ${formatDate(invoice.dueDate)}`, 140, 32);
 
         // FROM section
-        doc.setFontSize(12);
+        doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...primaryColor);
-        doc.text('FROM:', margin, yPosition);
+        doc.text('FROM:', 20, 45);
         
-        yPosition += 8;
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...textColor);
-        doc.text(settings.profileName, margin, yPosition);
-        
-        yPosition += 6;
-        doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(settings.profileName, 20, 52);
         
-        // Address handling
+        // Handle address properly
+        let yPos = 58;
         if (settings.profileAddress) {
-            const addressLines = settings.profileAddress.split('\n');
-            addressLines.forEach(line => {
+            const lines = settings.profileAddress.split('\n');
+            lines.forEach(line => {
                 if (line.trim()) {
-                    doc.text(line.trim(), margin, yPosition);
-                    yPosition += 4;
+                    doc.text(line.trim(), 20, yPos);
+                    yPos += 5;
                 }
             });
         }
         
-        // Contact details
-        const contactDetails = [
-            settings.profileGSTIN ? `GSTIN: ${settings.profileGSTIN}` : null,
-            settings.profilePhone ? `Phone: ${settings.profilePhone}` : null,
-            settings.profileEmail ? `Email: ${settings.profileEmail}` : null
-        ].filter(Boolean);
-        
-        contactDetails.forEach(detail => {
-            doc.text(detail, margin, yPosition);
-            yPosition += 4;
-        });
+        if (settings.profileGSTIN) {
+            doc.text(`GSTIN: ${settings.profileGSTIN}`, 20, yPos);
+            yPos += 5;
+        }
+        if (settings.profilePhone) {
+            doc.text(`Ph: ${settings.profilePhone}`, 20, yPos);
+            yPos += 5;
+        }
+        if (settings.profileEmail) {
+            doc.text(`Email: ${settings.profileEmail}`, 20, yPos);
+        }
 
         // TO section
-        const toX = pageWidth / 2 + 10;
-        let toY = 75;
-        
-        doc.setFontSize(12);
+        doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...primaryColor);
-        doc.text('TO:', toX, toY);
+        doc.text('TO:', 110, 45);
         
-        toY += 8;
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...textColor);
-        doc.text(client ? client.name : invoice.client, toX, toY);
-        
-        toY += 6;
-        doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(client ? client.name : invoice.client, 110, 52);
         
+        let toYPos = 58;
         if (client && client.address) {
-            const clientAddressLines = client.address.split('\n');
-            clientAddressLines.forEach(line => {
+            const clientLines = client.address.split('\n');
+            clientLines.forEach(line => {
                 if (line.trim()) {
-                    doc.text(line.trim(), toX, toY);
-                    toY += 4;
+                    doc.text(line.trim(), 110, toYPos);
+                    toYPos += 5;
                 }
             });
         }
 
-        // === ITEMS TABLE ===
-        const tableStartY = Math.max(yPosition, toY) + 20;
-        
+        // Items table - much simpler
+        const tableY = 95;
         const tableData = invoice.items.map(item => [
             item.description,
             item.quantity.toString(),
@@ -2988,101 +2942,59 @@ async function downloadInvoice(invoiceId) {
         ]);
 
         doc.autoTable({
-            head: [['DESCRIPTION', 'QTY', 'RATE', 'AMOUNT']],
+            head: [['Description', 'Qty', 'Rate', 'Amount']],
             body: tableData,
-            startY: tableStartY,
-            margin: { left: margin, right: margin },
+            startY: tableY,
             styles: {
-                fontSize: 9,
-                cellPadding: 8,
-                lineColor: [220, 220, 220],
-                lineWidth: 0.5,
-                textColor: textColor
+                fontSize: 8,
+                cellPadding: 3
             },
             headStyles: {
-                fillColor: primaryColor,
-                textColor: [255, 255, 255],
-                fontStyle: 'bold',
-                fontSize: 10
+                fillColor: [200, 200, 200],
+                textColor: [0, 0, 0],
+                fontSize: 9
             },
             columnStyles: {
-                0: { cellWidth: contentWidth * 0.5 },
-                1: { halign: 'center', cellWidth: contentWidth * 0.15 },
-                2: { halign: 'right', cellWidth: contentWidth * 0.17 },
-                3: { halign: 'right', cellWidth: contentWidth * 0.18 }
-            },
-            alternateRowStyles: {
-                fillColor: [252, 252, 252]
+                0: { cellWidth: 80 },
+                1: { cellWidth: 20, halign: 'center' },
+                2: { cellWidth: 35, halign: 'right' },
+                3: { cellWidth: 35, halign: 'right' }
             }
         });
 
-        // === TOTALS SECTION ===
-        const finalY = doc.lastAutoTable.finalY + 20;
-        const totalsX = pageWidth - 90;
+        // Totals - simple right-aligned
+        const totalsY = doc.lastAutoTable.finalY + 15;
+        doc.setFontSize(9);
         
-        // Totals background
-        doc.setFillColor(...lightGray);
-        doc.roundedRect(totalsX, finalY - 5, 85, 45, 3, 3, 'F');
+        doc.text('Subtotal:', 140, totalsY);
+        doc.text(`₹${formatNumber(invoice.subtotal)}`, 185, totalsY, { align: 'right' });
         
-        doc.setTextColor(...textColor);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
+        doc.text(`Tax (${settings.taxRate}%):`, 140, totalsY + 6);
+        doc.text(`₹${formatNumber(invoice.tax)}`, 185, totalsY + 6, { align: 'right' });
         
-        // Subtotal
-        doc.text('Subtotal:', totalsX + 5, finalY + 8);
-        doc.text(`₹${formatNumber(invoice.subtotal)}`, totalsX + 80, finalY + 8, { align: 'right' });
-        
-        // Tax
-        doc.text(`Tax (${settings.taxRate}%):`, totalsX + 5, finalY + 18);
-        doc.text(`₹${formatNumber(invoice.tax)}`, totalsX + 80, finalY + 18, { align: 'right' });
-        
-        // Total line
-        doc.setLineWidth(1);
-        doc.setDrawColor(...primaryColor);
-        doc.line(totalsX + 5, finalY + 23, totalsX + 80, finalY + 23);
-        
-        // Total amount
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(12);
-        doc.setTextColor(...primaryColor);
-        doc.text('TOTAL:', totalsX + 5, finalY + 33);
-        doc.text(`₹${formatNumber(invoice.amount)}`, totalsX + 80, finalY + 33, { align: 'right' });
+        doc.text('TOTAL:', 140, totalsY + 15);
+        doc.text(`₹${formatNumber(invoice.amount)}`, 185, totalsY + 15, { align: 'right' });
 
-        // === PAYMENT DETAILS ===
+        // Bank details - bottom left, small
         if (settings.bankAccount) {
-            const bankY = finalY + 15;
-            
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(11);
-            doc.setTextColor(...primaryColor);
-            doc.text('PAYMENT DETAILS', margin, bankY);
-            
             doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.setTextColor(...textColor);
+            doc.setFontSize(8);
+            const bankY = totalsY + 10;
             
-            const bankDetails = [
-                `Account Name: ${settings.bankName}`,
-                `Account Number: ${settings.bankAccount}`,
-                `IFSC Code: ${settings.bankIFSC}`,
-                settings.bankSWIFT ? `SWIFT Code: ${settings.bankSWIFT}` : null
-            ].filter(Boolean);
-            
-            bankDetails.forEach((detail, index) => {
-                doc.text(detail, margin, bankY + 10 + (index * 5));
-            });
+            doc.text('Bank Details:', 20, bankY);
+            doc.text(`Account: ${settings.bankName}`, 20, bankY + 6);
+            doc.text(`Number: ${settings.bankAccount}`, 20, bankY + 12);
+            doc.text(`IFSC: ${settings.bankIFSC}`, 20, bankY + 18);
+            if (settings.bankSWIFT) {
+                doc.text(`SWIFT: ${settings.bankSWIFT}`, 20, bankY + 24);
+            }
         }
 
-        // === FOOTER ===
-        doc.setFontSize(8);
-        doc.setTextColor(128, 128, 128);
-        doc.text('Thank you for your business!', margin, pageHeight - 25);
-        doc.text(`Generated on ${new Date().toLocaleDateString('en-IN')}`, margin, pageHeight - 20);
-        
-        // Company signature line
-        doc.text('Hariprasad Sivakumar', pageWidth - 60, pageHeight - 25, { align: 'right' });
+        // Footer
+        doc.setFontSize(7);
+        doc.text('Thank you for your business!', 20, 270);
 
-        // Save the PDF
         doc.save(`Invoice-${invoice.id}.pdf`);
         showToast(`Invoice ${invoice.id} downloaded successfully`, 'success');
 
@@ -3091,47 +3003,6 @@ async function downloadInvoice(invoiceId) {
         showToast('Error generating PDF. Please try again.', 'error');
     }
 }
-function editInvoice(invoiceId) {
-    console.log('Editing invoice:', invoiceId);
-    openInvoiceModal(invoiceId);
-}
-
-async function deleteInvoice(invoiceId) {
-    console.log('Deleting invoice:', invoiceId);
-    if (confirm(`Are you sure you want to delete invoice ${invoiceId}?`)) {
-        try {
-            await deleteInvoiceFromSupabase(invoiceId);
-
-            const index = appData.invoices.findIndex(inv => inv.id === invoiceId);
-            if (index > -1) {
-                const invoice = appData.invoices[index];
-                const client = appData.clients.find(c => c.id === invoice.clientId);
-
-                if (client) {
-                    client.total_invoices = Math.max(0, (client.total_invoices || 0) - 1);
-                    if (invoice.status === 'Paid') {
-                        client.total_amount = Math.max(0, (client.total_amount || 0) - invoice.amount);
-                    }
-                }
-
-                appData.invoices.splice(index, 1);
-                appData.totalInvoices = Math.max(0, appData.totalInvoices - 1);
-
-                calculateMonthlyEarnings();
-
-                renderInvoices();
-                renderDashboard();
-                renderClients();
-
-                showToast(`Invoice ${invoiceId} deleted successfully`, 'success');
-            }
-        } catch (error) {
-            console.error('Error deleting invoice:', error);
-            showToast('Error deleting invoice. Please try again.', 'error');
-        }
-    }
-}
-
 // Utility Functions
 function formatNumber(num) {
     if (num === null || num === undefined || isNaN(num)) return '0';
