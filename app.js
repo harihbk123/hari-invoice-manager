@@ -222,77 +222,120 @@ function setupDateRangeFilters() {
 
         const controlsContainer = document.createElement('div');
         controlsContainer.id = 'modern-analytics-controls';
-        controlsContainer.innerHTML = `
-    <div class="modern-analytics-controls">
-        <div class="controls-header">
-            <div class="header-content">
-                <div class="header-icon">📊</div>
-                <div class="header-text">
-                    <h3>Analytics Dashboard</h3>
-                    <p>Customize your view and analyze performance</p>
+       controlsContainer.innerHTML = `
+    <div class="ultra-modern-analytics">
+        <!-- Header Section -->
+        <div class="analytics-hero">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                    </svg>
+                    Analytics Dashboard
+                </div>
+                <h2 class="hero-title">Revenue & Performance Insights</h2>
+                <p class="hero-subtitle">Analyze trends, filter data, and make informed decisions with real-time analytics</p>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-pill">
+                    <span class="stat-icon">📈</span>
+                    <span>Live Data</span>
+                </div>
+                <div class="stat-pill">
+                    <span class="stat-icon">⚡</span>
+                    <span>Real-time</span>
                 </div>
             </div>
         </div>
-        
-        <div class="controls-body">
-            <div class="control-section">
-                <label class="modern-label">
-                    <span class="label-icon">📈</span>
-                    <span class="label-text">View Type</span>
-                </label>
-                <div class="modern-select-wrapper">
-                    <select id="analytics-period" class="modern-select-input">
-                        <option value="monthly">Monthly Breakdown</option>
-                        <option value="quarterly">Quarterly Overview</option>
-                        <option value="yearly">Annual Summary</option>
-                    </select>
-                    <div class="select-arrow">
+
+        <!-- Filter Controls -->
+        <div class="filter-section">
+            <div class="section-header">
+                <h3>Data Filters</h3>
+                <div class="filter-actions">
+                    <button class="action-btn reset-btn" id="clear-filters">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                        Reset
+                    </button>
+                </div>
+            </div>
+
+            <div class="filters-grid">
+                <!-- Time Period Filter -->
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <div class="label-content">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2.5-9H18V1h-2v1H8V1H6v1H4.5C3.11 2 2 3.11 2 4.5v15C2 20.89 3.11 22 4.5 22h15c1.39 0 2.5-1.11 2.5-2.5v-15C22 3.11 20.89 2 19.5 2z"/>
+                            </svg>
+                            <span>Time Period</span>
+                        </div>
+                    </label>
+                    <div class="select-wrapper">
+                        <select id="analytics-period" class="modern-select">
+                            <option value="monthly">📊 Monthly View</option>
+                            <option value="quarterly">📈 Quarterly View</option>
+                            <option value="yearly">📅 Yearly View</option>
+                        </select>
+                        <div class="select-chevron">
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M7 10l5 5 5-5z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date Range Filter -->
+                <div class="filter-group date-range-group">
+                    <label class="filter-label">
+                        <div class="label-content">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2.5-9H18V1h-2v1H8V1H6v1H4.5C3.11 2 2 3.11 2 4.5v15C2 20.89 3.11 22 4.5 22h15c1.39 0 2.5-1.11 2.5-2.5v-15C22 3.11 20.89 2 19.5 2z"/>
+                            </svg>
+                            <span>Date Range</span>
+                        </div>
+                    </label>
+                    <div class="date-inputs">
+                        <div class="date-input-container">
+                            <input type="month" id="date-from" class="date-input">
+                            <label class="floating-label">From</label>
+                        </div>
+                        <div class="date-separator">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                            </svg>
+                        </div>
+                        <div class="date-input-container">
+                            <input type="month" id="date-to" class="date-input">
+                            <label class="floating-label">To</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Apply Button -->
+                <div class="filter-group apply-group">
+                    <button class="apply-btn" id="apply-filters">
                         <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M7 10l5 5 5-5z"/>
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                         </svg>
-                    </div>
+                        <span>Apply Filters</span>
+                    </button>
                 </div>
-            </div>
-
-            <div class="control-section">
-                <label class="modern-label">
-                    <span class="label-icon">📅</span>
-                    <span class="label-text">Date Range</span>
-                </label>
-                <div class="date-range-inputs">
-                    <div class="date-input-wrapper">
-                        <input type="month" id="date-from" class="modern-date-input" placeholder="From">
-                        <span class="input-label">From</span>
-                    </div>
-                    <div class="range-connector">
-                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M16.01 11H4v2h12.01v3L20 12l-3.99-4z"/>
-                        </svg>
-                    </div>
-                    <div class="date-input-wrapper">
-                        <input type="month" id="date-to" class="modern-date-input" placeholder="To">
-                        <span class="input-label">To</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-actions">
-                <button class="modern-action-btn primary-btn" id="apply-filters">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                    </svg>
-                    <span>Apply Filters</span>
-                </button>
-                <button class="modern-action-btn secondary-btn" id="clear-filters">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                    </svg>
-                    <span>Clear</span>
-                </button>
             </div>
         </div>
 
-        <div class="analytics-status-bar" id="analytics-status"></div>
+        <!-- Active Filters Display -->
+        <div class="active-filters" id="analytics-status">
+            <div class="filters-header">
+                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14,12V19.88C14.04,20.18 13.94,20.5 13.71,20.71C13.32,21.1 12.69,21.1 12.3,20.71L10.29,18.7C10.06,18.47 9.96,18.16 10,17.87V12H9.97L4.21,4.62C3.87,4.19 3.95,3.56 4.38,3.22C4.57,3.08 4.78,3 5,3V3H19V3C19.22,3 19.43,3.08 19.62,3.22C20.05,3.56 20.13,4.19 19.79,4.62L14.03,12H14Z"/>
+                    </svg>
+                    <span>Active Filters</span>
+                </div>
+            <div class="filter-chips"></div>
+        </div>
     </div>
 `;
         analyticsHeader.parentNode.insertBefore(controlsContainer, analyticsHeader.nextSibling);
@@ -302,142 +345,351 @@ function setupDateRangeFilters() {
             const style = document.createElement('style');
             style.id = 'enhanced-analytics-styles';
             style.textContent = `
-                .analytics-controls-container {
-                    display: flex;
-                    align-items: center;
-                    gap: 20px;
-                    padding: 16px 20px;
-                    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-                    border-radius: 12px;
-                    margin: 20px 0;
-                    border: 1px solid #e2e8f0;
-                    flex-wrap: wrap;
-                    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-                }
+    .ultra-modern-analytics {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 24px;
+        overflow: hidden;
+        margin: 32px 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e2e8f0;
+    }
 
-                .control-group {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 6px;
-                    min-width: 140px;
-                }
+    .analytics-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 32px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
 
-                .control-label {
-                    font-size: 11px;
-                    font-weight: 600;
-                    color: #475569;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                }
+    .analytics-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: url('data:image/svg+xml,<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)" /></svg>');
+        opacity: 0.3;
+        pointer-events: none;
+    }
 
-                .modern-select, .modern-date-input {
-                    padding: 8px 12px;
-                    border: 2px solid #cbd5e1;
-                    border-radius: 8px;
-                    background: white;
-                    font-size: 13px;
-                    font-weight: 500;
-                    color: #1e293b;
-                    transition: all 0.2s ease;
-                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-                }
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
 
-                .modern-select:focus, .modern-date-input:focus {
-                    outline: none;
-                    border-color: #3b82f6;
-                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-                }
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
 
-                .period-select {
-                    min-width: 150px;
-                }
+    .hero-title {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0 0 8px 0;
+        line-height: 1.2;
+    }
 
-                .date-range-container {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
+    .hero-subtitle {
+        font-size: 16px;
+        opacity: 0.9;
+        margin: 0;
+        max-width: 500px;
+        line-height: 1.5;
+    }
 
-                .modern-date-input {
-                    min-width: 130px;
-                }
+    .hero-stats {
+        display: flex;
+        gap: 12px;
+        position: relative;
+        z-index: 2;
+    }
 
-                .date-picker {
-                    cursor: pointer;
-                }
+    .stat-pill {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.15);
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-size: 13px;
+        font-weight: 500;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
-                .date-separator {
-                    font-size: 14px;
-                    color: #64748b;
-                    font-weight: 600;
-                }
+    .stat-icon {
+        font-size: 14px;
+    }
 
-                .action-buttons {
-                    display: flex;
-                    gap: 8px;
-                }
+    .filter-section {
+        padding: 32px;
+    }
 
-                .action-btn {
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                    padding: 8px 14px;
-                    border: 2px solid;
-                    border-radius: 8px;
-                    font-size: 12px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                    white-space: nowrap;
-                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-                }
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
 
-                .apply-btn {
-                    background: #3b82f6;
-                    color: white;
-                    border-color: #3b82f6;
-                }
+    .section-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a202c;
+        margin: 0;
+    }
 
-                .apply-btn:hover {
-                    background: #2563eb;
-                    border-color: #2563eb;
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
-                }
+    .filter-actions {
+        display: flex;
+        gap: 8px;
+    }
 
-                .clear-btn {
-                    background: #f8fafc;
-                    color: #475569;
-                    border-color: #cbd5e1;
-                }
+    .reset-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        color: #4a5568;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
 
-                .clear-btn:hover {
-                    background: #e2e8f0;
-                    border-color: #94a3b8;
-                    transform: translateY(-1px);
-                }
+    .reset-btn:hover {
+        background: #edf2f7;
+        border-color: #cbd5e0;
+        color: #2d3748;
+    }
 
-                .filter-status {
-                    flex: 1;
-                    min-width: 200px;
-                    padding: 10px 14px;
-                    background: rgba(59, 130, 246, 0.1);
-                    border: 1px solid rgba(59, 130, 246, 0.2);
-                    border-radius: 8px;
-                    font-size: 12px;
-                    color: #1e40af;
-                    font-weight: 500;
-                    display: none;
-                }
+    .filters-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr auto;
+        gap: 24px;
+        align-items: end;
+    }
 
-                .filter-status.show {
-                    display: block;
-                    animation: slideIn 0.3s ease;
-                }
-            `;
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .filter-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 4px;
+    }
+
+    .label-content {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .select-wrapper {
+        position: relative;
+    }
+
+    .modern-select {
+        width: 100%;
+        padding: 12px 40px 12px 16px;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #2d3748;
+        appearance: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .modern-select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .select-chevron {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #a0aec0;
+        pointer-events: none;
+    }
+
+    .date-inputs {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .date-input-container {
+        position: relative;
+        flex: 1;
+    }
+
+    .date-input {
+        width: 100%;
+        padding: 12px 16px;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #2d3748;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .date-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .floating-label {
+        position: absolute;
+        top: -8px;
+        left: 12px;
+        background: white;
+        padding: 0 6px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .date-separator {
+        color: #667eea;
+        margin: 0 4px;
+    }
+
+    .apply-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .apply-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .apply-btn:active {
+        transform: translateY(0);
+    }
+
+    .active-filters {
+        padding: 24px 32px;
+        background: #f7fafc;
+        border-top: 1px solid #e2e8f0;
+        display: none;
+    }
+
+    .active-filters.show {
+        display: block;
+        animation: slideDown 0.3s ease;
+    }
+
+    .filters-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #4a5568;
+    }
+
+    .filter-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .filter-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #2d3748;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .analytics-hero {
+            flex-direction: column;
+            text-align: center;
+            gap: 20px;
+        }
+
+        .hero-stats {
+            justify-content: center;
+        }
+
+        .filters-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .date-inputs {
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .date-separator {
+            transform: rotate(90deg);
+        }
+    }
+`;
             document.head.appendChild(style);
         }
 
