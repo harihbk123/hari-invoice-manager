@@ -1290,46 +1290,56 @@ function renderClients() {
     }
 
     grid.innerHTML = appData.clients.map((client, index) => `
-        <div class="client-card" data-client-id="${client.id}" data-client-index="${index}">
-            <div class="client-header">
-                <h4 class="client-name">${escapeHtml(client.name)}</h4>
-                <div class="client-actions">
-                    <button
-                        class="client-action-btn edit"
-                        data-client-id="${client.id}"
-                        data-client-index="${index}"
-                        title="Edit client"
-                    >
-                        ✏️
-                    </button>
-                    <button
-                        class="client-action-btn delete"
-                        data-client-id="${client.id}"
-                        data-client-name="${escapeHtml(client.name)}"
-                        title="Delete client"
-                    >
-                        🗑️
-                    </button>
-                </div>
+    <div class="client-card modern-card" data-client-id="${client.id}" data-client-index="${index}">
+        <div class="client-card-header">
+            <div class="client-avatar">
+                <span class="client-initial">${client.name.charAt(0).toUpperCase()}</span>
             </div>
-            <div class="client-details">
-                <div class="client-email">📧 ${escapeHtml(client.email)}</div>
-                ${client.phone ? `<div class="client-phone">📞 ${escapeHtml(client.phone)}</div>` : ''}
-                ${client.contact_name ? `<div class="client-contact">👤 ${escapeHtml(client.contact_name)}</div>` : ''}
-                ${client.address ? `<div class="client-address">📍 ${escapeHtml(client.address)}</div>` : ''}
-            </div>
-            <div class="client-stats">
-                <div class="client-stat">
-                    <div class="client-stat-value">${client.total_invoices || 0}</div>
-                    <div class="client-stat-label">Invoices</div>
-                </div>
-                <div class="client-stat">
-                    <div class="client-stat-value">₹${formatNumber(client.total_amount || 0)}</div>
-                    <div class="client-stat-label">Total Paid</div>
-                </div>
+            <div class="client-actions">
+                <button class="client-action-btn edit modern-btn" data-client-id="${client.id}" data-client-index="${index}" title="Edit client">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                </button>
+                <button class="client-action-btn delete modern-btn delete-btn" data-client-id="${client.id}" data-client-name="${escapeHtml(client.name)}" title="Delete client">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                </button>
             </div>
         </div>
-    `).join('');
+        
+        <div class="client-info">
+            <h4 class="client-name">${escapeHtml(client.name)}</h4>
+            <div class="client-details">
+                <div class="detail-item">
+                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                    <span>${escapeHtml(client.email)}</span>
+                </div>
+                ${client.phone ? `
+                <div class="detail-item">
+                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                    <span>${escapeHtml(client.phone)}</span>
+                </div>
+                ` : ''}
+                ${client.contact_name ? `
+                <div class="detail-item">
+                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    <span>${escapeHtml(client.contact_name)}</span>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+        
+        <div class="client-stats modern-stats">
+            <div class="stat-item">
+                <div class="stat-number">${client.total_invoices || 0}</div>
+                <div class="stat-label">Invoices</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <div class="stat-number">₹${formatNumber(client.total_amount || 0)}</div>
+                <div class="stat-label">Revenue</div>
+            </div>
+        </div>
+    </div>
+`).join('');
 
     // Add event listeners
     setTimeout(() => {
