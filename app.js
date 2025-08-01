@@ -2781,28 +2781,36 @@ async function downloadInvoice(invoiceId) {
         // Set font
         doc.setFont('helvetica');
 
-        // Header
-        doc.setFontSize(24);
-        doc.text('INVOICE', 20, 30);
+       // Header with better spacing
+doc.setFontSize(28);
+doc.setFont('helvetica', 'bold');
+doc.text('INVOICE', 20, 25);
+
+// Add invoice status if needed
+doc.setFontSize(10);
+doc.setFont('helvetica', 'normal');
+doc.setTextColor(100, 100, 100);
+doc.text(`Status: ${invoice.status}`, 20, 35);
+doc.setTextColor(0, 0, 0); // Reset to black
 
         // Invoice details
         doc.setFontSize(10);
-        doc.text(`Invoice Number: ${invoice.id}`, 130, 20);
-        doc.text(`Date: ${formatDate(invoice.date)}`, 130, 27);
-        doc.text(`Due Date: ${formatDate(invoice.dueDate)}`, 130, 34);
+doc.text(`Invoice Number: ${invoice.id}`, 140, 25);
+doc.text(`Issue Date: ${formatDate(invoice.date)}`, 140, 35);
+doc.text(`Due Date: ${formatDate(invoice.dueDate)}`, 140, 45);
 
-        // From section
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('FROM:', 20, 50);
+// From section - more space from header
+doc.setFontSize(12);
+doc.setFont('helvetica', 'bold');
+doc.text('FROM:', 20, 65);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
         doc.text(settings.profileName, 20, 58);
         
-        const addressLines = settings.profileAddress.split('\n');
-        addressLines.forEach((line, index) => {
-            doc.text(line.trim(), 20, 65 + (index * 5));
-        });
+const addressLines = settings.profileAddress.split('\n');
+addressLines.forEach((line, index) => {
+    doc.text(line.trim(), 20, 75 + (index * 6)); // More spacing between lines
+});
         
         let yPos = 65 + (addressLines.length * 5);
         if (settings.profileGSTIN) {
@@ -2839,10 +2847,12 @@ async function downloadInvoice(invoiceId) {
             `₹${formatNumber(item.amount)}`
         ]);
 
-        doc.autoTable({
-            head: [['Description', 'Qty', 'Rate', 'Amount']],
-            body: tableData,
-            startY: yPos + 15,
+doc.autoTable({
+    head: [['Description', 'Qty', 'Rate', 'Amount']],
+    body: tableData,
+    startY: yPos + 25, // More space before table
+    margin: { left: 20, right: 20 }, // Add margins
+    styles: { cellPadding: 8, fontSize: 10 }, // Better cell padding
             theme: 'grid',
             headStyles: { fillColor: [31, 184, 205] },
             columnStyles: {
