@@ -222,7 +222,7 @@ function setupDateRangeFilters() {
 
         const controlsContainer = document.createElement('div');
         controlsContainer.id = 'modern-analytics-controls';
-       controlsContainer.innerHTML = `
+      controlsContainer.innerHTML = `
     <div class="ultra-modern-analytics">
         <!-- Header Section -->
         <div class="analytics-hero">
@@ -347,16 +347,16 @@ function setupDateRangeFilters() {
             style.textContent = `
     .ultra-modern-analytics {
         background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        border-radius: 16px;
+        border-radius: 24px;
         overflow: hidden;
-        margin: 20px 0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin: 32px 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
         border: 1px solid #e2e8f0;
     }
 
     .analytics-hero {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 20px;
+        padding: 32px;
         color: white;
         display: flex;
         justify-content: space-between;
@@ -372,7 +372,7 @@ function setupDateRangeFilters() {
         right: -50%;
         width: 200%;
         height: 200%;
-        background: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)" /></svg>');
+        background: url('data:image/svg+xml,<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)" /></svg>');
         opacity: 0.3;
         pointer-events: none;
     }
@@ -385,35 +385,35 @@ function setupDateRangeFilters() {
     .hero-badge {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         background: rgba(255, 255, 255, 0.2);
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 11px;
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-size: 12px;
         font-weight: 600;
-        margin-bottom: 8px;
+        margin-bottom: 16px;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     .hero-title {
-        font-size: 20px;
+        font-size: 28px;
         font-weight: 700;
-        margin: 0 0 4px 0;
+        margin: 0 0 8px 0;
         line-height: 1.2;
     }
 
     .hero-subtitle {
-        font-size: 13px;
+        font-size: 16px;
         opacity: 0.9;
         margin: 0;
-        max-width: 400px;
-        line-height: 1.4;
+        max-width: 500px;
+        line-height: 1.5;
     }
 
     .hero-stats {
         display: flex;
-        gap: 8px;
+        gap: 12px;
         position: relative;
         z-index: 2;
     }
@@ -421,33 +421,33 @@ function setupDateRangeFilters() {
     .stat-pill {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 6px;
         background: rgba(255, 255, 255, 0.15);
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 11px;
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-size: 13px;
         font-weight: 500;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .stat-icon {
-        font-size: 12px;
+        font-size: 14px;
     }
 
     .filter-section {
-        padding: 20px;
+        padding: 32px;
     }
 
     .section-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 16px;
+        margin-bottom: 24px;
     }
 
     .section-header h3 {
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 600;
         color: #1a202c;
         margin: 0;
@@ -455,19 +455,19 @@ function setupDateRangeFilters() {
 
     .filter-actions {
         display: flex;
-        gap: 6px;
+        gap: 8px;
     }
 
     .reset-btn {
         display: flex;
         align-items: center;
-        gap: 4px;
-        padding: 6px 12px;
+        gap: 6px;
+        padding: 8px 16px;
         background: #f7fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 6px;
+        border-radius: 8px;
         color: #4a5568;
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s ease;
@@ -481,28 +481,28 @@ function setupDateRangeFilters() {
 
     .filters-grid {
         display: grid;
-        grid-template-columns: 200px 300px auto;
-        gap: 16px;
+        grid-template-columns: 1fr 2fr auto;
+        gap: 24px;
         align-items: end;
     }
 
     .filter-group {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 8px;
     }
 
     .filter-label {
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 600;
         color: #4a5568;
-        margin-bottom: 2px;
+        margin-bottom: 4px;
     }
 
     .label-content {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
     }
 
     .select-wrapper {
@@ -511,11 +511,11 @@ function setupDateRangeFilters() {
 
     .modern-select {
         width: 100%;
-        padding: 8px 32px 8px 12px;
+        padding: 12px 40px 12px 16px;
         background: white;
         border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 13px;
+        border-radius: 12px;
+        font-size: 14px;
         font-weight: 500;
         color: #2d3748;
         appearance: none;
@@ -531,7 +531,7 @@ function setupDateRangeFilters() {
 
     .select-chevron {
         position: absolute;
-        right: 8px;
+        right: 12px;
         top: 50%;
         transform: translateY(-50%);
         color: #a0aec0;
@@ -541,7 +541,7 @@ function setupDateRangeFilters() {
     .date-inputs {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
     }
 
     .date-input-container {
@@ -551,11 +551,11 @@ function setupDateRangeFilters() {
 
     .date-input {
         width: 100%;
-        padding: 8px 12px;
+        padding: 12px 16px;
         background: white;
         border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 13px;
+        border-radius: 12px;
+        font-size: 14px;
         font-weight: 500;
         color: #2d3748;
         cursor: pointer;
@@ -570,11 +570,11 @@ function setupDateRangeFilters() {
 
     .floating-label {
         position: absolute;
-        top: -6px;
-        left: 8px;
+        top: -8px;
+        left: 12px;
         background: white;
-        padding: 0 4px;
-        font-size: 10px;
+        padding: 0 6px;
+        font-size: 11px;
         font-weight: 600;
         color: #718096;
         text-transform: uppercase;
@@ -583,29 +583,28 @@ function setupDateRangeFilters() {
 
     .date-separator {
         color: #667eea;
-        margin: 0 2px;
+        margin: 0 4px;
     }
 
     .apply-btn {
         display: flex;
         align-items: center;
-        gap: 6px;
-        padding: 8px 16px;
+        gap: 8px;
+        padding: 12px 24px;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
-        border-radius: 8px;
+        border-radius: 12px;
         color: white;
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s ease;
-        box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
-        white-space: nowrap;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
 
     .apply-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
     }
 
     .apply-btn:active {
@@ -613,7 +612,7 @@ function setupDateRangeFilters() {
     }
 
     .active-filters {
-        padding: 16px 20px;
+        padding: 24px 32px;
         background: #f7fafc;
         border-top: 1px solid #e2e8f0;
         display: none;
@@ -627,9 +626,9 @@ function setupDateRangeFilters() {
     .filters-header {
         display: flex;
         align-items: center;
-        gap: 6px;
-        margin-bottom: 8px;
-        font-size: 12px;
+        gap: 8px;
+        margin-bottom: 12px;
+        font-size: 13px;
         font-weight: 600;
         color: #4a5568;
     }
@@ -637,17 +636,17 @@ function setupDateRangeFilters() {
     .filter-chips {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 8px;
     }
 
     .filter-chip {
         display: inline-flex;
         align-items: center;
-        gap: 4px;
+        gap: 6px;
         background: white;
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 11px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
         font-weight: 500;
         color: #2d3748;
         border: 1px solid #e2e8f0;
@@ -665,24 +664,11 @@ function setupDateRangeFilters() {
         }
     }
 
-    @media (max-width: 1200px) {
-        .filters-grid {
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-        
-        .apply-group {
-            grid-column: 1 / -1;
-            justify-self: center;
-        }
-    }
-
     @media (max-width: 768px) {
         .analytics-hero {
             flex-direction: column;
             text-align: center;
-            gap: 12px;
-            padding: 16px;
+            gap: 20px;
         }
 
         .hero-stats {
@@ -691,12 +677,12 @@ function setupDateRangeFilters() {
 
         .filters-grid {
             grid-template-columns: 1fr;
-            gap: 12px;
+            gap: 20px;
         }
 
         .date-inputs {
             flex-direction: column;
-            gap: 12px;
+            gap: 16px;
         }
 
         .date-separator {
