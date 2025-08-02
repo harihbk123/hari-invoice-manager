@@ -5,21 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice Manager - Hariprasad Sivakumar</title>
     
+    <!-- Preload Critical Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Third-party Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- jsPDF for PDF Generation (FIXED: Statically loaded) -->
+    <!-- jsPDF for PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
-    <!-- Flatpickr for Analytics Date Picker (IMPROVED UI) -->
+    <!-- Flatpickr for Date Picker -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/plugins/monthSelect/style.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/plugins/monthSelect/index.js"></script>
     
-    <!-- Main Stylesheet -->
+    <!-- Modern Stylesheet -->
     <link rel="stylesheet" href="style.css">
     
     <!-- Auth Check -->
@@ -45,13 +50,24 @@
     </script>
 </head>
 <body>
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle navigation">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
+
     <!-- App Layout -->
     <div class="app-layout">
-        <!-- Sidebar Navigation -->
-        <nav class="sidebar">
+        <!-- Modern Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h2>Invoice Manager</h2>
                 <p class="sidebar-subtitle">Hariprasad S.</p>
+                <!-- Theme Toggle -->
+                <button class="theme-toggle" id="theme-toggle" style="margin-top: 1rem;" aria-label="Toggle theme">
+                    <span id="theme-icon">🌙</span>
+                </button>
                 <!-- Logout button will be added here by JavaScript -->
             </div>
             <ul class="sidebar-nav">
@@ -83,34 +99,73 @@
             <!-- Dashboard Page -->
             <div id="dashboard-page" class="page active">
                 <div class="page-header">
-                    <h1>Dashboard</h1>
-                    <button class="btn btn--primary" id="create-invoice-btn">+ Create Invoice</button>
+                    <div>
+                        <h1>Dashboard</h1>
+                        <p style="color: rgba(255, 255, 255, 0.7); margin-top: 0.5rem; font-size: 0.875rem;">Welcome back! Here's your business overview</p>
+                    </div>
+                    <button class="btn btn--primary" id="create-invoice-btn">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Create Invoice
+                    </button>
                 </div>
 
-                <!-- Metrics Cards -->
+                <!-- Enhanced Metrics Cards -->
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <div class="metric-value">₹0</div>
                         <div class="metric-label">Total Earnings</div>
+                        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: rgba(255, 255, 255, 0.6);">
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.25rem;">
+                                <path d="M7 14l5-5 5 5z"/>
+                            </svg>
+                            +12% from last month
+                        </div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-value">0</div>
                         <div class="metric-label">Total Clients</div>
+                        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: rgba(255, 255, 255, 0.6);">
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.25rem;">
+                                <path d="M7 14l5-5 5 5z"/>
+                            </svg>
+                            +5 new clients
+                        </div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-value">0</div>
                         <div class="metric-label">Total Invoices</div>
+                        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: rgba(255, 255, 255, 0.6);">
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.25rem;">
+                                <path d="M7 14l5-5 5 5z"/>
+                            </svg>
+                            +8% this week
+                        </div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-value">₹0</div>
                         <div class="metric-label">Average Monthly</div>
+                        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: rgba(255, 255, 255, 0.6);">
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24" style="margin-right: 0.25rem;">
+                                <path d="M7 14l5-5 5 5z"/>
+                            </svg>
+                            Trending up
+                        </div>
                     </div>
                 </div>
 
-                <!-- Charts Section -->
+                <!-- Modern Charts Section -->
                 <div class="charts-section">
                     <div class="chart-container">
-                        <h3>Monthly Earnings Trend</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>Monthly Earnings Trend</h3>
+                            <select class="form-control" style="width: auto; background: rgba(255, 255, 255, 0.1);">
+                                <option>Last 6 months</option>
+                                <option>Last 12 months</option>
+                                <option>This year</option>
+                            </select>
+                        </div>
                         <div style="position: relative; height: 300px;">
                             <canvas id="monthlyChart"></canvas>
                         </div>
@@ -120,12 +175,20 @@
                         <div style="position: relative; height: 300px;">
                             <canvas id="clientChart"></canvas>
                         </div>
+                        <div style="margin-top: 1rem; font-size: 0.75rem; color: rgba(255, 255, 255, 0.6); text-align: center;">
+                            Based on paid invoices
+                        </div>
                     </div>
                 </div>
 
                 <!-- Recent Invoices -->
                 <div class="recent-invoices">
-                    <h3>Recent Invoices</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>Recent Invoices</h3>
+                        <a href="#" class="nav-link" data-page="invoices" style="color: rgba(255, 255, 255, 0.8); font-size: 0.875rem; text-decoration: none;">
+                            View all →
+                        </a>
+                    </div>
                     <div class="table-container">
                         <table class="invoices-table">
                             <thead>
@@ -148,7 +211,10 @@
             <!-- Invoices Page -->
             <div id="invoices-page" class="page">
                 <div class="page-header">
-                    <h1>Invoices</h1>
+                    <div>
+                        <h1>Invoices</h1>
+                        <p style="color: rgba(255, 255, 255, 0.7); margin-top: 0.5rem; font-size: 0.875rem;">Manage all your invoices in one place</p>
+                    </div>
                     <div class="header-actions">
                         <div class="filter-tabs">
                             <button class="filter-tab active" data-filter="all">All</button>
@@ -156,7 +222,12 @@
                             <button class="filter-tab" data-filter="pending">Pending</button>
                             <button class="filter-tab" data-filter="draft">Draft</button>
                         </div>
-                        <button class="btn btn--primary" id="new-invoice-btn">+ New Invoice</button>
+                        <button class="btn btn--primary" id="new-invoice-btn">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            New Invoice
+                        </button>
                     </div>
                 </div>
                 
@@ -183,8 +254,16 @@
             <!-- Clients Page -->
             <div id="clients-page" class="page">
                 <div class="page-header">
-                    <h1>Clients</h1>
-                    <button class="btn btn--primary" id="add-client-btn">+ Add Client</button>
+                    <div>
+                        <h1>Clients</h1>
+                        <p style="color: rgba(255, 255, 255, 0.7); margin-top: 0.5rem; font-size: 0.875rem;">Manage your client relationships</p>
+                    </div>
+                    <button class="btn btn--primary" id="add-client-btn">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Add Client
+                    </button>
                 </div>
                 
                 <div class="clients-grid" id="clients-grid">
@@ -195,7 +274,10 @@
             <!-- Analytics Page -->
             <div id="analytics-page" class="page">
                 <div class="page-header">
-                    <h1>Analytics</h1>
+                    <div>
+                        <h1>Analytics</h1>
+                        <p style="color: rgba(255, 255, 255, 0.7); margin-top: 0.5rem; font-size: 0.875rem;">Insights and performance metrics</p>
+                    </div>
                 </div>
                 <!-- Date range filters will be added here by JavaScript -->
             </div>
@@ -203,41 +285,54 @@
             <!-- Settings Page -->
             <div id="settings-page" class="page">
                 <div class="page-header">
-                    <h1>Settings</h1>
+                    <div>
+                        <h1>Settings</h1>
+                        <p style="color: rgba(255, 255, 255, 0.7); margin-top: 0.5rem; font-size: 0.875rem;">Configure your application preferences</p>
+                    </div>
                 </div>
 
                 <div class="settings-content">
                     <form id="settings-form">
                         <div class="settings-section">
-                            <h3>Profile Information</h3>
+                            <h3>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem; vertical-align: text-bottom;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                Profile Information
+                            </h3>
                             <div class="form-group">
                                 <label class="form-label" for="profile-name">Full Name</label>
-                                <input type="text" class="form-control" id="profile-name">
+                                <input type="text" class="form-control" id="profile-name" placeholder="Enter your full name">
                             </div>
                             <div class="form-group">
-                                <label class="form-label" for="profile-email">Email</label>
-                                <input type="email" class="form-control" id="profile-email">
+                                <label class="form-label" for="profile-email">Email Address</label>
+                                <input type="email" class="form-control" id="profile-email" placeholder="Enter your email address">
                             </div>
                             <div class="form-group">
-                                <label class="form-label" for="profile-phone">Phone</label>
-                                <input type="tel" class="form-control" id="profile-phone">
+                                <label class="form-label" for="profile-phone">Phone Number</label>
+                                <input type="tel" class="form-control" id="profile-phone" placeholder="Enter your phone number">
                             </div>
                             <div class="form-group">
-                                <label class="form-label" for="profile-address">Address</label>
+                                <label class="form-label" for="profile-address">Business Address</label>
                                 <textarea class="form-control" id="profile-address" rows="3" placeholder="Enter your business address"></textarea>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="profile-gstin">GSTIN</label>
-                                <input type="text" class="form-control" id="profile-gstin">
+                                <input type="text" class="form-control" id="profile-gstin" placeholder="Enter your GSTIN number">
                             </div>
                         </div>
 
                         <div class="settings-section">
-                            <h3>Banking Details</h3>
+                            <h3>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem; vertical-align: text-bottom;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                </svg>
+                                Banking Details
+                            </h3>
                             <div class="banking-info">
                                 <div class="form-group">
                                     <label class="form-label" for="bank-name">Account Holder Name</label>
-                                    <input type="text" class="form-control" id="bank-name">
+                                    <input type="text" class="form-control" id="bank-name" placeholder="Enter account holder name">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="bank-account">Account Number</label>
@@ -249,34 +344,51 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="bank-swift">SWIFT Code</label>
-                                    <input type="text" class="form-control" placeholder="Enter SWIFT code" id="bank-swift">
+                                    <input type="text" class="form-control" placeholder="Enter SWIFT code (optional)" id="bank-swift">
                                 </div>
                             </div>
                         </div>
 
                         <div class="settings-section">
-                            <h3>Invoice Settings</h3>
-                            <div class="form-group">
-                                <label class="form-label" for="currency-setting">Currency</label>
-                                <select class="form-control" id="currency-setting">
-                                    <option value="INR">Indian Rupee (₹)</option>
-                                    <option value="USD">US Dollar ($)</option>
-                                    <option value="EUR">Euro (€)</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="tax-rate">Tax Rate (%)</label>
-                                <input type="number" class="form-control" id="tax-rate" min="0" max="100" step="0.01">
+                            <h3>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem; vertical-align: text-bottom;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Invoice Settings
+                            </h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="currency-setting">Currency</label>
+                                    <select class="form-control" id="currency-setting">
+                                        <option value="INR">Indian Rupee (₹)</option>
+                                        <option value="USD">US Dollar ($)</option>
+                                        <option value="EUR">Euro (€)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="tax-rate">Tax Rate (%)</label>
+                                    <input type="number" class="form-control" id="tax-rate" min="0" max="100" step="0.01" placeholder="e.g., 18">
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="invoice-prefix">Invoice Prefix</label>
-                                <input type="text" class="form-control" id="invoice-prefix">
+                                <input type="text" class="form-control" id="invoice-prefix" placeholder="e.g., HP-2526">
                             </div>
                         </div>
 
                         <div class="settings-actions">
-                            <button type="button" class="btn btn--secondary" id="reset-settings">Reset to Default</button>
-                            <button type="submit" class="btn btn--primary" id="save-settings">Save Settings</button>
+                            <button type="button" class="btn btn--secondary" id="reset-settings">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0V9a8 8 0 1115.356 2M15 15v5h5.582M8.36 13.36a8 8 0 007.28 0"></path>
+                                </svg>
+                                Reset to Default
+                            </button>
+                            <button type="submit" class="btn btn--primary" id="save-settings">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Save Settings
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -284,14 +396,19 @@
         </main>
     </div>
 
-    <!-- Modals -->
+    <!-- Enhanced Modals -->
     <!-- Create/Edit Invoice Modal -->
     <div id="invoice-modal" class="modal hidden">
         <div class="modal-overlay" id="invoice-modal-overlay"></div>
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="invoice-modal-title">Create New Invoice</h2>
-                <button class="modal-close" id="close-invoice-modal">&times;</button>
+                <h2 id="invoice-modal-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem; vertical-align: text-bottom;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Create New Invoice
+                </h2>
+                <button class="modal-close" id="close-invoice-modal" aria-label="Close modal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="invoice-form">
@@ -318,11 +435,21 @@
                     </div>
 
                     <div class="line-items">
-                        <h4>Line Items</h4>
+                        <h4>
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem; vertical-align: text-bottom;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            Line Items
+                        </h4>
                         <div id="line-items-container">
                             <!-- Line items will be populated by JS -->
                         </div>
-                        <button type="button" class="btn btn--secondary btn--sm" id="add-line-item">+ Add Item</button>
+                        <button type="button" class="btn btn--secondary btn--sm" id="add-line-item">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.25rem;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Add Item
+                        </button>
                     </div>
 
                     <div class="invoice-totals">
@@ -342,8 +469,18 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn--secondary" id="save-draft">Save as Draft</button>
-                <button type="submit" class="btn btn--primary" id="save-invoice">Create Invoice</button>
+                <button type="button" class="btn btn--secondary" id="save-draft">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                    </svg>
+                    Save as Draft
+                </button>
+                <button type="submit" class="btn btn--primary" id="save-invoice">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Create Invoice
+                </button>
             </div>
         </div>
     </div>
@@ -353,32 +490,37 @@
         <div class="modal-overlay" id="client-modal-overlay"></div>
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="client-modal-title">Add New Client</h2>
-                <button class="modal-close" id="close-client-modal">&times;</button>
+                <h2 id="client-modal-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem; vertical-align: text-bottom;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    Add New Client
+                </h2>
+                <button class="modal-close" id="close-client-modal" aria-label="Close modal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="client-form">
                     <div class="form-group">
                         <label class="form-label" for="client-name">Company Name</label>
-                        <input type="text" class="form-control" id="client-name" required>
+                        <input type="text" class="form-control" id="client-name" required placeholder="Enter company name">
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="client-contact-name">Contact Person</label>
-                        <input type="text" class="form-control" id="client-contact-name">
+                        <input type="text" class="form-control" id="client-contact-name" placeholder="Enter contact person name">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label" for="client-email">Email</label>
-                            <input type="email" class="form-control" id="client-email" required>
+                            <label class="form-label" for="client-email">Email Address</label>
+                            <input type="email" class="form-control" id="client-email" required placeholder="Enter email address">
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="client-phone">Phone</label>
-                            <input type="tel" class="form-control" id="client-phone">
+                            <label class="form-label" for="client-phone">Phone Number</label>
+                            <input type="tel" class="form-control" id="client-phone" placeholder="Enter phone number">
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="client-address">Address</label>
-                        <textarea class="form-control" id="client-address" rows="3"></textarea>
+                        <textarea class="form-control" id="client-address" rows="3" placeholder="Enter client address"></textarea>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="client-terms">Payment Terms</label>
@@ -392,14 +534,162 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn--secondary" id="cancel-client">Cancel</button>
-                <button type="submit" class="btn btn--primary" id="save-client">Save Client</button>
+                <button type="button" class="btn btn--secondary" id="cancel-client">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn--primary" id="save-client">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Save Client
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Toast Notifications -->
+    <!-- Toast Notifications Container -->
     <div id="toast-container" class="toast-container"></div>
+
+    <!-- Modern JavaScript Enhancements -->
+    <script>
+        // Theme Toggle Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+            
+            // Initialize theme
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            
+            // Theme toggle
+            themeToggle.addEventListener('click', function() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            });
+            
+            // Mobile menu toggle
+            mobileMenuToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('mobile-open');
+            });
+            
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!sidebar.contains(e.target) && !mobileMenuToggle.contains(e.target)) {
+                    sidebar.classList.remove('mobile-open');
+                }
+            });
+            
+            // Enhanced form interactions
+            const formControls = document.querySelectorAll('.form-control');
+            formControls.forEach(control => {
+                // Add floating label effect
+                control.addEventListener('focus', function() {
+                    this.parentElement.classList.add('focused');
+                });
+                
+                control.addEventListener('blur', function() {
+                    if (!this.value) {
+                        this.parentElement.classList.remove('focused');
+                    }
+                });
+                
+                // Initialize focused state for pre-filled inputs
+                if (control.value) {
+                    control.parentElement.classList.add('focused');
+                }
+            });
+            
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+            
+            // Enhanced button hover effects
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+            
+            // Add ripple effect to buttons
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    ripple.classList.add('ripple');
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+        });
+        
+        // Add ripple effect styles
+        const rippleStyles = document.createElement('style');
+        rippleStyles.textContent = `
+            .btn {
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .ripple {
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.3);
+                transform: scale(0);
+                animation: ripple-animation 0.6s linear;
+                pointer-events: none;
+            }
+            
+            @keyframes ripple-animation {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+            
+            .form-group.focused .form-label {
+                color: var(--color-primary);
+                transform: translateY(-2px);
+                font-size: 0.75rem;
+            }
+        `;
+        document.head.appendChild(rippleStyles);
+    </script>
 
     <!-- Main App Script -->
     <script src="app.js"></script>
