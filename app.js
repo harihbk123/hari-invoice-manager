@@ -1,636 +1,35 @@
-data: earningsData.map(m => m.amount),
-                backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                borderColor: 'rgba(59, 130, 246, 1)',
-                borderWidth: 2,
-                borderRadius: 8,
-                borderSkipped: false,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return '₹' + formatNumber(value);
-                        },
-                        color: '#64748b'
-                    },
-                    grid: {
-                        color: 'rgba(0,0,0,0.05)'
-                    }
-                },
-                x: {
-                    ticks: {
-                        color: '#64748b'
-                    },
-                    grid: {
-                        color: 'rgba(0,0,0,0.05)'
-                    }
-                }
-            }
-        }
-    });
-}
-
-function calculateMonthlyEarningsForData(invoices) {
-    const monthlyData = new Map();
-
-    invoices
-        .filter(inv => inv.status === 'Paid')
-        .forEach(({ date, amount }) => {
-            const d = new Date(date);
-            if (Number.isNaN(d)) return;
-            const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-            monthlyData.set(monthKey, (monthlyData.get(monthKey) || 0) + amount);
-        });
-
-    return Array.from(monthlyData, ([month, amount]) => ({ month, amount }))
-                 .sort((a, b) => a.month.localeCompare(b.month));
-}
-
-function renderTopClientInsights(invoices) {
-    const insightsContainer = safeQuerySelector('#analytics-insights');
-    if (!insightsContainer) return;
-
-    const clientEarnings = new Map();
-    const clientInvoiceCounts = new Map();
-
-    invoices.forEach(invoice => {
-        const clientId = invoice.clientId;
-        const clientName = invoice.client;
-        
-        if (invoice.status === 'Paid') {
-            clientEarnings.set(clientId, (clientEarnings.get(clientId) || 0) + invoice.amount);
-        }
-        clientInvoiceCounts.set(clientId, (clientInvoiceCounts.get(clientId) || 0) + 1);
-        
-        if (!clientEarnings.has(clientId + '_name')) {
-            clientEarnings.set(clientId + '_name', clientName);
-        }
-    });
-
-    let topClientId = null;
-    let topClientEarnings = 0;
-    let topClientName = 'N/A';
-
-    for (const [clientId, earnings] of clientEarnings.entries()) {
-        if (typeof clientId === 'string' && !clientId.endsWith('_name') && earnings > topClientEarnings) {
-            topClientEarnings = earnings;
-            topClientId = clientId;
-            topClientName = clientEarnings.get(clientId + '_name') || 'Unknown';
+const missingElements = Object.entries(elements).filter(([key, element]) => !element);
+    if (missingElements.length > 0) {
+        console.error('Missing form elements:', missingElements.map(([key]) => key));
+        if (!missingElements.every(([key]) => key === 'profileGSTIN')) {
+            showToast(`Settings form is incomplete. Missing: ${missingElements.map(([key]) => key).join(', ')}`, 'error');
+            return;
         }
     }
 
-    const totalPaidInvoices = invoices.filter(inv => inv.status === 'Paid');
-    const totalEarnings = totalPaidInvoices.reduce((sum, inv) => sum + inv.amount, 0);
-    const averageInvoice = totalPaidInvoices.length > 0 ? totalEarnings / totalPaidInvoices.length : 0;
-    const totalInvoices = invoices.length;
-
-    let periodInfo = '';
-    if (analyticsState.dateRange.from && analyticsState.dateRange.to) {
-        periodInfo = `${analyticsState.dateRange.from} to ${analyticsState.dateRange.to}`;
-    } else {
-        periodInfo = 'All time';
-    }
-
-    insightsContainer.innerHTML = `
-        <div class="insight-item">
-            <div class="insight-label">🏆 Top Client${periodInfo !== 'All time' ? ` (${periodInfo})` : ''}</div>
-            <div class="insight-value">${topClientName}</div>
-            <div class="insight-change positive">₹${formatNumber(topClientEarnings)} earned</div>
-        </div>
-        
-        <div class="insight-item">
-            <div class="insight-label">💰 Total Earnings</div>
-            <div class="insight-value">₹${formatNumber(totalEarnings)}</div>
-            <div class="insight-change">${totalPaidInvoices.length} paid invoices</div>
-        </div>
-        
-        <div class="insight-item">
-            <div class="insight-label">📊 Average Invoice</div>
-            <div class="insight-value">₹${formatNumber(averageInvoice)}</div>
-            <div class="insight-change">${totalInvoices} total invoices</div>
-        </div>
-        
-        <div class="insight-item">
-            <div class="insight-label">🎯 Period</div>
-            <div class="insight-value">${analyticsState.currentPeriod.charAt(0).toUpperCase() + analyticsState.currentPeriod.slice(1)}</div>
-            <div class="insight-change">${periodInfo}</div>
-        </div>
-    `;
-}
-
-// ENHANCED: Settings with GSTIN field
-function renderSettings() {
-    console.log('Rendering settings...');
-
-    if (!appData.dataLoaded) {
-        console.log('Data not loaded yet, skipping settings render');
-        return;
-    }
-
-    const settings = appData.settings;
-
-    const elements = {
-        'profile-name': settings.profileName,
-        'profile-email': settings.profileEmail,
-        'profile-phone': settings.profilePhone,
-        'profile-address': settings.profileAddress,
-        'profile-gstin': settings.profileGSTIN,
-        'bank-name': settings.bankName,
-        'bank-account': settings.bankAccount,
-        'bank-ifsc': settings.bankIFSC,
-        'bank-swift': settings.bankSWIFT,
-        'currency-setting': settings.currency,
-        'tax-rate': settings.taxRate,
-        'invoice-prefix': settings.invoicePrefix
-    };
-
-    Object.entries(elements).forEach(([id, value]) => {
-        const element = safeQuerySelector(`#${id}`);
+    const settingsData = {};
+    Object.entries(elements).forEach(([key, element]) => {
         if (element) {
-            element.value = (value !== null && value !== undefined) ? value : '';
-        }
-    });
-
-    const taxRateField = safeQuerySelector('#tax-rate');
-    if (taxRateField) {
-        let datalist = safeQuerySelector('#tax-rate-options');
-        if (!datalist) {
-            datalist = document.createElement('datalist');
-            datalist.id = 'tax-rate-options';
-            datalist.innerHTML = `
-                <option value="0">0% - No Tax</option>
-                <option value="5">5% - Reduced Rate</option>
-                <option value="12">12% - Standard Rate</option>
-                <option value="18">18% - Higher Rate</option>
-                <option value="28">28% - Luxury Rate</option>
-            `;
-            taxRateField.parentNode.appendChild(datalist);
-        }
-        taxRateField.setAttribute('list', 'tax-rate-options');
-        taxRateField.setAttribute('placeholder', 'e.g., 0, 18');
-        
-        if (!safeQuerySelector('#tax-rate-helper')) {
-            const helper = document.createElement('small');
-            helper.id = 'tax-rate-helper';
-            helper.style.cssText = 'display: block; margin-top: 4px; color: #64748b; font-size: 11px;';
-            helper.textContent = 'Enter 0 for no tax, or your applicable GST percentage';
-            taxRateField.parentNode.appendChild(helper);
-        }
-    }
-
-    console.log('Settings rendered with tax rate:', settings.taxRate);
-}
-
-function setupModals() {
-    console.log('Setting up modals...');
-
-    const invoiceModal = safeQuerySelector('#invoice-modal');
-    const invoiceModalOverlay = safeQuerySelector('#invoice-modal-overlay');
-    const closeInvoiceModal = safeQuerySelector('#close-invoice-modal');
-    const createInvoiceBtn = safeQuerySelector('#create-invoice-btn');
-    const newInvoiceBtn = safeQuerySelector('#new-invoice-btn');
-
-    if (createInvoiceBtn) {
-        createInvoiceBtn.addEventListener('click', () => openInvoiceModal());
-    }
-    if (newInvoiceBtn) {
-        newInvoiceBtn.addEventListener('click', () => openInvoiceModal());
-    }
-
-    if (invoiceModalOverlay) {
-        invoiceModalOverlay.addEventListener('click', () => closeModal(invoiceModal));
-    }
-    if (closeInvoiceModal) {
-        closeInvoiceModal.addEventListener('click', () => closeModal(invoiceModal));
-    }
-
-    const clientModal = safeQuerySelector('#client-modal');
-    const clientModalOverlay = safeQuerySelector('#client-modal-overlay');
-    const closeClientModal = safeQuerySelector('#close-client-modal');
-    const addClientBtn = safeQuerySelector('#add-client-btn');
-
-    if (addClientBtn) {
-        addClientBtn.addEventListener('click', () => openClientModal());
-    }
-
-    if (clientModalOverlay) {
-        clientModalOverlay.addEventListener('click', () => closeModal(clientModal));
-    }
-    if (closeClientModal) {
-        closeClientModal.addEventListener('click', () => closeModal(clientModal));
-    }
-}
-
-async function openInvoiceModal(invoiceId = null) {
-    console.log('Opening invoice modal...', invoiceId ? 'for editing' : 'for creation');
-    const modal = safeQuerySelector('#invoice-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-
-        editingInvoiceId = invoiceId;
-
-        if (invoiceId) {
-            const invoice = appData.invoices.find(inv => inv.id === invoiceId);
-            if (invoice) {
-                const invoiceNumber = safeQuerySelector('#invoice-number');
-                const issueDate = safeQuerySelector('#issue-date');
-                const dueDate = safeQuerySelector('#due-date');
-                
-                if (invoiceNumber) invoiceNumber.value = invoice.id;
-                if (issueDate) issueDate.value = invoice.date;
-                if (dueDate) dueDate.value = invoice.dueDate;
-
-                const clientSelect = safeQuerySelector('#invoice-client');
-                if (clientSelect) {
-                    clientSelect.innerHTML = '<option value="">Select Client</option>' +
-                        appData.clients.map(client =>
-                            `<option value="${client.id}" ${client.id === invoice.clientId ? 'selected' : ''}>${client.name}</option>`
-                        ).join('');
+            if (key === 'taxRate') {
+                const value = parseFloat(element.value);
+                if (isNaN(value) || value < 0 || value > 100) {
+                    showToast('Tax rate must be a number between 0 and 100 (0% is allowed)', 'error');
+                    element.focus();
+                    return;
                 }
-
-                const container = safeQuerySelector('#line-items-container');
-                if (container) {
-                    container.innerHTML = '';
-
-                    if (invoice.items && invoice.items.length > 0) {
-                        invoice.items.forEach(item => {
-                            const lineItem = document.createElement('div');
-                            lineItem.className = 'line-item';
-                            lineItem.innerHTML = `
-                                <div class="form-row">
-                                    <div class="form-group flex-2">
-                                        <input type="text" class="form-control" placeholder="Description" value="${item.description}" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <input type="number" class="form-control quantity" placeholder="Qty" min="1" value="${item.quantity}" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <input type="number" class="form-control rate" placeholder="Rate" min="0" step="0.01" value="${item.rate}" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <input type="number" class="form-control amount" placeholder="Amount" value="${item.amount}" readonly>
-                                    </div>
-                                    <button type="button" class="btn btn--secondary remove-item">Remove</button>
-                                </div>
-                            `;
-                            container.appendChild(lineItem);
-                        });
-                    } else {
-                        addLineItem();
-                    }
-
-                    calculateInvoiceTotal();
-                }
+                settingsData[key] = value;
+            } else {
+                settingsData[key] = element.value?.trim() || '';
             }
-        } else {
-            try {
-                const num = await getNextInvoiceNumber();
-                const invoiceNumInput = safeQuerySelector('#invoice-number');
-                if (invoiceNumInput) {
-                    invoiceNumInput.value = `${appData.settings.invoicePrefix}-${String(num).padStart(3, '0')}`;
-                }
-            } catch (error) {
-                console.error('Error generating invoice number:', error);
-                const invoiceNumInput = safeQuerySelector('#invoice-number');
-                if (invoiceNumInput) {
-                    invoiceNumInput.value = `${appData.settings.invoicePrefix}-${String(Date.now()).slice(-3)}`;
-                }
-            }
-
-            const today = new Date().toISOString().split('T')[0];
-            const dueDate = new Date();
-            dueDate.setDate(dueDate.getDate() + 30);
-
-            const issueDateField = safeQuerySelector('#issue-date');
-            const dueDateField = safeQuerySelector('#due-date');
-
-            if (issueDateField) issueDateField.value = today;
-            if (dueDateField) dueDateField.value = dueDate.toISOString().split('T')[0];
-
-            const clientSelect = safeQuerySelector('#invoice-client');
-            if (clientSelect) {
-                clientSelect.innerHTML = '<option value="">Select Client</option>' +
-                    appData.clients.map(client => `<option value="${client.id}">${client.name}</option>`).join('');
-            }
-
-            const container = safeQuerySelector('#line-items-container');
-            if (container) {
-                container.innerHTML = '';
-                addLineItem();
-            }
-        }
-    }
-}
-
-function openClientModal() {
-    console.log('Opening client modal...');
-    const modal = safeQuerySelector('#client-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-
-        if (!editingClientId) {
-            const form = safeQuerySelector('#client-form');
-            if (form) {
-                form.reset();
-            }
-
-            const modalTitle = safeQuerySelector('#client-modal .modal-header h2');
-            if (modalTitle) modalTitle.textContent = 'Add New Client';
-
-            const saveBtn = safeQuerySelector('#save-client');
-            if (saveBtn) saveBtn.textContent = 'Save Client';
-        }
-    }
-}
-
-function closeModal(modal) {
-    if (modal) {
-        modal.classList.add('hidden');
-        editingInvoiceId = null;
-        editingClientId = null;
-    }
-}
-
-function setupForms() {
-    console.log('Setting up forms...');
-    setupInvoiceForm();
-    setupClientForm();
-    setupSettingsForm();
-}
-
-function setupInvoiceForm() {
-    const addLineItemBtn = safeQuerySelector('#add-line-item');
-    const createInvoiceBtn = safeQuerySelector('#create-invoice');
-    const saveDraftBtn = safeQuerySelector('#save-draft');
-
-    if (addLineItemBtn) {
-        addLineItemBtn.addEventListener('click', addLineItem);
-    }
-
-    if (createInvoiceBtn) {
-        createInvoiceBtn.addEventListener('click', () => saveInvoice('Pending'));
-    }
-
-    if (saveDraftBtn) {
-        saveDraftBtn.addEventListener('click', () => saveInvoice('Draft'));
-    }
-
-    document.addEventListener('input', (e) => {
-        if (e.target.classList.contains('quantity') || e.target.classList.contains('rate')) {
-            calculateLineItem(e.target.closest('.line-item'));
-            calculateInvoiceTotal();
         }
     });
 
-    document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('remove-item')) {
-            removeLineItem(e.target.closest('.line-item'));
-            calculateInvoiceTotal();
-        }
-    });
-}
-
-function addLineItem() {
-    const container = safeQuerySelector('#line-items-container');
-    if (container) {
-        const lineItem = document.createElement('div');
-        lineItem.className = 'line-item';
-        lineItem.innerHTML = `
-            <div class="form-row">
-                <div class="form-group flex-2">
-                    <input type="text" class="form-control" placeholder="Description" required>
-                </div>
-                <div class="form-group">
-                    <input type="number" class="form-control quantity" placeholder="Qty" min="1" value="1" required>
-                </div>
-                <div class="form-group">
-                    <input type="number" class="form-control rate" placeholder="Rate" min="0" step="0.01" required>
-                </div>
-                <div class="form-group">
-                    <input type="number" class="form-control amount" placeholder="Amount" readonly>
-                </div>
-                <button type="button" class="btn btn--secondary remove-item">Remove</button>
-            </div>
-        `;
-        container.appendChild(lineItem);
-    }
-}
-
-function removeLineItem(lineItem) {
-    const container = safeQuerySelector('#line-items-container');
-    if (container && container.children.length > 1 && lineItem) {
-        lineItem.remove();
-    }
-}
-
-function calculateLineItem(lineItem) {
-    if (!lineItem) return;
-
-    const quantityInput = lineItem.querySelector('.quantity');
-    const rateInput = lineItem.querySelector('.rate');
-    const amountInput = lineItem.querySelector('.amount');
-
-    if (quantityInput && rateInput && amountInput) {
-        const quantity = parseFloat(quantityInput.value) || 0;
-        const rate = parseFloat(rateInput.value) || 0;
-        const amount = quantity * rate;
-
-        amountInput.value = amount.toFixed(2);
-    }
-}
-
-function calculateInvoiceTotal() {
-    const lineItems = safeQuerySelectorAll('.line-item');
-    let subtotal = 0;
-
-    lineItems.forEach(item => {
-        const amountInput = item.querySelector('.amount');
-        if (amountInput) {
-            const amount = parseFloat(amountInput.value) || 0;
-            subtotal += amount;
-        }
-    });
-
-    const taxRate = appData.settings.taxRate / 100;
-    const tax = subtotal * taxRate;
-    const total = subtotal + tax;
-
-    const subtotalElement = safeQuerySelector('#invoice-subtotal');
-    const taxElement = safeQuerySelector('#invoice-tax');
-    const totalElement = safeQuerySelector('#invoice-total');
-
-    if (subtotalElement) subtotalElement.textContent = `₹${formatNumber(subtotal)}`;
-    if (taxElement) taxElement.textContent = `₹${formatNumber(tax)}`;
-    if (totalElement) totalElement.textContent = `₹${formatNumber(total)}`;
-
-    const taxLabels = safeQuerySelectorAll('.total-row span');
-    taxLabels.forEach(label => {
-        if (label.textContent.includes('Tax')) {
-            label.textContent = `Tax (${appData.settings.taxRate}%):`;
-        }
-    });
-}
-
-async function saveInvoice(status) {
-    console.log('Saving invoice with status:', status);
-
-    const invoiceNumberInput = safeQuerySelector('#invoice-number');
-    let invoiceNumber = invoiceNumberInput?.value;
-    const clientSelect = safeQuerySelector('#invoice-client');
-    const clientId = clientSelect ? clientSelect.value : null;
-
-    if (!clientId) {
-        showToast('Please select a client', 'error');
-        clientSelect?.focus();
+    if (settingsData.taxRate === undefined) {
         return;
     }
 
-    const client = appData.clients.find(c => c.id === clientId);
-    if (!client) {
-        showToast('Selected client not found', 'error');
-        return;
-    }
-
-    const lineItems = [];
-    const lineItemElements = safeQuerySelectorAll('.line-item');
-
-    lineItemElements.forEach(item => {
-        const descInput = item.querySelector('input[placeholder="Description"]');
-        const quantityInput = item.querySelector('.quantity');
-        const rateInput = item.querySelector('.rate');
-        const amountInput = item.querySelector('.amount');
-
-        if (descInput && quantityInput && rateInput && amountInput) {
-            const description = descInput.value.trim();
-            const quantity = parseFloat(quantityInput.value);
-            const rate = parseFloat(rateInput.value);
-            const amount = parseFloat(amountInput.value);
-
-            if (description && quantity && rate) {
-                lineItems.push({description, quantity, rate, amount});
-            }
-        }
-    });
-
-    if (lineItems.length === 0) {
-        showToast('Please add at least one line item', 'error');
-        return;
-    }
-
-    const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
-    const tax = subtotal * (appData.settings.taxRate / 100);
-    const total = subtotal + tax;
-
-    const issueDateInput = safeQuerySelector('#issue-date');
-    const dueDateInput = safeQuerySelector('#due-date');
-
-    const invoice = {
-        id: invoiceNumber,
-        clientId: clientId,
-        client: client.name,
-        amount: total,
-        subtotal: subtotal,
-        tax: tax,
-        date: issueDateInput ? issueDateInput.value : new Date().toISOString().split('T')[0],
-        dueDate: dueDateInput ? dueDateInput.value : new Date().toISOString().split('T')[0],
-        status: status,
-        items: lineItems
-    };
-
-    try {
-        await saveInvoiceToSupabase(invoice);
-
-        if (editingInvoiceId) {
-            const index = appData.invoices.findIndex(inv => inv.id === editingInvoiceId);
-            if (index > -1) {
-                appData.invoices[index] = invoice;
-            }
-            showToast(`Invoice ${invoiceNumber} updated successfully`, 'success');
-        } else {
-            appData.invoices.unshift(invoice);
-            appData.totalInvoices++;
-            showToast(`Invoice ${invoiceNumber} ${status === 'Draft' ? 'saved as draft' : 'created'} successfully`, 'success');
-        }
-
-        const localClient = appData.clients.find(c => c.id === clientId);
-        if (localClient) {
-            const clientInvoices = appData.invoices.filter(inv => inv.clientId === clientId);
-            localClient.total_invoices = clientInvoices.length;
-            localClient.total_amount = clientInvoices
-                .filter(inv => inv.status === 'Paid')
-                .reduce((sum, inv) => sum + inv.amount, 0);
-        }
-
-        calculateMonthlyEarnings();
-
-        renderInvoices();
-        renderDashboard();
-        renderClients();
-
-        closeModal(safeQuerySelector('#invoice-modal'));
-    } catch (error) {
-        console.error('Error saving invoice:', error);
-        showToast('Error saving invoice. Please try again.', 'error');
-    }
-}
-
-function setupClientForm() {
-    const saveClientBtn = safeQuerySelector('#save-client');
-    const cancelClientBtn = safeQuerySelector('#cancel-client');
-
-    if (saveClientBtn) {
-        saveClientBtn.addEventListener('click', saveClient);
-    }
-
-    if (cancelClientBtn) {
-        cancelClientBtn.addEventListener('click', () => closeModal(safeQuerySelector('#client-modal')));
-    }
-}
-
-async function saveClient() {
-    console.log('Saving client... Editing ID:', editingClientId);
-
-    const formFields = {
-        company: safeQuerySelector('#client-company') || safeQuerySelector('#client-name'),
-        email: safeQuerySelector('#client-email'),
-        phone: safeQuerySelector('#client-phone'),
-        address: safeQuerySelector('#client-address'),
-        terms: safeQuerySelector('#client-terms'),
-        contactName: safeQuerySelector('#client-contact-name') || safeQuerySelector('#client-contact'),
-        companyName: safeQuerySelector('#client-company-name') || safeQuerySelector('#client-business-name')
-    };
-
-    console.log('Available form fields:', Object.keys(formFields).filter(key => formFields[key]));
-
-    if (!formFields.company || !formFields.email) {
-        showToast('Required form fields (company and email) are missing', 'error');
-        return;
-    }
-
-    const clientData = {
-        name: formFields.company.value.trim(),
-        email: formFields.email.value.trim(),
-        phone: formFields.phone ? formFields.phone.value.trim() : '',
-        address: formFields.address ? formFields.address.value.trim() : '',
-        paymentTerms: formFields.terms ? formFields.terms.value : 'net30',
-        contactName: formFields.contactName ? formFields.contactName.value.trim() : '',
-        company: formFields.companyName ? formFields.companyName.value.trim() : formFields.company.value.trim()
-    };
-
-    console.log('Client data being saved:', clientData);
-
-    if (!clientData.name || !clientData.email) {
-        showToast('Company name and email are required', 'error');
+    if (!settingsData.profileName || !settingsData.profileEmail) {
+        showToast('Profile name and email are required', 'error');
         return;
     }
 
@@ -642,9 +41,11 @@ async function saveClient() {
 
     try {
         const saveBtn = safeQuerySelector('#save-settings');
-        const originalText = saveBtn.textContent;
-        saveBtn.textContent = 'Saving...';
-        saveBtn.disabled = true;
+        const originalText = saveBtn?.textContent || 'Save Settings';
+        if (saveBtn) {
+            saveBtn.textContent = 'Saving...';
+            saveBtn.disabled = true;
+        }
 
         await saveSettingsToSupabase(settingsData);
 
@@ -658,8 +59,10 @@ async function saveClient() {
 
         showToast(`Settings saved successfully. Tax rate: ${appData.settings.taxRate}%`, 'success');
 
-        saveBtn.textContent = originalText;
-        saveBtn.disabled = false;
+        if (saveBtn) {
+            saveBtn.textContent = originalText;
+            saveBtn.disabled = false;
+        }
 
     } catch (error) {
         console.error('Error saving settings:', error);
@@ -702,7 +105,6 @@ function viewInvoice(invoiceId) {
     }
 }
 
-// ENHANCED: Invoice modal with GSTIN and download button
 function showInvoiceModal(invoice) {
     const client = appData.clients.find(c => c.id === invoice.clientId);
     const settings = appData.settings;
@@ -1001,7 +403,6 @@ function formatDate(dateString) {
     }
 }
 
-// ENHANCED: Toast notifications with better positioning and animations
 function showToast(message, type = 'info') {
     console.log('Toast:', type, message);
 
@@ -1311,84 +712,6 @@ const additionalStyles = `
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: relative;
-    overflow: hidden;
-}
-
-.analytics-hero::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: url('data:image/svg+xml,<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)" /></svg>');
-    opacity: 0.3;
-    pointer-events: none;
-}
-
-.hero-content {
-    position: relative;
-    z-index: 2;
-}
-
-.hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 8px 16px;
-    border-radius: 50px;
-    font-size: 12px;
-    font-weight: 600;
-    margin-bottom: 16px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.hero-title {
-    font-size: 28px;
-    font-weight: 700;
-    margin: 0 0 8px 0;
-    line-height: 1.2;
-}
-
-.hero-subtitle {
-    font-size: 16px;
-    opacity: 0.9;
-    margin: 0;
-    max-width: 500px;
-    line-height: 1.5;
-}
-
-.hero-stats {
-    display: flex;
-    gap: 12px;
-    position: relative;
-    z-index: 2;
-}
-
-.stat-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255, 255, 255, 0.15);
-    padding: 8px 16px;
-    border-radius: 50px;
-    font-size: 13px;
-    font-weight: 500;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.filter-section {
-    padding: 32px;
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     margin-bottom: 24px;
 }
 
@@ -1629,6 +952,248 @@ const additionalStyles = `
     color: #059669; 
 }
 
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.toast {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    pointer-events: auto;
+    cursor: pointer;
+    transform: translateX(100%);
+    animation: slideIn 0.3s ease forwards;
+    transition: all 0.3s ease;
+}
+
+.toast.removing {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+.toast.success {
+    border-left: 4px solid #059669;
+}
+
+.toast.error {
+    border-left: 4px solid #dc2626;
+}
+
+.toast.warning {
+    border-left: 4px solid #d97706;
+}
+
+.toast.info {
+    border-left: 4px solid #2563eb;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.action-btn.view {
+    background: #f0f9ff;
+    color: #0ea5e9;
+}
+
+.action-btn.view:hover {
+    background: #0ea5e9;
+    color: white;
+}
+
+.action-btn.edit {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.action-btn.edit:hover {
+    background: #d97706;
+    color: white;
+}
+
+.action-btn.download {
+    background: #f0fdf4;
+    color: #059669;
+}
+
+.action-btn.download:hover {
+    background: #059669;
+    color: white;
+}
+
+.action-btn.delete {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.action-btn.delete:hover {
+    background: #dc2626;
+    color: white;
+}
+
+.client-card {
+    transition: all 0.3s ease;
+}
+
+.client-card:hover {
+    transform: translateY(-2px);
+}
+
+.client-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.client-avatar {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.client-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.client-action-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.client-action-btn.edit {
+    background: #f0f9ff;
+    color: #0ea5e9;
+}
+
+.client-action-btn.edit:hover {
+    background: #0ea5e9;
+    color: white;
+}
+
+.client-action-btn.delete {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.client-action-btn.delete:hover {
+    background: #dc2626;
+    color: white;
+}
+
+.client-info {
+    margin-bottom: 16px;
+}
+
+.client-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 12px 0;
+}
+
+.client-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #64748b;
+}
+
+.detail-item svg {
+    flex-shrink: 0;
+}
+
+.client-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.stat-divider {
+    width: 1px;
+    height: 32px;
+    background: #f1f5f9;
+}
+
 @media (max-width: 768px) {
     .analytics-hero {
         flex-direction: column;
@@ -1654,6 +1219,49 @@ const additionalStyles = `
         grid-template-columns: 1fr;
         gap: 16px;
     }
+
+    .action-buttons {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .action-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+
+    .toast-container {
+        left: 20px;
+        right: 20px;
+        top: 20px;
+    }
+
+    .toast {
+        max-width: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .client-card-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .client-actions {
+        align-self: flex-end;
+    }
+
+    .client-stats {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .stat-divider {
+        width: 100%;
+        height: 1px;
+    }
 }
 `;
 
@@ -1667,156 +1275,85 @@ console.log('📱 Responsive design enabled');
 console.log('🎨 Glassmorphism effects applied');
 console.log('⚡ Performance optimizations active');
 
-// End of app.js fileex.test(clientData.email)) {
-        showToast('Please enter a valid email address', 'error');
-        return;
-    }
-
-    try {
-        const saveBtn = safeQuerySelector('#save-client');
-        const originalText = saveBtn.textContent;
-        saveBtn.textContent = 'Saving...';
-        saveBtn.disabled = true;
-
-        console.log('Attempting to save client to Supabase...');
-        const savedClient = await saveClientToSupabase(clientData);
-        console.log('Client saved to Supabase successfully:', savedClient);
-
-        if (editingClientId) {
-            const index = appData.clients.findIndex(c => c.id === editingClientId);
-            if (index > -1) {
-                const oldClient = { ...appData.clients[index] };
-                appData.clients[index] = {
-                    ...appData.clients[index],
-                    id: savedClient.id,
-                    name: savedClient.name,
-                    email: savedClient.email,
-                    phone: savedClient.phone || '',
-                    address: savedClient.address || '',
-                    payment_terms: savedClient.payment_terms,
-                    contact_name: savedClient.contact_name || '',
-                    company: savedClient.company || savedClient.name || ''
-                };
-                console.log('Updated client:', {
-                    before: oldClient,
-                    after: appData.clients[index],
-                    index: index
-                });
-            }
-            showToast(`Client "${savedClient.name}" updated successfully`, 'success');
-        } else {
-            const newClient = {
-                id: savedClient.id,
-                name: savedClient.name,
-                email: savedClient.email,
-                phone: savedClient.phone || '',
-                address: savedClient.address || '',
-                payment_terms: savedClient.payment_terms,
-                contact_name: savedClient.contact_name || '',
-                company: savedClient.company || savedClient.name || '',
-                total_invoices: savedClient.total_invoices || 0,
-                total_amount: savedClient.total_amount || 0
-            };
-
-            appData.clients.push(newClient);
-            appData.totalClients++;
-            console.log('Added new client:', newClient);
-            showToast(`Client "${newClient.name}" added successfully`, 'success');
-        }
-
-        console.log('Refreshing client views...');
-        renderClients();
-        
-        closeModal(safeQuerySelector('#client-modal'));
-
-        const form = safeQuerySelector('#client-form');
-        if (form) form.reset();
-        editingClientId = null;
-
-        saveBtn.textContent = originalText;
-        saveBtn.disabled = false;
-
-    } catch (error) {
-        console.error('Error saving client:', error);
-        showToast(`Error saving client: ${error.message || 'Please try again'}`, 'error');
-
-        const saveBtn = safeQuerySelector('#save-client');
-        if (saveBtn) {
-            saveBtn.textContent = editingClientId ? 'Update Client' : 'Save Client';
-            saveBtn.disabled = false;
-        }
-    }
+// End of app.js file
+    position: relative;
+    overflow: hidden;
 }
 
-function setupSettingsForm() {
-    const saveSettingsBtn = safeQuerySelector('#save-settings');
-    const resetSettingsBtn = safeQuerySelector('#reset-settings');
-
-    if (saveSettingsBtn) {
-        saveSettingsBtn.addEventListener('click', saveSettings);
-    }
-
-    if (resetSettingsBtn) {
-        resetSettingsBtn.addEventListener('click', resetSettings);
-    }
+.analytics-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: url('data:image/svg+xml,<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)" /></svg>');
+    opacity: 0.3;
+    pointer-events: none;
 }
 
-// ENHANCED: Settings save with GSTIN
-async function saveSettings() {
-    console.log('Saving settings...');
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
 
-    const elements = {
-        currency: safeQuerySelector('#currency-setting'),
-        taxRate: safeQuerySelector('#tax-rate'),
-        invoicePrefix: safeQuerySelector('#invoice-prefix'),
-        profileName: safeQuerySelector('#profile-name'),
-        profileEmail: safeQuerySelector('#profile-email'),
-        profilePhone: safeQuerySelector('#profile-phone'),
-        profileAddress: safeQuerySelector('#profile-address'),
-        profileGSTIN: safeQuerySelector('#profile-gstin'),
-        bankName: safeQuerySelector('#bank-name'),
-        bankAccount: safeQuerySelector('#bank-account'),
-        bankIFSC: safeQuerySelector('#bank-ifsc'),
-        bankSWIFT: safeQuerySelector('#bank-swift')
-    };
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
 
-    const missingElements = Object.entries(elements).filter(([key, element]) => !element);
-    if (missingElements.length > 0) {
-        console.error('Missing form elements:', missingElements.map(([key]) => key));
-        if (!missingElements.every(([key]) => key === 'profileGSTIN')) {
-            showToast(`Settings form is incomplete. Missing: ${missingElements.map(([key]) => key).join(', ')}`, 'error');
-            return;
-        }
-    }
+.hero-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    line-height: 1.2;
+}
 
-    const settingsData = {};
-    Object.entries(elements).forEach(([key, element]) => {
-        if (element) {
-            if (key === 'taxRate') {
-                const value = parseFloat(element.value);
-                if (isNaN(value) || value < 0 || value > 100) {
-                    showToast('Tax rate must be a number between 0 and 100 (0% is allowed)', 'error');
-                    element.focus();
-                    return;
-                }
-                settingsData[key] = value;
-            } else {
-                settingsData[key] = element.value?.trim() || '';
-            }
-        }
-    });
+.hero-subtitle {
+    font-size: 16px;
+    opacity: 0.9;
+    margin: 0;
+    max-width: 500px;
+    line-height: 1.5;
+}
 
-    if (settingsData.taxRate === undefined) {
-        return;
-    }
+.hero-stats {
+    display: flex;
+    gap: 12px;
+    position: relative;
+    z-index: 2;
+}
 
-    if (!settingsData.profileName || !settingsData.profileEmail) {
-        showToast('Profile name and email are required', 'error');
-        return;
-    }
+.stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 500;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailReg// COMPLETE ENHANCED INVOICE MANAGER - ALL ISSUES FIXED
+.filter-section {
+    padding: 32px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;// COMPLETE ENHANCED INVOICE MANAGER - ALL ISSUES FIXED
 
 // ============================================
 // ERROR HANDLING AND DOM UTILITIES
@@ -2825,6 +2362,13 @@ function renderRecentInvoices() {
 function renderCharts(period = 'monthly') {
     console.log('Rendering charts for period:', period);
 
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.warn('Chart.js not loaded, retrying in 1 second...');
+        setTimeout(() => renderCharts(period), 1000);
+        return;
+    }
+
     let earningsData = appData.monthlyEarnings;
 
     if (period === 'quarterly') {
@@ -2835,94 +2379,102 @@ function renderCharts(period = 'monthly') {
 
     const monthlyCtx = safeQuerySelector('#monthlyChart');
     if (monthlyCtx) {
-        if (monthlyChart) {
-            monthlyChart.destroy();
-        }
+        try {
+            if (monthlyChart) {
+                monthlyChart.destroy();
+            }
 
-        monthlyChart = new Chart(monthlyCtx, {
-            type: 'line',
-            data: {
-                labels: earningsData.map(m => m.month),
-                datasets: [{
-                    label: 'Earnings',
-                    data: earningsData.map(m => m.amount),
-                    borderColor: '#1FB8CD',
-                    backgroundColor: 'rgba(31, 184, 205, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#1FB8CD',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
+            monthlyChart = new Chart(monthlyCtx, {
+                type: 'line',
+                data: {
+                    labels: earningsData.map(m => m.month),
+                    datasets: [{
+                        label: 'Earnings',
+                        data: earningsData.map(m => m.amount),
+                        borderColor: '#1FB8CD',
+                        backgroundColor: 'rgba(31, 184, 205, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#1FB8CD',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '₹' + formatNumber(value);
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + formatNumber(value);
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
+        } catch (error) {
+            console.error('Error rendering monthly chart:', error);
+        }
     }
 
     const clientCtx = safeQuerySelector('#clientChart');
-    if (clientCtx) {
-        if (clientChart) {
-            clientChart.destroy();
-        }
+    if (clientCtx && appData.clients.length > 0) {
+        try {
+            if (clientChart) {
+                clientChart.destroy();
+            }
 
-        const colors = ['#1FB8CD', '#FFC185', '#B4413C', '#ECEBD5', '#5D878F', '#DB4545', '#D2BA4C', '#964325'];
+            const colors = ['#1FB8CD', '#FFC185', '#B4413C', '#ECEBD5', '#5D878F', '#DB4545', '#D2BA4C', '#964325'];
 
-        clientChart = new Chart(clientCtx, {
-            type: 'pie',
-            data: {
-                labels: appData.clients.map(c => c.name),
-                datasets: [{
-                    data: appData.clients.map(c => c.total_amount || 0),
-                    backgroundColor: colors,
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = context.raw;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                return `${label}: ₹${formatNumber(value)} (${percentage}%)`;
+            clientChart = new Chart(clientCtx, {
+                type: 'pie',
+                data: {
+                    labels: appData.clients.map(c => c.name),
+                    datasets: [{
+                        data: appData.clients.map(c => c.total_amount || 0),
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${label}: ₹${formatNumber(value)} (${percentage}%)`;
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
+        } catch (error) {
+            console.error('Error rendering client chart:', error);
+        }
     }
 }
 
@@ -2930,7 +2482,6 @@ function setupAnalyticsFilters() {
     console.log('Analytics filters setup complete');
 }
 
-// IMPROVED: Compact action buttons for invoices
 function renderInvoices() {
     console.log('Rendering invoices...');
     const tbody = safeQuerySelector('#invoices-body');
@@ -2987,7 +2538,6 @@ function filterInvoices(filter) {
     });
 }
 
-// FIXED: Client rendering with working delete functionality
 function renderClients() {
     console.log('Rendering clients...');
     const grid = safeQuerySelector('#clients-grid');
@@ -3162,7 +2712,6 @@ function editClient(clientId) {
     showToast(`Editing client: ${client.name}`, 'info');
 }
 
-// FIXED: Delete client function
 async function deleteClient(clientId, clientName) {
     console.log('Deleting client:', { clientId, clientName });
 
@@ -3257,6 +2806,13 @@ function renderAnalyticsChart(period, invoices) {
     const analyticsCtx = safeQuerySelector('#analyticsChart');
     if (!analyticsCtx) return;
 
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.warn('Chart.js not loaded, retrying in 1 second...');
+        setTimeout(() => renderAnalyticsChart(period, invoices), 1000);
+        return;
+    }
+
     if (analyticsChart) {
         analyticsChart.destroy();
     }
@@ -3284,49 +2840,766 @@ function renderAnalyticsChart(period, invoices) {
         subtitleElement.textContent = subtitle;
     }
 
-    analyticsChart = new Chart(analyticsCtx, {
-   type: 'bar',
-   data: {
-       labels: earningsData.map(m => m.month),
-       datasets: [{
-           label: label,
-           data: earningsData.map(m => m.amount),
-           backgroundColor: 'rgba(59, 130, 246, 0.8)',
-           borderColor: 'rgba(59, 130, 246, 1)',
-           borderWidth: 2,
-           borderRadius: 8,
-           borderSkipped: false,
-       }]
-   },
-   options: {
-       responsive: true,
-       maintainAspectRatio: false,
-       plugins: {
-           legend: {
-               display: false
-           }
-       },
-       scales: {
-           y: {
-               beginAtZero: true,
-               ticks: {
-                   callback: function(value) {
-                       return '₹' + formatNumber(value);
-                   },
-                   color: '#64748b'
-               },
-               grid: {
-                   color: 'rgba(0,0,0,0.05)'
-               }
-           },
-           x: {
-               ticks: {
-                   color: '#64748b'
-               },
-               grid: {
-                   color: 'rgba(0,0,0,0.05)'
-               }
-           }
-       }
-   }
-});
+    try {
+        analyticsChart = new Chart(analyticsCtx, {
+            type: 'bar',
+            data: {
+                labels: earningsData.map(m => m.month),
+                datasets: [{
+                    label: label,
+                    data: earningsData.map(m => m.amount),
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₹' + formatNumber(value);
+                            },
+                            color: '#64748b'
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#64748b'
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error rendering analytics chart:', error);
+    }
+}
+
+function calculateMonthlyEarningsForData(invoices) {
+    const monthlyData = new Map();
+
+    invoices
+        .filter(inv => inv.status === 'Paid')
+        .forEach(({ date, amount }) => {
+            const d = new Date(date);
+            if (Number.isNaN(d)) return;
+            const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            monthlyData.set(monthKey, (monthlyData.get(monthKey) || 0) + amount);
+        });
+
+    return Array.from(monthlyData, ([month, amount]) => ({ month, amount }))
+                 .sort((a, b) => a.month.localeCompare(b.month));
+}
+
+function renderTopClientInsights(invoices) {
+    const insightsContainer = safeQuerySelector('#analytics-insights');
+    if (!insightsContainer) return;
+
+    const clientEarnings = new Map();
+    const clientInvoiceCounts = new Map();
+
+    invoices.forEach(invoice => {
+        const clientId = invoice.clientId;
+        const clientName = invoice.client;
+        
+        if (invoice.status === 'Paid') {
+            clientEarnings.set(clientId, (clientEarnings.get(clientId) || 0) + invoice.amount);
+        }
+        clientInvoiceCounts.set(clientId, (clientInvoiceCounts.get(clientId) || 0) + 1);
+        
+        if (!clientEarnings.has(clientId + '_name')) {
+            clientEarnings.set(clientId + '_name', clientName);
+        }
+    });
+
+    let topClientId = null;
+    let topClientEarnings = 0;
+    let topClientName = 'N/A';
+
+    for (const [clientId, earnings] of clientEarnings.entries()) {
+        if (typeof clientId === 'string' && !clientId.endsWith('_name') && earnings > topClientEarnings) {
+            topClientEarnings = earnings;
+            topClientId = clientId;
+            topClientName = clientEarnings.get(clientId + '_name') || 'Unknown';
+        }
+    }
+
+    const totalPaidInvoices = invoices.filter(inv => inv.status === 'Paid');
+    const totalEarnings = totalPaidInvoices.reduce((sum, inv) => sum + inv.amount, 0);
+    const averageInvoice = totalPaidInvoices.length > 0 ? totalEarnings / totalPaidInvoices.length : 0;
+    const totalInvoices = invoices.length;
+
+    let periodInfo = '';
+    if (analyticsState.dateRange.from && analyticsState.dateRange.to) {
+        periodInfo = `${analyticsState.dateRange.from} to ${analyticsState.dateRange.to}`;
+    } else {
+        periodInfo = 'All time';
+    }
+
+    insightsContainer.innerHTML = `
+        <div class="insight-item">
+            <div class="insight-label">🏆 Top Client${periodInfo !== 'All time' ? ` (${periodInfo})` : ''}</div>
+            <div class="insight-value">${topClientName}</div>
+            <div class="insight-change positive">₹${formatNumber(topClientEarnings)} earned</div>
+        </div>
+        
+        <div class="insight-item">
+            <div class="insight-label">💰 Total Earnings</div>
+            <div class="insight-value">₹${formatNumber(totalEarnings)}</div>
+            <div class="insight-change">${totalPaidInvoices.length} paid invoices</div>
+        </div>
+        
+        <div class="insight-item">
+            <div class="insight-label">📊 Average Invoice</div>
+            <div class="insight-value">₹${formatNumber(averageInvoice)}</div>
+            <div class="insight-change">${totalInvoices} total invoices</div>
+        </div>
+        
+        <div class="insight-item">
+            <div class="insight-label">🎯 Period</div>
+            <div class="insight-value">${analyticsState.currentPeriod.charAt(0).toUpperCase() + analyticsState.currentPeriod.slice(1)}</div>
+            <div class="insight-change">${periodInfo}</div>
+        </div>
+    `;
+}
+
+function renderSettings() {
+    console.log('Rendering settings...');
+
+    if (!appData.dataLoaded) {
+        console.log('Data not loaded yet, skipping settings render');
+        return;
+    }
+
+    const settings = appData.settings;
+
+    const elements = {
+        'profile-name': settings.profileName,
+        'profile-email': settings.profileEmail,
+        'profile-phone': settings.profilePhone,
+        'profile-address': settings.profileAddress,
+        'profile-gstin': settings.profileGSTIN,
+        'bank-name': settings.bankName,
+        'bank-account': settings.bankAccount,
+        'bank-ifsc': settings.bankIFSC,
+        'bank-swift': settings.bankSWIFT,
+        'currency-setting': settings.currency,
+        'tax-rate': settings.taxRate,
+        'invoice-prefix': settings.invoicePrefix
+    };
+
+    Object.entries(elements).forEach(([id, value]) => {
+        const element = safeQuerySelector(`#${id}`);
+        if (element) {
+            element.value = (value !== null && value !== undefined) ? value : '';
+        }
+    });
+
+    const taxRateField = safeQuerySelector('#tax-rate');
+    if (taxRateField) {
+        let datalist = safeQuerySelector('#tax-rate-options');
+        if (!datalist) {
+            datalist = document.createElement('datalist');
+            datalist.id = 'tax-rate-options';
+            datalist.innerHTML = `
+                <option value="0">0% - No Tax</option>
+                <option value="5">5% - Reduced Rate</option>
+                <option value="12">12% - Standard Rate</option>
+                <option value="18">18% - Higher Rate</option>
+                <option value="28">28% - Luxury Rate</option>
+            `;
+            taxRateField.parentNode.appendChild(datalist);
+        }
+        taxRateField.setAttribute('list', 'tax-rate-options');
+        taxRateField.setAttribute('placeholder', 'e.g., 0, 18');
+        
+        if (!safeQuerySelector('#tax-rate-helper')) {
+            const helper = document.createElement('small');
+            helper.id = 'tax-rate-helper';
+            helper.style.cssText = 'display: block; margin-top: 4px; color: #64748b; font-size: 11px;';
+            helper.textContent = 'Enter 0 for no tax, or your applicable GST percentage';
+            taxRateField.parentNode.appendChild(helper);
+        }
+    }
+
+    console.log('Settings rendered with tax rate:', settings.taxRate);
+}
+
+function setupModals() {
+    console.log('Setting up modals...');
+
+    const invoiceModal = safeQuerySelector('#invoice-modal');
+    const invoiceModalOverlay = safeQuerySelector('#invoice-modal-overlay');
+    const closeInvoiceModal = safeQuerySelector('#close-invoice-modal');
+    const createInvoiceBtn = safeQuerySelector('#create-invoice-btn');
+    const newInvoiceBtn = safeQuerySelector('#new-invoice-btn');
+
+    if (createInvoiceBtn) {
+        createInvoiceBtn.addEventListener('click', () => openInvoiceModal());
+    }
+    if (newInvoiceBtn) {
+        newInvoiceBtn.addEventListener('click', () => openInvoiceModal());
+    }
+
+    if (invoiceModalOverlay) {
+        invoiceModalOverlay.addEventListener('click', () => closeModal(invoiceModal));
+    }
+    if (closeInvoiceModal) {
+        closeInvoiceModal.addEventListener('click', () => closeModal(invoiceModal));
+    }
+
+    const clientModal = safeQuerySelector('#client-modal');
+    const clientModalOverlay = safeQuerySelector('#client-modal-overlay');
+    const closeClientModal = safeQuerySelector('#close-client-modal');
+    const addClientBtn = safeQuerySelector('#add-client-btn');
+
+    if (addClientBtn) {
+        addClientBtn.addEventListener('click', () => openClientModal());
+    }
+
+    if (clientModalOverlay) {
+        clientModalOverlay.addEventListener('click', () => closeModal(clientModal));
+    }
+    if (closeClientModal) {
+        closeClientModal.addEventListener('click', () => closeModal(clientModal));
+    }
+}
+
+async function openInvoiceModal(invoiceId = null) {
+    console.log('Opening invoice modal...', invoiceId ? 'for editing' : 'for creation');
+    const modal = safeQuerySelector('#invoice-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+
+        editingInvoiceId = invoiceId;
+
+        if (invoiceId) {
+            const invoice = appData.invoices.find(inv => inv.id === invoiceId);
+            if (invoice) {
+                const invoiceNumber = safeQuerySelector('#invoice-number');
+                const issueDate = safeQuerySelector('#issue-date');
+                const dueDate = safeQuerySelector('#due-date');
+                
+                if (invoiceNumber) invoiceNumber.value = invoice.id;
+                if (issueDate) issueDate.value = invoice.date;
+                if (dueDate) dueDate.value = invoice.dueDate;
+
+                const clientSelect = safeQuerySelector('#invoice-client');
+                if (clientSelect) {
+                    clientSelect.innerHTML = '<option value="">Select Client</option>' +
+                        appData.clients.map(client =>
+                            `<option value="${client.id}" ${client.id === invoice.clientId ? 'selected' : ''}>${client.name}</option>`
+                        ).join('');
+                }
+
+                const container = safeQuerySelector('#line-items-container');
+                if (container) {
+                    container.innerHTML = '';
+
+                    if (invoice.items && invoice.items.length > 0) {
+                        invoice.items.forEach(item => {
+                            const lineItem = document.createElement('div');
+                            lineItem.className = 'line-item';
+                            lineItem.innerHTML = `
+                                <div class="form-row">
+                                    <div class="form-group flex-2">
+                                        <input type="text" class="form-control" placeholder="Description" value="${item.description}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="number" class="form-control quantity" placeholder="Qty" min="1" value="${item.quantity}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="number" class="form-control rate" placeholder="Rate" min="0" step="0.01" value="${item.rate}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="number" class="form-control amount" placeholder="Amount" value="${item.amount}" readonly>
+                                    </div>
+                                    <button type="button" class="btn btn--secondary remove-item">Remove</button>
+                                </div>
+                            `;
+                            container.appendChild(lineItem);
+                        });
+                    } else {
+                        addLineItem();
+                    }
+
+                    calculateInvoiceTotal();
+                }
+            }
+        } else {
+            try {
+                const num = await getNextInvoiceNumber();
+                const invoiceNumInput = safeQuerySelector('#invoice-number');
+                if (invoiceNumInput) {
+                    invoiceNumInput.value = `${appData.settings.invoicePrefix}-${String(num).padStart(3, '0')}`;
+                }
+            } catch (error) {
+                console.error('Error generating invoice number:', error);
+                const invoiceNumInput = safeQuerySelector('#invoice-number');
+                if (invoiceNumInput) {
+                    invoiceNumInput.value = `${appData.settings.invoicePrefix}-${String(Date.now()).slice(-3)}`;
+                }
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 30);
+
+            const issueDateField = safeQuerySelector('#issue-date');
+            const dueDateField = safeQuerySelector('#due-date');
+
+            if (issueDateField) issueDateField.value = today;
+            if (dueDateField) dueDateField.value = dueDate.toISOString().split('T')[0];
+
+            const clientSelect = safeQuerySelector('#invoice-client');
+            if (clientSelect) {
+                clientSelect.innerHTML = '<option value="">Select Client</option>' +
+                    appData.clients.map(client => `<option value="${client.id}">${client.name}</option>`).join('');
+            }
+
+            const container = safeQuerySelector('#line-items-container');
+            if (container) {
+                container.innerHTML = '';
+                addLineItem();
+            }
+        }
+    }
+}
+
+function openClientModal() {
+    console.log('Opening client modal...');
+    const modal = safeQuerySelector('#client-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+
+        if (!editingClientId) {
+            const form = safeQuerySelector('#client-form');
+            if (form) {
+                form.reset();
+            }
+
+            const modalTitle = safeQuerySelector('#client-modal .modal-header h2');
+            if (modalTitle) modalTitle.textContent = 'Add New Client';
+
+            const saveBtn = safeQuerySelector('#save-client');
+            if (saveBtn) saveBtn.textContent = 'Save Client';
+        }
+    }
+}
+
+function closeModal(modal) {
+    if (modal) {
+        modal.classList.add('hidden');
+        editingInvoiceId = null;
+        editingClientId = null;
+    }
+}
+
+function setupForms() {
+    console.log('Setting up forms...');
+    setupInvoiceForm();
+    setupClientForm();
+    setupSettingsForm();
+}
+
+function setupInvoiceForm() {
+    const addLineItemBtn = safeQuerySelector('#add-line-item');
+    const createInvoiceBtn = safeQuerySelector('#create-invoice');
+    const saveDraftBtn = safeQuerySelector('#save-draft');
+
+    if (addLineItemBtn) {
+        addLineItemBtn.addEventListener('click', addLineItem);
+    }
+
+    if (createInvoiceBtn) {
+        createInvoiceBtn.addEventListener('click', () => saveInvoice('Pending'));
+    }
+
+    if (saveDraftBtn) {
+        saveDraftBtn.addEventListener('click', () => saveInvoice('Draft'));
+    }
+
+    document.addEventListener('input', (e) => {
+        if (e.target.classList.contains('quantity') || e.target.classList.contains('rate')) {
+            calculateLineItem(e.target.closest('.line-item'));
+            calculateInvoiceTotal();
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-item')) {
+            removeLineItem(e.target.closest('.line-item'));
+            calculateInvoiceTotal();
+        }
+    });
+}
+
+function addLineItem() {
+    const container = safeQuerySelector('#line-items-container');
+    if (container) {
+        const lineItem = document.createElement('div');
+        lineItem.className = 'line-item';
+        lineItem.innerHTML = `
+            <div class="form-row">
+                <div class="form-group flex-2">
+                    <input type="text" class="form-control" placeholder="Description" required>
+                </div>
+                <div class="form-group">
+                    <input type="number" class="form-control quantity" placeholder="Qty" min="1" value="1" required>
+                </div>
+                <div class="form-group">
+                    <input type="number" class="form-control rate" placeholder="Rate" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <input type="number" class="form-control amount" placeholder="Amount" readonly>
+                </div>
+                <button type="button" class="btn btn--secondary remove-item">Remove</button>
+            </div>
+        `;
+        container.appendChild(lineItem);
+    }
+}
+
+function removeLineItem(lineItem) {
+    const container = safeQuerySelector('#line-items-container');
+    if (container && container.children.length > 1 && lineItem) {
+        lineItem.remove();
+    }
+}
+
+function calculateLineItem(lineItem) {
+    if (!lineItem) return;
+
+    const quantityInput = lineItem.querySelector('.quantity');
+    const rateInput = lineItem.querySelector('.rate');
+    const amountInput = lineItem.querySelector('.amount');
+
+    if (quantityInput && rateInput && amountInput) {
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const rate = parseFloat(rateInput.value) || 0;
+        const amount = quantity * rate;
+
+        amountInput.value = amount.toFixed(2);
+    }
+}
+
+function calculateInvoiceTotal() {
+    const lineItems = safeQuerySelectorAll('.line-item');
+    let subtotal = 0;
+
+    lineItems.forEach(item => {
+        const amountInput = item.querySelector('.amount');
+        if (amountInput) {
+            const amount = parseFloat(amountInput.value) || 0;
+            subtotal += amount;
+        }
+    });
+
+    const taxRate = appData.settings.taxRate / 100;
+    const tax = subtotal * taxRate;
+    const total = subtotal + tax;
+
+    const subtotalElement = safeQuerySelector('#invoice-subtotal');
+    const taxElement = safeQuerySelector('#invoice-tax');
+    const totalElement = safeQuerySelector('#invoice-total');
+
+    if (subtotalElement) subtotalElement.textContent = `₹${formatNumber(subtotal)}`;
+    if (taxElement) taxElement.textContent = `₹${formatNumber(tax)}`;
+    if (totalElement) totalElement.textContent = `₹${formatNumber(total)}`;
+
+    const taxLabels = safeQuerySelectorAll('.total-row span');
+    taxLabels.forEach(label => {
+        if (label.textContent.includes('Tax')) {
+            label.textContent = `Tax (${appData.settings.taxRate}%):`;
+        }
+    });
+}
+
+async function saveInvoice(status) {
+    console.log('Saving invoice with status:', status);
+
+    const invoiceNumberInput = safeQuerySelector('#invoice-number');
+    let invoiceNumber = invoiceNumberInput?.value;
+    const clientSelect = safeQuerySelector('#invoice-client');
+    const clientId = clientSelect ? clientSelect.value : null;
+
+    if (!clientId) {
+        showToast('Please select a client', 'error');
+        clientSelect?.focus();
+        return;
+    }
+
+    const client = appData.clients.find(c => c.id === clientId);
+    if (!client) {
+        showToast('Selected client not found', 'error');
+        return;
+    }
+
+    const lineItems = [];
+    const lineItemElements = safeQuerySelectorAll('.line-item');
+
+    lineItemElements.forEach(item => {
+        const descInput = item.querySelector('input[placeholder="Description"]');
+        const quantityInput = item.querySelector('.quantity');
+        const rateInput = item.querySelector('.rate');
+        const amountInput = item.querySelector('.amount');
+
+        if (descInput && quantityInput && rateInput && amountInput) {
+            const description = descInput.value.trim();
+            const quantity = parseFloat(quantityInput.value);
+            const rate = parseFloat(rateInput.value);
+            const amount = parseFloat(amountInput.value);
+
+            if (description && quantity && rate) {
+                lineItems.push({description, quantity, rate, amount});
+            }
+        }
+    });
+
+    if (lineItems.length === 0) {
+        showToast('Please add at least one line item', 'error');
+        return;
+    }
+
+    const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
+    const tax = subtotal * (appData.settings.taxRate / 100);
+    const total = subtotal + tax;
+
+    const issueDateInput = safeQuerySelector('#issue-date');
+    const dueDateInput = safeQuerySelector('#due-date');
+
+    const invoice = {
+        id: invoiceNumber,
+        clientId: clientId,
+        client: client.name,
+        amount: total,
+        subtotal: subtotal,
+        tax: tax,
+        date: issueDateInput ? issueDateInput.value : new Date().toISOString().split('T')[0],
+        dueDate: dueDateInput ? dueDateInput.value : new Date().toISOString().split('T')[0],
+        status: status,
+        items: lineItems
+    };
+
+    try {
+        await saveInvoiceToSupabase(invoice);
+
+        if (editingInvoiceId) {
+            const index = appData.invoices.findIndex(inv => inv.id === editingInvoiceId);
+            if (index > -1) {
+                appData.invoices[index] = invoice;
+            }
+            showToast(`Invoice ${invoiceNumber} updated successfully`, 'success');
+        } else {
+            appData.invoices.unshift(invoice);
+            appData.totalInvoices++;
+            showToast(`Invoice ${invoiceNumber} ${status === 'Draft' ? 'saved as draft' : 'created'} successfully`, 'success');
+        }
+
+        const localClient = appData.clients.find(c => c.id === clientId);
+        if (localClient) {
+            const clientInvoices = appData.invoices.filter(inv => inv.clientId === clientId);
+            localClient.total_invoices = clientInvoices.length;
+            localClient.total_amount = clientInvoices
+                .filter(inv => inv.status === 'Paid')
+                .reduce((sum, inv) => sum + inv.amount, 0);
+        }
+
+        calculateMonthlyEarnings();
+
+        renderInvoices();
+        renderDashboard();
+        renderClients();
+
+        closeModal(safeQuerySelector('#invoice-modal'));
+    } catch (error) {
+        console.error('Error saving invoice:', error);
+        showToast('Error saving invoice. Please try again.', 'error');
+    }
+}
+
+function setupClientForm() {
+    const saveClientBtn = safeQuerySelector('#save-client');
+    const cancelClientBtn = safeQuerySelector('#cancel-client');
+
+    if (saveClientBtn) {
+        saveClientBtn.addEventListener('click', saveClient);
+    }
+
+    if (cancelClientBtn) {
+        cancelClientBtn.addEventListener('click', () => closeModal(safeQuerySelector('#client-modal')));
+    }
+}
+
+async function saveClient() {
+    console.log('Saving client... Editing ID:', editingClientId);
+
+    const formFields = {
+        company: safeQuerySelector('#client-company') || safeQuerySelector('#client-name'),
+        email: safeQuerySelector('#client-email'),
+        phone: safeQuerySelector('#client-phone'),
+        address: safeQuerySelector('#client-address'),
+        terms: safeQuerySelector('#client-terms'),
+        contactName: safeQuerySelector('#client-contact-name') || safeQuerySelector('#client-contact'),
+        companyName: safeQuerySelector('#client-company-name') || safeQuerySelector('#client-business-name')
+    };
+
+    console.log('Available form fields:', Object.keys(formFields).filter(key => formFields[key]));
+
+    if (!formFields.company || !formFields.email) {
+        showToast('Required form fields (company and email) are missing', 'error');
+        return;
+    }
+
+    const clientData = {
+        name: formFields.company.value.trim(),
+        email: formFields.email.value.trim(),
+        phone: formFields.phone ? formFields.phone.value.trim() : '',
+        address: formFields.address ? formFields.address.value.trim() : '',
+        paymentTerms: formFields.terms ? formFields.terms.value : 'net30',
+        contactName: formFields.contactName ? formFields.contactName.value.trim() : '',
+        company: formFields.companyName ? formFields.companyName.value.trim() : formFields.company.value.trim()
+    };
+
+    console.log('Client data being saved:', clientData);
+
+    if (!clientData.name || !clientData.email) {
+        showToast('Company name and email are required', 'error');
+        return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(clientData.email)) {
+        showToast('Please enter a valid email address', 'error');
+        return;
+    }
+
+    try {
+        const saveBtn = safeQuerySelector('#save-client');
+        const originalText = saveBtn?.textContent || 'Save Client';
+        if (saveBtn) {
+            saveBtn.textContent = 'Saving...';
+            saveBtn.disabled = true;
+        }
+
+        console.log('Attempting to save client to Supabase...');
+        const savedClient = await saveClientToSupabase(clientData);
+        console.log('Client saved to Supabase successfully:', savedClient);
+
+        if (editingClientId) {
+            const index = appData.clients.findIndex(c => c.id === editingClientId);
+            if (index > -1) {
+                const oldClient = { ...appData.clients[index] };
+                appData.clients[index] = {
+                    ...appData.clients[index],
+                    id: savedClient.id,
+                    name: savedClient.name,
+                    email: savedClient.email,
+                    phone: savedClient.phone || '',
+                    address: savedClient.address || '',
+                    payment_terms: savedClient.payment_terms,
+                    contact_name: savedClient.contact_name || '',
+                    company: savedClient.company || savedClient.name || ''
+                };
+                console.log('Updated client:', {
+                    before: oldClient,
+                    after: appData.clients[index],
+                    index: index
+                });
+            }
+            showToast(`Client "${savedClient.name}" updated successfully`, 'success');
+        } else {
+            const newClient = {
+                id: savedClient.id,
+                name: savedClient.name,
+                email: savedClient.email,
+                phone: savedClient.phone || '',
+                address: savedClient.address || '',
+                payment_terms: savedClient.payment_terms,
+                contact_name: savedClient.contact_name || '',
+                company: savedClient.company || savedClient.name || '',
+                total_invoices: savedClient.total_invoices || 0,
+                total_amount: savedClient.total_amount || 0
+            };
+
+            appData.clients.push(newClient);
+            appData.totalClients++;
+            console.log('Added new client:', newClient);
+            showToast(`Client "${newClient.name}" added successfully`, 'success');
+        }
+
+        console.log('Refreshing client views...');
+        renderClients();
+        
+        closeModal(safeQuerySelector('#client-modal'));
+
+        const form = safeQuerySelector('#client-form');
+        if (form) form.reset();
+        editingClientId = null;
+
+        if (saveBtn) {
+            saveBtn.textContent = originalText;
+            saveBtn.disabled = false;
+        }
+
+    } catch (error) {
+        console.error('Error saving client:', error);
+        showToast(`Error saving client: ${error.message || 'Please try again'}`, 'error');
+
+        const saveBtn = safeQuerySelector('#save-client');
+        if (saveBtn) {
+            saveBtn.textContent = editingClientId ? 'Update Client' : 'Save Client';
+            saveBtn.disabled = false;
+        }
+    }
+}
+
+function setupSettingsForm() {
+    const saveSettingsBtn = safeQuerySelector('#save-settings');
+    const resetSettingsBtn = safeQuerySelector('#reset-settings');
+
+    if (saveSettingsBtn) {
+        saveSettingsBtn.addEventListener('click', saveSettings);
+    }
+
+    if (resetSettingsBtn) {
+        resetSettingsBtn.addEventListener('click', resetSettings);
+    }
+}
+
+async function saveSettings() {
+    console.log('Saving settings...');
+
+    const elements = {
+        currency: safeQuerySelector('#currency-setting'),
+        taxRate: safeQuerySelector('#tax-rate'),
+        invoicePrefix: safeQuerySelector('#invoice-prefix'),
+        profileName: safeQuerySelector('#profile-name'),
+        profileEmail: safeQuerySelector('#profile-email'),
+        profilePhone: safeQuerySelector('#profile-phone'),
+        profileAddress: safeQuerySelector('#profile-address'),
+        profileGSTIN: safeQuerySelector('#profile-gstin'),
+        bankName: safeQuerySelector('#bank-name'),
+        bankAccount: safeQuerySelector('#bank-account'),
+        bankIFSC: safeQuerySelector('#bank-ifsc'),
+        bankSWIFT: safeQuerySelector('#bank-swift')
+    };
+
+    const missingElements = Object.entries(elements).filter(([key, element]) => !element
