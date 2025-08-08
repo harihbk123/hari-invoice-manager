@@ -1303,7 +1303,18 @@ function setupNavigation() {
             e.preventDefault();
             const targetPage = link.dataset.page;
             console.log('Navigating to:', targetPage);
+            
+            // FIXED: Clean up expense elements before any navigation
             aggressiveExpenseCleanup();
+            
+            // FIXED: Clean up expense filter listeners when leaving expenses page
+            if (window.expenseIntegration && window.expenseIntegration.getExpenseUI()) {
+                try {
+                    window.expenseIntegration.getExpenseUI().cleanupExpenseFilterListeners();
+                } catch (error) {
+                    console.warn('⚠️ Could not cleanup expense listeners:', error);
+                }
+            }
 
             navLinks.forEach(nl => nl.classList.remove('active'));
             link.classList.add('active');
@@ -1313,11 +1324,20 @@ function setupNavigation() {
             if (targetElement) {
                 targetElement.classList.add('active');
 
-                if (targetPage === 'dashboard') renderDashboard();
-                else if (targetPage === 'invoices') renderInvoices();
-                else if (targetPage === 'clients') renderClients();
-                else if (targetPage === 'analytics') renderAnalytics();
-                else if (targetPage === 'settings') renderSettings();
+                // FIXED: Add delay before rendering to ensure DOM is stable
+                setTimeout(() => {
+                    if (targetPage === 'dashboard') renderDashboard();
+                    else if (targetPage === 'invoices') renderInvoices();
+                    else if (targetPage === 'clients') renderClients();
+                    else if (targetPage === 'analytics') renderAnalytics();
+                    else if (targetPage === 'settings') renderSettings();
+                    else if (targetPage === 'expenses') {
+                        // Handle expenses navigation through expense UI
+                        if (window.expenseIntegration && window.expenseIntegration.getExpenseUI()) {
+                            window.expenseIntegration.getExpenseUI().navigateToExpenses();
+                        }
+                    }
+                }, 50);
             } else {
                 console.error('Target page not found:', targetPage);
             }
@@ -1360,10 +1380,44 @@ function cleanupExpenseFilters() {
 
 function renderDashboard() {
     console.log('Rendering dashboard...');
-    cleanupExpenseFilters();
+    
+    // FIXED: Clean up any leaked expense elements before rendering dashboard
+    aggressiveExpenseCleanup();
+    
+    // Remove any existing expense dashboard metrics to prevent duplicates
+    const existingExpenseMetrics = document.getElementById('expense-dashboard-metrics');
+    if (existingExpenseMetrics) {
+        existingExpenseMetrics.remove();
+    }
+    
+    // Remove any existing expense charts from dashboard
+    const existingExpenseChart = document.getElementById('expense-earnings-chart-container');
+    if (existingExpenseChart) {
+        existingExpenseChart.remove();
+    }
+    
     updateDashboardMetrics();
     renderRecentInvoices();
+    
+    // Render charts with a small delay to ensure DOM is ready
     setTimeout(() => renderCharts(), 100);
+    
+    // FIXED: Only add expense integration if it's enabled and properly initialized
+    if (window.expenseIntegration && window.expenseIntegration.isEnabled()) {
+        setTimeout(() => {
+            try {
+                // Re-add expense metrics to dashboard (but only on dashboard)
+                const currentPage = document.querySelector('.page.active');
+                if (currentPage && currentPage.id === 'dashboard-page') {
+                    window.expenseIntegration.addExpenseToDashboard();
+                }
+            } catch (error) {
+                console.warn('⚠️ Could not add expense metrics to dashboard:', error);
+            }
+        }, 200);
+    }
+    
+    console.log('✅ Dashboard rendered successfully');
 }
 
 function updateDashboardMetrics() {
@@ -3987,6 +4041,7 @@ document.addEventListener('keydown', (e) => {
 // 🆕 ADD THIS COMPLETE FUNCTION - copy everything between these lines
 
 // Aggressive cleanup of expense elements from all pages except expenses
+// 🆕 FIXED: Aggressive cleanup of expense elements from all pages except expenses
 function aggressiveExpenseCleanup() {
     console.log('🧹 App-level expense cleanup...');
     
@@ -3997,15 +4052,52 @@ function aggressiveExpenseCleanup() {
         
         // If we're NOT on expenses page, remove ALL expense elements
         if (activePageId !== 'expenses-page') {
-            // Remove expense filters from all non-expense pages
+            console.log('🧹 Cleaning up expense elements from non-expense pages...');
+            
+            // Remove expense filters from all non-expense pages with more specific selectors
             document.querySelectorAll('.page:not(#expenses-page)').forEach(page => {
+                // Remove expense filter containers
                 page.querySelectorAll(`
                     .expense-filters-container,
                     .expense-filters-wrapper,
                     [id*="expense-filter"],
-                    [class*="expense-filter"]
+                    [class*="expense-filter"],
+                    #expenses-page-filters-wrapper,
+                    #expenses-page-filters-container
                 `).forEach(el => {
-                    console.log('🗑️ Removing leaked expense element:', el.id || el.className);
+                    console.log('🗑️ Removing leaked expense filter:', el.id || el.className);
+                    el.remove();
+                });
+                
+                // Remove expense charts that shouldn't be on other pages
+                page.querySelectorAll(`
+                    #expenseMonthlyChart,
+                    #expenseCategoryChart,
+                    .expense-charts,
+                    [id*="expense"][id*="Chart"]
+                `).forEach(el => {
+                    console.log('🗑️ Removing leaked expense chart:', el.id || el.className);
+                    el.remove();
+                });
+                
+                // Remove expense balance cards from non-dashboard pages
+                if (!page.id.includes('dashboard')) {
+                    page.querySelectorAll(`
+                        .expense-balance-grid,
+                        .expense-balance-cards,
+                        #expense-balance-cards
+                    `).forEach(el => {
+                        console.log('🗑️ Removing leaked expense balance element:', el.id || el.className);
+                        el.remove();
+                    });
+                }
+                
+                // Remove expense tables from non-expense pages
+                page.querySelectorAll(`
+                    .expenses-table-section,
+                    #expenses-table-body
+                `).forEach(el => {
+                    console.log('🗑️ Removing leaked expense table:', el.id || el.className);
                     el.remove();
                 });
             });
@@ -4013,18 +4105,37 @@ function aggressiveExpenseCleanup() {
             // Remove any orphaned expense elements anywhere in the document
             document.querySelectorAll(`
                 [id^="expense-filter-"]:not(#expenses-page [id^="expense-filter-"]),
-                .expense-filters-container:not(#expenses-page .expense-filters-container)
+                .expense-filters-container:not(#expenses-page .expense-filters-container),
+                .expense-filters-wrapper:not(#expenses-page .expense-filters-wrapper),
+                #expenses-page-filters-wrapper:not(#expenses-page #expenses-page-filters-wrapper),
+                #expenses-page-filters-container:not(#expenses-page #expenses-page-filters-container)
             `).forEach(el => {
                 console.log('🗑️ Removing orphaned expense element:', el.id || el.className);
                 el.remove();
             });
+            
+            // Clean up any expense event listeners that might be attached globally
+            const expenseFilterButtons = document.querySelectorAll(`
+                #apply-expense-filters:not(#expenses-page #apply-expense-filters),
+                #clear-expense-filters:not(#expenses-page #clear-expense-filters),
+                #export-expenses:not(#expenses-page #export-expenses),
+                #add-expense-btn:not(#expenses-page #add-expense-btn)
+            `);
+            
+            expenseFilterButtons.forEach(btn => {
+                console.log('🗑️ Removing orphaned expense button:', btn.id);
+                btn.remove();
+            });
+            
+            console.log('✅ Aggressive expense cleanup completed');
+        } else {
+            console.log('🏠 On expenses page - skipping cleanup');
         }
         
     } catch (error) {
-        console.error('Error in aggressive expense cleanup:', error);
+        console.error('❌ Error in aggressive expense cleanup:', error);
     }
 }
-
 // Auto-save draft functionality for forms
 let autoSaveTimer;
 
