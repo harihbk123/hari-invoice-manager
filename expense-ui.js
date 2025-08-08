@@ -60,7 +60,13 @@ class ExpenseUI {
     }
 
     // Navigate to expenses page
+   // Navigate to expenses page
     navigateToExpenses() {
+        console.log('🏠 Navigating to expenses page...');
+        
+        // FIXED: First cleanup any leaked elements
+        this.aggressiveCleanup();
+        
         // Remove active class from all nav links and pages
         document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
         document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
@@ -70,44 +76,73 @@ class ExpenseUI {
         const expensesPage = document.getElementById('expenses-page');
         
         if (expensesNavLink) expensesNavLink.classList.add('active');
-        if (expensesPage) expensesPage.classList.add('active');
+        if (expensesPage) {
+            expensesPage.classList.add('active');
+            console.log('✅ Expenses page activated');
+        } else {
+            console.error('❌ Expenses page not found in DOM');
+            return;
+        }
 
-        // AGGRESSIVE cleanup of any leaked expense elements
-        this.aggressiveCleanup();
-
-        // Render expenses ONLY after cleanup
+        // FIXED: Wait for page to be fully active before rendering
         setTimeout(() => {
-            this.renderExpenses();
-        }, 50);
+            // Verify we're still on the expenses page before rendering
+            const currentPage = document.querySelector('.page.active');
+            if (currentPage && currentPage.id === 'expenses-page') {
+                console.log('🎨 Rendering expenses content...');
+                this.renderExpenses();
+            } else {
+                console.log('⚠️ Page changed during navigation - skipping render');
+            }
+        }, 100);
     }
-
-    // Aggressive cleanup of expense elements from other pages
+   // Aggressive cleanup of expense elements from other pages
     aggressiveCleanup() {
         console.log('🧹 Starting aggressive cleanup of expense elements...');
         
         try {
+            // FIXED: Clean up expense filter listeners first
+            this.cleanupExpenseFilterListeners();
+            
             // Remove ALL expense-related elements from non-expense pages
             const nonExpensePages = document.querySelectorAll('.page:not(#expenses-page)');
             
             nonExpensePages.forEach(page => {
-                // Remove expense filters
-                page.querySelectorAll('.expense-filters-container, .expense-filters-wrapper, [id*="expense-filter"]').forEach(el => {
-                    console.log('Removing leaked element:', el.className || el.id);
+                // Remove expense filters with more specific selectors
+                page.querySelectorAll(`
+                    .expense-filters-container, 
+                    .expense-filters-wrapper, 
+                    [id*="expense-filter"],
+                    [id^="expenses-page-"],
+                    #expenses-page-filters-wrapper,
+                    #expenses-page-filters-container
+                `).forEach(el => {
+                    console.log('🗑️ Removing leaked element:', el.className || el.id);
                     el.remove();
                 });
                 
                 // Remove expense charts
-                page.querySelectorAll('[id*="expense"], [id*="Expense"]').forEach(el => {
+                page.querySelectorAll(`
+                    [id*="expense"], 
+                    [id*="Expense"],
+                    #expenseMonthlyChart,
+                    #expenseCategoryChart,
+                    .expense-charts
+                `).forEach(el => {
                     if (!el.closest('#expenses-page')) {
-                        console.log('Removing leaked expense element:', el.id);
+                        console.log('🗑️ Removing leaked expense element:', el.id);
                         el.remove();
                     }
                 });
                 
                 // Remove expense balance cards (except from dashboard)
                 if (!page.id.includes('dashboard')) {
-                    page.querySelectorAll('.expense-balance-grid, .expense-balance-cards').forEach(el => {
-                        console.log('Removing leaked balance element');
+                    page.querySelectorAll(`
+                        .expense-balance-grid, 
+                        .expense-balance-cards,
+                        #expense-balance-cards
+                    `).forEach(el => {
+                        console.log('🗑️ Removing leaked balance element');
                         el.remove();
                     });
                 }
@@ -116,20 +151,22 @@ class ExpenseUI {
             // Remove any orphaned expense elements with specific selectors
             document.querySelectorAll(`
                 [id^="expense-filter-"]:not(#expenses-page [id^="expense-filter-"]),
+                [id^="expenses-page-"]:not(#expenses-page [id^="expenses-page-"]),
                 .expense-filters-container:not(#expenses-page .expense-filters-container),
-                .expense-filters-wrapper:not(#expenses-page .expense-filters-wrapper)
+                .expense-filters-wrapper:not(#expenses-page .expense-filters-wrapper),
+                #expenses-page-filters-wrapper:not(#expenses-page #expenses-page-filters-wrapper),
+                #expenses-page-filters-container:not(#expenses-page #expenses-page-filters-container)
             `).forEach(el => {
-                console.log('Removing orphaned expense element:', el.id || el.className);
+                console.log('🗑️ Removing orphaned expense element:', el.id || el.className);
                 el.remove();
             });
 
             console.log('✅ Aggressive cleanup completed');
             
         } catch (error) {
-            console.error('Error during aggressive cleanup:', error);
+            console.error('❌ Error during aggressive cleanup:', error);
         }
     }
-
     // Get expenses page HTML template
     getExpensesPageHTML() {
         return `
@@ -642,31 +679,45 @@ class ExpenseUI {
     }
 
     // Render expense filters
+   // Render expense filters
     renderExpenseFilters() {
-        // ONLY render filters if we're actually on the expenses page
+        console.log('🔍 Starting expense filter render...');
+        
+        // CRITICAL: Only render filters if we're actually on the expenses page
         const expensesPage = document.getElementById('expenses-page');
+        const currentActivePage = document.querySelector('.page.active');
+        
         if (!expensesPage || !expensesPage.classList.contains('active')) {
-            console.log('Not on expenses page, skipping filter render');
+            console.log('❌ Not on expenses page - aborting filter render');
+            return;
+        }
+        
+        if (!currentActivePage || currentActivePage.id !== 'expenses-page') {
+            console.log('❌ Active page is not expenses page - aborting filter render');
             return;
         }
 
-        const container = document.getElementById('expenses-page-filters-container');
+        console.log('✅ Confirmed on expenses page - proceeding with filter render');
+
+        // FIXED: Use more specific container targeting
+        const container = expensesPage.querySelector('#expenses-page-filters-container');
         if (!container) {
-            console.error('Expenses page filter container not found');
+            console.error('❌ Expense filter container not found on expenses page');
             return;
         }
 
-        // Clear any existing filters first
+        // Clear any existing filters first to prevent duplicates
         container.innerHTML = '';
 
         const categories = this.expenseManager.categories;
         const paymentMethods = this.expenseManager.getPaymentMethods();
 
+        // FIXED: Create filters with expense-page-specific IDs
         container.innerHTML = `
             <div class="filters-row">
                 <div class="filter-group">
                     <label class="filter-label">Category</label>
-                    <select class="form-control filter-select" id="expense-filter-category">
+                    <select class="form-control filter-select" id="expenses-page-category-filter">
                         <option value="all">All Categories</option>
                         ${categories.map(cat => `
                             <option value="${cat.id}">${cat.icon} ${cat.name}</option>
@@ -675,7 +726,7 @@ class ExpenseUI {
                 </div>
                 <div class="filter-group">
                     <label class="filter-label">Payment Method</label>
-                    <select class="form-control filter-select" id="expense-filter-payment-method">
+                    <select class="form-control filter-select" id="expenses-page-payment-filter">
                         <option value="all">All Methods</option>
                         ${paymentMethods.map(method => `
                             <option value="${method.value}">${method.icon} ${method.label}</option>
@@ -685,97 +736,179 @@ class ExpenseUI {
                 <div class="filter-group">
                     <label class="filter-label">Date Range</label>
                     <div class="date-range-inputs">
-                        <input type="date" class="form-control" id="expense-filter-date-from" placeholder="From">
-                        <input type="date" class="form-control" id="expense-filter-date-to" placeholder="To">
+                        <input type="date" class="form-control" id="expenses-page-date-from" placeholder="From">
+                        <input type="date" class="form-control" id="expenses-page-date-to" placeholder="To">
                     </div>
                 </div>
                 <div class="filter-group">
                     <label class="filter-label">Options</label>
                     <div class="filter-checkboxes">
                         <label class="checkbox-label">
-                            <input type="checkbox" id="expense-filter-business-only">
+                            <input type="checkbox" id="expenses-page-business-only">
                             <span>Business Only</span>
                         </label>
                     </div>
                 </div>
                 <div class="filter-group">
-                    <button class="btn btn--primary btn--sm" id="apply-expense-filters">Apply Filters</button>
-                    <button class="btn btn--secondary btn--sm" id="clear-expense-filters">Clear</button>
+                    <button class="btn btn--primary btn--sm" id="expenses-page-apply-filters">Apply Filters</button>
+                    <button class="btn btn--secondary btn--sm" id="expenses-page-clear-filters">Clear</button>
                 </div>
             </div>
         `;
 
-        // Add filter event listeners with more specific targeting
-        const applyBtn = document.getElementById('apply-expense-filters');
-        const clearBtn = document.getElementById('clear-expense-filters');
+     // FIXED: Setup expense filter listeners with proper scoping
+    setupExpenseFilterListeners() {
+        // Only setup listeners if we're on the expenses page
+        const expensesPage = document.getElementById('expenses-page');
+        if (!expensesPage || !expensesPage.classList.contains('active')) {
+            console.log('❌ Not on expenses page - skipping filter listener setup');
+            return;
+        }
+
+       // FIXED: Cleanup expense filter listeners
+    cleanupExpenseFilterListeners() {
+        if (!this._expenseFilterListenersActive) {
+            return; // No listeners to clean up
+        }
+
+        console.log('🧹 Cleaning up expense filter listeners...');
+
+        // Remove specific event listeners using stored references
+        const applyBtn = document.getElementById('expenses-page-apply-filters');
+        const clearBtn = document.getElementById('expenses-page-clear-filters');
+        
+        if (applyBtn && this._applyFiltersHandler) {
+            applyBtn.removeEventListener('click', this._applyFiltersHandler);
+            this._applyFiltersHandler = null;
+            console.log('✅ Apply filters listener removed');
+        }
+        
+        if (clearBtn && this._clearFiltersHandler) {
+            clearBtn.removeEventListener('click', this._clearFiltersHandler);
+            this._clearFiltersHandler = null;
+            console.log('✅ Clear filters listener removed');
+        }
+
+        // Mark listeners as inactive
+        this._expenseFilterListenersActive = false;
+        console.log('✅ Expense filter listeners cleanup complete');
+    }
+
+        // FIXED: Use expense-page-specific selectors and store references for cleanup
+        const applyBtn = document.getElementById('expenses-page-apply-filters');
+        const clearBtn = document.getElementById('expenses-page-clear-filters');
         
         if (applyBtn) {
-            // Remove existing listeners first
-            applyBtn.replaceWith(applyBtn.cloneNode(true));
-            document.getElementById('apply-expense-filters').addEventListener('click', () => this.applyExpenseFilters());
+            // Store the bound function for later cleanup
+            this._applyFiltersHandler = () => {
+                console.log('🔍 Apply filters clicked');
+                this.applyExpenseFilters();
+            };
+            applyBtn.addEventListener('click', this._applyFiltersHandler);
+            console.log('✅ Apply filters listener added');
+        } else {
+            console.warn('⚠️ Apply filters button not found');
         }
         
         if (clearBtn) {
-            // Remove existing listeners first
-            clearBtn.replaceWith(clearBtn.cloneNode(true));
-            document.getElementById('clear-expense-filters').addEventListener('click', () => this.clearExpenseFilters());
+            // Store the bound function for later cleanup
+            this._clearFiltersHandler = () => {
+                console.log('🧹 Clear filters clicked');
+                this.clearExpenseFilters();
+            };
+            clearBtn.addEventListener('click', this._clearFiltersHandler);
+            console.log('✅ Clear filters listener added');
+        } else {
+            console.warn('⚠️ Clear filters button not found');
         }
 
-        console.log('Expense filters rendered successfully on expenses page');
+        // Mark listeners as active
+        this._expenseFilterListenersActive = true;
+        console.log('✅ Expense filter listeners setup complete');
     }
-
-    // Apply expense filters
+// Apply expense filters
     applyExpenseFilters() {
-        // Only apply filters if we're on the expenses page
+        // FIXED: Only apply filters if we're on the expenses page
         const expensesPage = document.getElementById('expenses-page');
         if (!expensesPage || !expensesPage.classList.contains('active')) {
-            console.log('Not on expenses page, skipping filter application');
+            console.log('❌ Not on expenses page - skipping filter application');
+            return;
+        }
+
+        console.log('🔍 Applying expense filters...');
+
+        // FIXED: Use expense-page-specific selectors
+        const categorySelect = document.getElementById('expenses-page-category-filter');
+        const paymentSelect = document.getElementById('expenses-page-payment-filter');
+        const dateFromInput = document.getElementById('expenses-page-date-from');
+        const dateToInput = document.getElementById('expenses-page-date-to');
+        const businessCheckbox = document.getElementById('expenses-page-business-only');
+
+        // Validate all elements exist
+        if (!categorySelect || !paymentSelect || !dateFromInput || !dateToInput || !businessCheckbox) {
+            console.error('❌ Some filter elements not found - cannot apply filters');
             return;
         }
 
         const filters = {
-            category: document.getElementById('expense-filter-category')?.value,
-            paymentMethod: document.getElementById('expense-filter-payment-method')?.value,
+            category: categorySelect.value,
+            paymentMethod: paymentSelect.value,
             dateRange: {
-                from: document.getElementById('expense-filter-date-from')?.value,
-                to: document.getElementById('expense-filter-date-to')?.value
+                from: dateFromInput.value,
+                to: dateToInput.value
             },
-            businessOnly: document.getElementById('expense-filter-business-only')?.checked
+            businessOnly: businessCheckbox.checked
         };
 
+        console.log('🔍 Filter values:', filters);
+
+        // Apply filters through expense manager
         this.expenseManager.applyFilters(filters);
+        
+        // Re-render table and charts with filtered data
         this.renderExpensesTable();
         this.renderExpenseCharts();
+        
         this.showToast('Filters applied successfully', 'info');
+        console.log('✅ Expense filters applied successfully');
     }
 
     // Clear expense filters
+   // Clear expense filters
     clearExpenseFilters() {
-        // Only clear filters if we're on the expenses page
+        // FIXED: Only clear filters if we're on the expenses page
         const expensesPage = document.getElementById('expenses-page');
         if (!expensesPage || !expensesPage.classList.contains('active')) {
-            console.log('Not on expenses page, skipping filter clear');
+            console.log('❌ Not on expenses page - skipping filter clear');
             return;
         }
 
-        const categorySelect = document.getElementById('expense-filter-category');
-        const paymentSelect = document.getElementById('expense-filter-payment-method');
-        const dateFromInput = document.getElementById('expense-filter-date-from');
-        const dateToInput = document.getElementById('expense-filter-date-to');
-        const businessCheckbox = document.getElementById('expense-filter-business-only');
+        console.log('🧹 Clearing expense filters...');
 
+        // FIXED: Use expense-page-specific selectors
+        const categorySelect = document.getElementById('expenses-page-category-filter');
+        const paymentSelect = document.getElementById('expenses-page-payment-filter');
+        const dateFromInput = document.getElementById('expenses-page-date-from');
+        const dateToInput = document.getElementById('expenses-page-date-to');
+        const businessCheckbox = document.getElementById('expenses-page-business-only');
+
+        // Reset all filter values
         if (categorySelect) categorySelect.value = 'all';
         if (paymentSelect) paymentSelect.value = 'all';
         if (dateFromInput) dateFromInput.value = '';
         if (dateToInput) dateToInput.value = '';
         if (businessCheckbox) businessCheckbox.checked = false;
 
+        // Clear filtered data in expense manager
         this.expenseManager.expenseState.filteredData = null;
+        
+        // Re-render table and charts with unfiltered data
         this.renderExpensesTable();
         this.renderExpenseCharts();
+        
         this.showToast('Filters cleared', 'info');
+        console.log('✅ Expense filters cleared successfully');
     }
-
     // Render expense charts
     renderExpenseCharts() {
         setTimeout(() => {
