@@ -6,6 +6,11 @@ class ExpenseUI {
         this.expenseManager = expenseManager;
         this.showToast = showToast || console.log;
         this.charts = {};
+        
+        // FIXED: Add properties to track listeners and cleanup
+        this._expenseFilterListenersActive = false;
+        this._applyFiltersHandler = null;
+        this._clearFiltersHandler = null;
     }
 
     // Initialize UI components and event listeners
@@ -60,7 +65,6 @@ class ExpenseUI {
     }
 
     // Navigate to expenses page
-   // Navigate to expenses page
     navigateToExpenses() {
         console.log('🏠 Navigating to expenses page...');
         
@@ -96,7 +100,8 @@ class ExpenseUI {
             }
         }, 100);
     }
-   // Aggressive cleanup of expense elements from other pages
+
+    // Aggressive cleanup of expense elements from other pages
     aggressiveCleanup() {
         console.log('🧹 Starting aggressive cleanup of expense elements...');
         
@@ -167,6 +172,7 @@ class ExpenseUI {
             console.error('❌ Error during aggressive cleanup:', error);
         }
     }
+
     // Get expenses page HTML template
     getExpensesPageHTML() {
         return `
@@ -428,6 +434,80 @@ class ExpenseUI {
         // Filters will be set up when expenses page is rendered
     }
 
+    // FIXED: Setup expense filter listeners with proper scoping
+    setupExpenseFilterListeners() {
+        // Only setup listeners if we're on the expenses page
+        const expensesPage = document.getElementById('expenses-page');
+        if (!expensesPage || !expensesPage.classList.contains('active')) {
+            console.log('❌ Not on expenses page - skipping filter listener setup');
+            return;
+        }
+
+        // Clean up any existing listeners first
+        this.cleanupExpenseFilterListeners();
+
+        // FIXED: Use expense-page-specific selectors and store references for cleanup
+        const applyBtn = document.getElementById('expenses-page-apply-filters');
+        const clearBtn = document.getElementById('expenses-page-clear-filters');
+        
+        if (applyBtn) {
+            // Store the bound function for later cleanup
+            this._applyFiltersHandler = () => {
+                console.log('🔍 Apply filters clicked');
+                this.applyExpenseFilters();
+            };
+            applyBtn.addEventListener('click', this._applyFiltersHandler);
+            console.log('✅ Apply filters listener added');
+        } else {
+            console.warn('⚠️ Apply filters button not found');
+        }
+        
+        if (clearBtn) {
+            // Store the bound function for later cleanup
+            this._clearFiltersHandler = () => {
+                console.log('🧹 Clear filters clicked');
+                this.clearExpenseFilters();
+            };
+            clearBtn.addEventListener('click', this._clearFiltersHandler);
+            console.log('✅ Clear filters listener added');
+        } else {
+            console.warn('⚠️ Clear filters button not found');
+        }
+
+        // Mark listeners as active
+        this._expenseFilterListenersActive = true;
+        console.log('✅ Expense filter listeners setup complete');
+    }
+
+    // FIXED: Cleanup expense filter listeners
+    cleanupExpenseFilterListeners() {
+        if (!this._expenseFilterListenersActive) {
+            return; // No listeners to clean up
+        }
+
+        console.log('🧹 Cleaning up expense filter listeners...');
+
+        // Remove specific event listeners using stored references
+        const applyBtn = document.getElementById('expenses-page-apply-filters');
+        const clearBtn = document.getElementById('expenses-page-clear-filters');
+        
+        if (applyBtn && this._applyFiltersHandler) {
+            applyBtn.removeEventListener('click', this._applyFiltersHandler);
+            this._applyFiltersHandler = null;
+            console.log('✅ Apply filters listener removed');
+        }
+        
+        if (clearBtn && this._clearFiltersHandler) {
+            clearBtn.removeEventListener('click', this._clearFiltersHandler);
+            this._clearFiltersHandler = null;
+            console.log('✅ Clear filters listener removed');
+        }
+
+        // Mark listeners as inactive
+        this._expenseFilterListenersActive = false;
+        console.log('✅ Expense filter listeners cleanup complete');
+    }
+
     // Open expense modal
     openExpenseModal(expenseId = null) {
         const modal = document.getElementById('expense-modal');
@@ -679,7 +759,6 @@ class ExpenseUI {
     }
 
     // Render expense filters
-   // Render expense filters
     renderExpenseFilters() {
         console.log('🔍 Starting expense filter render...');
         
@@ -756,77 +835,13 @@ class ExpenseUI {
             </div>
         `;
 
-     // FIXED: Setup expense filter listeners with proper scoping
-    setupExpenseFilterListeners() {
-        // Only setup listeners if we're on the expenses page
-        const expensesPage = document.getElementById('expenses-page');
-        if (!expensesPage || !expensesPage.classList.contains('active')) {
-            console.log('❌ Not on expenses page - skipping filter listener setup');
-            return;
-        }
+        // FIXED: Add event listeners with proper scoping and cleanup
+        this.setupExpenseFilterListeners();
 
-       // FIXED: Cleanup expense filter listeners
-    cleanupExpenseFilterListeners() {
-        if (!this._expenseFilterListenersActive) {
-            return; // No listeners to clean up
-        }
-
-        console.log('🧹 Cleaning up expense filter listeners...');
-
-        // Remove specific event listeners using stored references
-        const applyBtn = document.getElementById('expenses-page-apply-filters');
-        const clearBtn = document.getElementById('expenses-page-clear-filters');
-        
-        if (applyBtn && this._applyFiltersHandler) {
-            applyBtn.removeEventListener('click', this._applyFiltersHandler);
-            this._applyFiltersHandler = null;
-            console.log('✅ Apply filters listener removed');
-        }
-        
-        if (clearBtn && this._clearFiltersHandler) {
-            clearBtn.removeEventListener('click', this._clearFiltersHandler);
-            this._clearFiltersHandler = null;
-            console.log('✅ Clear filters listener removed');
-        }
-
-        // Mark listeners as inactive
-        this._expenseFilterListenersActive = false;
-        console.log('✅ Expense filter listeners cleanup complete');
+        console.log('✅ Expense filters rendered successfully on expenses page');
     }
 
-        // FIXED: Use expense-page-specific selectors and store references for cleanup
-        const applyBtn = document.getElementById('expenses-page-apply-filters');
-        const clearBtn = document.getElementById('expenses-page-clear-filters');
-        
-        if (applyBtn) {
-            // Store the bound function for later cleanup
-            this._applyFiltersHandler = () => {
-                console.log('🔍 Apply filters clicked');
-                this.applyExpenseFilters();
-            };
-            applyBtn.addEventListener('click', this._applyFiltersHandler);
-            console.log('✅ Apply filters listener added');
-        } else {
-            console.warn('⚠️ Apply filters button not found');
-        }
-        
-        if (clearBtn) {
-            // Store the bound function for later cleanup
-            this._clearFiltersHandler = () => {
-                console.log('🧹 Clear filters clicked');
-                this.clearExpenseFilters();
-            };
-            clearBtn.addEventListener('click', this._clearFiltersHandler);
-            console.log('✅ Clear filters listener added');
-        } else {
-            console.warn('⚠️ Clear filters button not found');
-        }
-
-        // Mark listeners as active
-        this._expenseFilterListenersActive = true;
-        console.log('✅ Expense filter listeners setup complete');
-    }
-// Apply expense filters
+    // Apply expense filters
     applyExpenseFilters() {
         // FIXED: Only apply filters if we're on the expenses page
         const expensesPage = document.getElementById('expenses-page');
@@ -874,7 +889,6 @@ class ExpenseUI {
     }
 
     // Clear expense filters
-   // Clear expense filters
     clearExpenseFilters() {
         // FIXED: Only clear filters if we're on the expenses page
         const expensesPage = document.getElementById('expenses-page');
@@ -909,6 +923,7 @@ class ExpenseUI {
         this.showToast('Filters cleared', 'info');
         console.log('✅ Expense filters cleared successfully');
     }
+
     // Render expense charts
     renderExpenseCharts() {
         setTimeout(() => {
