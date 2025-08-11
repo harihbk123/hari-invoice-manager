@@ -601,8 +601,8 @@ class ExpenseUI {
             if (tableBody) tableBody.innerHTML = '';
         }
         // Destroy charts if exist
-        if (this.charts && this.charts.monthly) { this.charts.monthly.destroy(); this.charts.monthly = null; }
-        if (this.charts && this.charts.category) { this.charts.category.destroy(); this.charts.category = null; }
+    if (this.charts && this.charts.monthly && typeof this.charts.monthly.destroy === 'function') { this.charts.monthly.destroy(); this.charts.monthly = null; }
+    if (this.charts && this.charts.category && typeof this.charts.category.destroy === 'function') { this.charts.category.destroy(); this.charts.category = null; }
         this.renderBalanceCards();
         this.renderExpenseFilters();
         this.renderExpenseCharts();

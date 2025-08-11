@@ -1454,8 +1454,8 @@ function renderDashboard() {
         const tbody = dashboardPage.querySelector('#recent-invoices-body');
         if (tbody) tbody.innerHTML = '';
         // Destroy charts if exist
-        if (window.monthlyChart) { window.monthlyChart.destroy(); window.monthlyChart = null; }
-        if (window.clientChart) { window.clientChart.destroy(); window.clientChart = null; }
+        if (window.monthlyChart && typeof window.monthlyChart.destroy === 'function') { window.monthlyChart.destroy(); window.monthlyChart = null; }
+        if (window.clientChart && typeof window.clientChart.destroy === 'function') { window.clientChart.destroy(); window.clientChart = null; }
     }
     updateDashboardMetrics();
     renderRecentInvoices();
@@ -2121,7 +2121,7 @@ function renderAnalytics(period = 'monthly') {
         const oldLayout = analyticsPage.querySelector('#modern-analytics-layout');
         if (oldLayout) oldLayout.remove();
         // Destroy analytics chart if exists
-        if (window.analyticsChart) { window.analyticsChart.destroy(); window.analyticsChart = null; }
+        if (window.analyticsChart && typeof window.analyticsChart.destroy === 'function') { window.analyticsChart.destroy(); window.analyticsChart = null; }
     }
     if (analyticsPage && !document.getElementById('modern-analytics-layout')) {
         const analyticsLayout = document.createElement('div');
