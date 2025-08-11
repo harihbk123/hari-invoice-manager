@@ -3,6 +3,82 @@
 
 // ExpenseUI class (migrated from expense-ui.js)
 class ExpenseUI {
+    // --- MIGRATED FROM expense-ui.js ---
+    getExpensesPageHTML() {
+        return `
+            <div class="page-header">
+                <div>
+                    <h1>💰 Expense Management</h1>
+                    <p style="color: var(--color-text-secondary); margin: 4px 0 0 0; font-size: 14px;">
+                        Track and manage your business expenses
+                    </p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn--secondary btn--sm" id="export-expenses">📊 Export</button>
+                    <button class="btn btn--primary" id="add-expense-btn">+ Add Expense</button>
+                </div>
+            </div>
+            <div class="expense-balance-cards" id="expense-balance-cards"></div>
+            <div class="expense-filters-wrapper" id="expenses-page-filters-wrapper">
+                <div class="expense-filters-container" id="expenses-page-filters-container"></div>
+            </div>
+            <div class="expense-charts" id="expense-charts" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin: 24px 0;">
+                <div class="chart-container">
+                    <h3>Monthly Expense Trend</h3>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="expenseMonthlyChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h3>Category Breakdown</h3>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="expenseCategoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="expenses-table-section">
+                <div class="table-container">
+                    <table class="invoices-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Payment Method</th>
+                                <th>Vendor</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expenses-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    attachExpensePageListeners(expensesPage) {
+        // Add expense button, export, edit, delete
+        expensesPage.addEventListener('click', (e) => {
+            if (e.target.id === 'add-expense-btn') {
+                this.showToast('Add Expense clicked (stub)', 'info');
+            } else if (e.target.id === 'export-expenses') {
+                this.showToast('Export Expenses clicked (stub)', 'info');
+            }
+        });
+    }
+
+    aggressiveCleanup() {
+        // No-op for now (stub)
+    }
+
+    renderExpenses() {
+        // Render a placeholder row for now
+        const tbody = document.getElementById('expenses-table-body');
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--color-text-secondary); padding:40px;">No expenses found. Add your first expense!</td></tr>`;
+        }
+    }
     constructor(expenseManager, showToast) {
         this.expenseManager = expenseManager;
         this.showToast = showToast;
