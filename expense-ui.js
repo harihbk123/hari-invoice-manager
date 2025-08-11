@@ -597,6 +597,11 @@ class ExpenseUI {
 
     // Render balance cards
     renderBalanceCards() {
+        const expensesPage = document.getElementById('expenses-page');
+        if (!expensesPage || !expensesPage.classList.contains('active')) {
+            console.log('Not on expenses page, skipping balance cards render');
+            return;
+        }
         const container = document.getElementById('expense-balance-cards');
         if (!container) return;
 
@@ -778,6 +783,11 @@ class ExpenseUI {
 
     // Render expense charts
     renderExpenseCharts() {
+        const expensesPage = document.getElementById('expenses-page');
+        if (!expensesPage || !expensesPage.classList.contains('active')) {
+            console.log('Not on expenses page, skipping charts render');
+            return;
+        }
         setTimeout(() => {
             this.renderMonthlyExpenseChart();
             this.renderCategoryChart();
@@ -786,6 +796,11 @@ class ExpenseUI {
 
     // Render monthly expense chart
     renderMonthlyExpenseChart() {
+        const expensesPage = document.getElementById('expenses-page');
+        if (!expensesPage || !expensesPage.classList.contains('active')) {
+            console.log('Not on expenses page, skipping monthly chart render');
+            return;
+        }
         const ctx = document.getElementById('expenseMonthlyChart');
         if (!ctx) return;
 
@@ -851,6 +866,11 @@ class ExpenseUI {
 
     // Render category chart
     renderCategoryChart() {
+        const expensesPage = document.getElementById('expenses-page');
+        if (!expensesPage || !expensesPage.classList.contains('active')) {
+            console.log('Not on expenses page, skipping category chart render');
+            return;
+        }
         const ctx = document.getElementById('expenseCategoryChart');
         if (!ctx) return;
 
@@ -929,6 +949,11 @@ class ExpenseUI {
 
     // Render expenses table
     renderExpensesTable() {
+        const expensesPage = document.getElementById('expenses-page');
+        if (!expensesPage || !expensesPage.classList.contains('active')) {
+            console.log('Not on expenses page, skipping expenses table render');
+            return;
+        }
         const tbody = document.getElementById('expenses-table-body');
         if (!tbody) return;
 

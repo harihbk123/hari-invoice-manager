@@ -1303,7 +1303,12 @@ function setupNavigation() {
             e.preventDefault();
             const targetPage = link.dataset.page;
             console.log('Navigating to:', targetPage);
-            aggressiveExpenseCleanup();
+
+            // If leaving the expenses page, run aggressive cleanup
+            const currentActivePage = document.querySelector('.page.active');
+            if (currentActivePage && currentActivePage.id === 'expenses-page' && targetPage !== 'expenses') {
+                aggressiveExpenseCleanup();
+            }
 
             navLinks.forEach(nl => nl.classList.remove('active'));
             link.classList.add('active');
