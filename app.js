@@ -2472,8 +2472,13 @@ function editClient(clientId) {
         form.reset();
     }
 
-    // Open the modal first
+    // Open the modal and force removal of 'hidden' class if needed
     openClientModal();
+    const modal = document.getElementById('client-modal');
+    if (modal && modal.classList.contains('hidden')) {
+        modal.classList.remove('hidden');
+        console.warn('Forced removal of hidden class for client modal');
+    }
 
     // Then populate the fields after a short delay to ensure modal is open
     setTimeout(() => {
@@ -3045,6 +3050,11 @@ async function openInvoiceModal(invoiceId = null) {
                             </div>
                         `;
                         container.appendChild(lineItem);
+                        // Attach input listeners for live calculation
+                        const quantityInput = lineItem.querySelector('.quantity');
+                        const rateInput = lineItem.querySelector('.rate');
+                        if (quantityInput) quantityInput.addEventListener('input', () => { calculateLineItem(lineItem); calculateInvoiceTotal(); });
+                        if (rateInput) rateInput.addEventListener('input', () => { calculateLineItem(lineItem); calculateInvoiceTotal(); });
                     });
                 } else {
                     addLineItem();
@@ -3277,6 +3287,11 @@ function addLineItem() {
             </div>
         `;
         container.appendChild(lineItem);
+        // Attach input listeners for live calculation
+        const quantityInput = lineItem.querySelector('.quantity');
+        const rateInput = lineItem.querySelector('.rate');
+        if (quantityInput) quantityInput.addEventListener('input', () => { calculateLineItem(lineItem); calculateInvoiceTotal(); });
+        if (rateInput) rateInput.addEventListener('input', () => { calculateLineItem(lineItem); calculateInvoiceTotal(); });
     }
 }
 
