@@ -1379,16 +1379,23 @@ function setupNavigation() {
     const navLinks = document.querySelectorAll('.nav-link');
     const pages = document.querySelectorAll('.page');
 
+    // Get reference to ExpenseUI instance if available
+    let expenseUI = null;
+    if (window.ExpenseUI && typeof window.ExpenseUI === 'function') {
+        expenseUI = window.expenseUIInstance || null;
+    }
     navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const targetPage = link.dataset.page;
             console.log('Navigating to:', targetPage);
 
-            // If leaving the expenses page, run aggressive cleanup
+            // If leaving the expenses page, run robust cleanup
             const currentActivePage = document.querySelector('.page.active');
             if (currentActivePage && currentActivePage.id === 'expenses-page' && targetPage !== 'expenses') {
-                aggressiveExpenseCleanup();
+                if (expenseUI && typeof expenseUI.cleanupExpensesPage === 'function') {
+                    expenseUI.cleanupExpensesPage();
+                }
             }
 
             navLinks.forEach(nl => nl.classList.remove('active'));
