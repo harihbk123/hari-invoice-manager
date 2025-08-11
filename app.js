@@ -1715,42 +1715,34 @@ function renderClients() {
     </div>
 `).join('');
 
-    // Add event listeners
-    setTimeout(() => {
-        // Edit buttons
-        document.querySelectorAll('.client-action-btn.edit').forEach((btn) => {
-            btn.addEventListener('click', (e) => {
+    // Attach event delegation to the clients page container
+    const clientsPage = document.getElementById('clients-page');
+    if (clientsPage) {
+        // Remove any previous listeners by replacing the container
+        const newClientsPage = clientsPage.cloneNode(true);
+        clientsPage.parentNode.replaceChild(newClientsPage, clientsPage);
+        // Attach event delegation
+        newClientsPage.addEventListener('click', (e) => {
+            if (e.target.classList.contains('client-action-btn')) {
                 e.preventDefault();
                 e.stopPropagation();
-                
+                const btn = e.target;
                 const clientId = btn.getAttribute('data-client-id');
                 const clientIndex = parseInt(btn.getAttribute('data-client-index'));
-                
-                console.log('Edit button clicked:', { clientId, clientIndex });
-                
-                if (appData.clients[clientIndex] && appData.clients[clientIndex].id === clientId) {
-                    editClient(clientId);
-                } else {
-                    console.error('Client mismatch detected');
-                    showToast('Error: Client data mismatch. Please refresh the page.', 'error');
+                if (btn.classList.contains('edit')) {
+                    if (appData.clients[clientIndex] && appData.clients[clientIndex].id === clientId) {
+                        editClient(clientId);
+                    } else {
+                        console.error('Client mismatch detected');
+                        showToast('Error: Client data mismatch. Please refresh the page.', 'error');
+                    }
+                } else if (btn.classList.contains('delete')) {
+                    const clientName = btn.getAttribute('data-client-name');
+                    deleteClient(clientId, clientName);
                 }
-            });
+            }
         });
-
-        // Delete buttons
-        document.querySelectorAll('.client-action-btn.delete').forEach((btn) => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const clientId = btn.getAttribute('data-client-id');
-                const clientName = btn.getAttribute('data-client-name');
-                
-                console.log('Delete button clicked:', { clientId, clientName });
-                deleteClient(clientId, clientName);
-            });
-        });
-    }, 100);
+    }
 
     // Add enhanced client card styles
     if (!document.getElementById('enhanced-client-styles')) {
@@ -2079,6 +2071,25 @@ function renderAnalytics(period = 'monthly') {
             </div>
         `;
         analyticsPage.appendChild(analyticsLayout);
+
+        // Remove any previous listeners by replacing the container
+        const newAnalyticsPage = analyticsPage.cloneNode(true);
+        analyticsPage.parentNode.replaceChild(newAnalyticsPage, analyticsPage);
+        // Attach event delegation for analytics filters
+        newAnalyticsPage.addEventListener('click', (e) => {
+            if (e.target.id === 'apply-filters') {
+                applyAnalyticsFilters();
+            } else if (e.target.id === 'clear-filters') {
+                clearAnalyticsFilters();
+            }
+        });
+        newAnalyticsPage.addEventListener('change', (e) => {
+            if (e.target.id === 'analytics-period') {
+                analyticsState.currentPeriod = e.target.value;
+                console.log('Period changed to:', analyticsState.currentPeriod);
+                applyAnalyticsFilters();
+            }
+        });
 
         // Add analytics grid styles
         if (!document.getElementById('analytics-grid-styles')) {
@@ -2691,17 +2702,36 @@ function setupInvoiceForm() {
         addLineItemBtn.addEventListener('click', addLineItem);
     }
 
-    // Set up event listeners for dynamic buttons
-    document.addEventListener('click', (e) => {
-        if (e.target.id === 'save-draft') {
-            saveInvoice('Draft');
-        } else if (e.target.id === 'save-invoice') {
-            saveInvoice('Pending');
-        } else if (e.target.classList.contains('remove-item')) {
-            removeLineItem(e.target.closest('.line-item'));
-            calculateInvoiceTotal();
-        }
-    });
+    // Remove any previous listeners by replacing the container
+    const oldInvoiceForm = document.getElementById('invoice-form');
+    if (oldInvoiceForm) {
+        const newInvoiceForm = oldInvoiceForm.cloneNode(true);
+        oldInvoiceForm.parentNode.replaceChild(newInvoiceForm, oldInvoiceForm);
+    }
+
+    // Attach event listeners only to the invoices page
+    const invoicesPage = document.getElementById('invoices-page');
+    if (invoicesPage) {
+        invoicesPage.addEventListener('click', (e) => {
+            if (e.target.id === 'save-draft') {
+                saveInvoice('Draft');
+            } else if (e.target.id === 'save-invoice') {
+                saveInvoice('Pending');
+            } else if (e.target.classList.contains('remove-item')) {
+                removeLineItem(e.target.closest('.line-item'));
+                calculateInvoiceTotal();
+            } else if (e.target.id === 'new-invoice-btn') {
+                openInvoiceModal();
+            }
+        });
+
+        invoicesPage.addEventListener('input', (e) => {
+            if (e.target.classList.contains('quantity') || e.target.classList.contains('rate')) {
+                calculateLineItem(e.target.closest('.line-item'));
+                calculateInvoiceTotal();
+            }
+        });
+    }
 
     // Set up form submission
     const invoiceForm = document.getElementById('invoice-form');
@@ -2711,13 +2741,6 @@ function setupInvoiceForm() {
             saveInvoice('Pending');
         });
     }
-
-    document.addEventListener('input', (e) => {
-        if (e.target.classList.contains('quantity') || e.target.classList.contains('rate')) {
-            calculateLineItem(e.target.closest('.line-item'));
-            calculateInvoiceTotal();
-        }
-    });
 }
 
 function addLineItem() {
