@@ -93,6 +93,298 @@ let editingClientId = null;
 // Charts
 let monthlyChart, clientChart, analyticsChart;
 
+class NavigationManager {
+    constructor() {
+        this.currentPage = null;
+        this.previousPage = null;
+        this.pageStates = new Map();
+        this.componentCleanupHandlers = new Map();
+        this.globalListeners = new Set();
+        this.isNavigating = false;
+        
+        // Bind methods
+        this._handleBeforeUnload = this._handleBeforeUnload.bind(this);
+        this._handlePageVisibilityChange = this._handlePageVisibilityChange.bind(this);
+    }
+
+    init() {
+        console.log('🚀 Initializing Enhanced Navigation Manager...');
+        
+        // Setup global cleanup listeners
+        window.addEventListener('beforeunload', this._handleBeforeUnload);
+        document.addEventListener('visibilitychange', this._handlePageVisibilityChange);
+        
+        // Track these for cleanup
+        this.globalListeners.add(() => window.removeEventListener('beforeunload', this._handleBeforeUnload));
+        this.globalListeners.add(() => document.removeEventListener('visibilitychange', this._handlePageVisibilityChange));
+        
+        // Setup navigation observers
+        this.setupNavigationObserver();
+        
+        console.log('✅ Enhanced Navigation Manager initialized');
+    }
+
+    setupNavigationObserver() {
+        if (this.navigationObserver) {
+            this.navigationObserver.disconnect();
+        }
+
+        this.navigationObserver = new MutationObserver((mutations) => {
+            let pageChanged = false;
+            
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const target = mutation.target;
+                    if (target.classList.contains('page')) {
+                        pageChanged = true;
+                    }
+                }
+            });
+
+            if (pageChanged && !this.isNavigating) {
+                this._handlePageChange();
+            }
+        });
+
+        // Observe all page elements
+        document.querySelectorAll('.page').forEach(page => {
+            this.navigationObserver.observe(page, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
+        });
+    }
+
+    _handlePageChange() {
+        const activePage = document.querySelector('.page.active');
+        const newPageId = activePage ? activePage.id : null;
+        
+        if (this.currentPage !== newPageId) {
+            console.log(`📍 Page change detected: ${this.currentPage} → ${newPageId}`);
+            
+            this.previousPage = this.currentPage;
+            this.currentPage = newPageId;
+            
+            // Cleanup previous page
+            if (this.previousPage) {
+                this._cleanupPage(this.previousPage);
+            }
+            
+            // Initialize new page
+            if (this.currentPage) {
+                this._initializePage(this.currentPage);
+            }
+        }
+    }
+
+    _cleanupPage(pageId) {
+        console.log(`🧹 Cleaning up page: ${pageId}`);
+        
+        // Run registered cleanup handlers for this page
+        const cleanupHandlers = this.componentCleanupHandlers.get(pageId);
+        if (cleanupHandlers) {
+            cleanupHandlers.forEach(handler => {
+                try {
+                    handler();
+                } catch (error) {
+                    console.error(`❌ Error in cleanup handler for ${pageId}:`, error);
+                }
+            });
+        }
+        
+        // Component-specific cleanup
+        this._cleanupComponentSpecific(pageId);
+        
+        // Generic cleanup for the page
+        this._genericPageCleanup(pageId);
+    }
+
+    _cleanupComponentSpecific(pageId) {
+        // Expense-specific cleanup
+        if (pageId === 'expenses-page') {
+            console.log('🧹 Performing expenses-specific cleanup...');
+            this._cleanupExpenseComponents();
+        }
+    }
+
+    _cleanupExpenseComponents() {
+        // Remove expense elements from non-expense pages
+        document.querySelectorAll('.page:not(#expenses-page)').forEach(page => {
+            page.querySelectorAll(`
+                .expense-filters-container,
+                .expense-filters-wrapper,
+                [id*="expense-filter"],
+                [id^="expenses-page-"],
+                .expense-balance-grid,
+                .expense-charts
+            `).forEach(element => {
+                console.log('🗑️ Removing leaked expense element:', element.id || element.className);
+                element.remove();
+            });
+        });
+        
+        // Global cleanup of orphaned elements
+        document.querySelectorAll(`
+            [id^="expense-filter-"]:not(#expenses-page [id^="expense-filter-"]),
+            [id^="expenses-page-"]:not(#expenses-page [id^="expenses-page-"]),
+            .expense-filters-container:not(#expenses-page .expense-filters-container)
+        `).forEach(element => {
+            console.log('🗑️ Removing orphaned expense element:', element.id || element.className);
+            element.remove();
+        });
+    }
+
+    _genericPageCleanup(pageId) {
+        const page = document.getElementById(pageId);
+        if (!page) return;
+        
+        // Remove any temporary elements or overlays
+        page.querySelectorAll('.temporary, .overlay, .tooltip').forEach(el => el.remove());
+        
+        // Reset any form states
+        page.querySelectorAll('form').forEach(form => {
+            try {
+                form.reset();
+            } catch (error) {
+                console.warn('⚠️ Could not reset form:', error);
+            }
+        });
+        
+        // Clear any active modals related to this page
+        document.querySelectorAll('.modal:not(.hidden)').forEach(modal => {
+            if (modal.id.includes(pageId.replace('-page', ''))) {
+                modal.classList.add('hidden');
+            }
+        });
+    }
+
+    _initializePage(pageId) {
+        console.log(`🚀 Initializing page: ${pageId}`);
+        
+        // Store page state
+        this.pageStates.set(pageId, {
+            initializedAt: Date.now(),
+            isActive: true
+        });
+        
+        // Page-specific initialization
+        switch (pageId) {
+            case 'dashboard-page':
+                this._initializeDashboard();
+                break;
+            case 'expenses-page':
+                this._initializeExpenses();
+                break;
+            case 'analytics-page':
+                this._initializeAnalytics();
+                break;
+        }
+    }
+
+    _initializeDashboard() {
+        // Ensure no expense elements leak into dashboard
+        this._cleanupExpenseComponents();
+        
+        // Re-render dashboard if needed
+        if (typeof renderDashboard === 'function') {
+            renderDashboard();
+        }
+    }
+
+    _initializeExpenses() {
+        // Expenses initialization is handled by ExpenseUI
+        console.log('💰 Expenses page initialization delegated to ExpenseUI');
+    }
+
+    _initializeAnalytics() {
+        // Clean up any leaked components
+        this._cleanupExpenseComponents();
+        
+        // Re-render analytics if needed
+        if (typeof renderAnalytics === 'function') {
+            renderAnalytics();
+        }
+    }
+
+    // Public method to navigate safely
+    navigateTo(pageId) {
+        if (this.isNavigating) {
+            console.log('⏳ Navigation already in progress, ignoring request');
+            return;
+        }
+
+        console.log(`🧭 Navigating to: ${pageId}`);
+        this.isNavigating = true;
+
+        try {
+            // Remove active classes
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+
+            // Activate new page
+            const navLink = document.querySelector(`[data-page="${pageId}"]`);
+            const page = document.getElementById(`${pageId}-page`);
+
+            if (navLink) navLink.classList.add('active');
+            if (page) page.classList.add('active');
+
+            // The page change will be detected by the observer
+        } finally {
+            // Reset navigation flag after a delay
+            setTimeout(() => {
+                this.isNavigating = false;
+            }, 100);
+        }
+    }
+
+    // Register cleanup handler for a specific page
+    registerPageCleanup(pageId, cleanupHandler) {
+        if (!this.componentCleanupHandlers.has(pageId)) {
+            this.componentCleanupHandlers.set(pageId, new Set());
+        }
+        
+        this.componentCleanupHandlers.get(pageId).add(cleanupHandler);
+        
+        console.log(`✅ Registered cleanup handler for ${pageId}`);
+    }
+
+    _handleBeforeUnload() {
+        console.log('🔄 Page unloading - performing navigation cleanup');
+        this.cleanup();
+    }
+
+    _handlePageVisibilityChange() {
+        if (document.hidden) {
+            console.log('👁️ Page hidden - pausing operations');
+        } else {
+            console.log('👁️ Page visible - resuming operations');
+        }
+    }
+
+    cleanup() {
+        console.log('🧹 Cleaning up Navigation Manager...');
+        
+        // Cleanup all pages
+        this.componentCleanupHandlers.forEach((handlers, pageId) => {
+            this._cleanupPage(pageId);
+        });
+        
+        // Remove global listeners
+        this.globalListeners.forEach(cleanup => cleanup());
+        this.globalListeners.clear();
+        
+        // Disconnect observer
+        if (this.navigationObserver) {
+            this.navigationObserver.disconnect();
+            this.navigationObserver = null;
+        }
+        
+        // Clear state
+        this.pageStates.clear();
+        this.componentCleanupHandlers.clear();
+    }
+}
+
 // Application Initialization
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing application...');
@@ -106,7 +398,7 @@ async function initializeApp() {
         await loadDataFromSupabase();
         appData.dataLoaded = true;
 
-        setupNavigation();
+        setupEnhancedNavigation();
         setupModals();
         setupForms();
         setupAnalyticsFilters();
@@ -128,6 +420,28 @@ async function initializeApp() {
             console.warn('⚠️ Expense management could not be loaded:', error);
             showToast('Expense features disabled. Main app continues normally.', 'warning');
         }
+
+        // Register expense cleanup with navigation manager
+        if (window.expenseIntegration && window.navigationManager) {
+            window.navigationManager.registerPageCleanup('expenses-page', () => {
+                if (window.expenseIntegration.getExpenseUI) {
+                    const expenseUI = window.expenseIntegration.getExpenseUI();
+                    if (expenseUI && expenseUI.cleanup) {
+                        expenseUI.cleanup();
+                    }
+                }
+            });
+        }
+
+        // Setup global cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (window.navigationManager) {
+                window.navigationManager.cleanup();
+            }
+            if (window.expenseIntegration) {
+                window.expenseIntegration.cleanup();
+            }
+        });
 
         showLoadingState(false);
         console.log('Application initialized successfully');
@@ -1293,68 +1607,47 @@ async function saveSettingsToSupabase(settingsData) {
     }
 }
 
-function setupNavigation() {
-    console.log('Setting up navigation...');
+function setupEnhancedNavigation() {
+    console.log('🚀 Setting up enhanced navigation...');
+    
+    // Create global navigation manager
+    window.navigationManager = new NavigationManager();
+    window.navigationManager.init();
+    
+    // Enhanced navigation setup with cleanup
     const navLinks = document.querySelectorAll('.nav-link');
-    const pages = document.querySelectorAll('.page');
 
     navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const targetPage = link.dataset.page;
-            console.log('Navigating to:', targetPage);
-            aggressiveExpenseCleanup();
-
-            navLinks.forEach(nl => nl.classList.remove('active'));
-            link.classList.add('active');
-
-            pages.forEach(page => page.classList.remove('active'));
-            const targetElement = document.getElementById(`${targetPage}-page`);
-            if (targetElement) {
-                targetElement.classList.add('active');
-
-                if (targetPage === 'dashboard') renderDashboard();
-                else if (targetPage === 'invoices') renderInvoices();
-                else if (targetPage === 'clients') renderClients();
-                else if (targetPage === 'analytics') renderAnalytics();
-                else if (targetPage === 'settings') renderSettings();
-            } else {
-                console.error('Target page not found:', targetPage);
-            }
+            
+            console.log('🔗 Navigation link clicked:', targetPage);
+            
+            // Use navigation manager for safe navigation
+            window.navigationManager.navigateTo(targetPage);
+            
+            // Handle page-specific rendering
+            setTimeout(() => {
+                const activePage = document.querySelector('.page.active');
+                if (activePage && activePage.id === `${targetPage}-page`) {
+                    if (targetPage === 'dashboard') renderDashboard();
+                    else if (targetPage === 'invoices') renderInvoices();
+                    else if (targetPage === 'clients') renderClients();
+                    else if (targetPage === 'analytics') renderAnalytics();
+                    else if (targetPage === 'settings') renderSettings();
+                }
+            }, 100);
         });
     });
+    
+    console.log('✅ Enhanced navigation setup completed');
 }
 
 // 🆕 ADD THIS NEW FUNCTION TO app.js
 function cleanupExpenseFilters() {
-    try {
-        // Remove expense filters from all pages except expenses page
-        document.querySelectorAll('.page:not(#expenses-page) .expense-filters-container').forEach(container => {
-            console.log('Removing leaked expense filter container');
-            container.remove();
-        });
-        
-        // Remove expense filter elements that might have leaked
-        document.querySelectorAll('[id^="expense-filter-"]:not(#expenses-page [id^="expense-filter-"])').forEach(element => {
-            console.log('Removing leaked expense filter element:', element.id);
-            element.remove();
-        });
-
-        // Clean up any expense charts that might have leaked
-        document.querySelectorAll('.page:not(#expenses-page) #expenseMonthlyChart, .page:not(#expenses-page) #expenseCategoryChart').forEach(chart => {
-            console.log('Removing leaked expense chart');
-            chart.remove();
-        });
-
-        // Clean up expense balance cards from non-dashboard pages
-        document.querySelectorAll('.page:not(#dashboard-page):not(#expenses-page) .expense-balance-grid').forEach(balanceGrid => {
-            console.log('Removing leaked expense balance grid');
-            balanceGrid.remove();
-        });
-
-    } catch (error) {
-        console.warn('Error cleaning up expense filters:', error);
-    }
+    // Delegate to enhanced cleanup
+    enhancedExpenseCleanup();
 }
 
 
@@ -1512,7 +1805,7 @@ function setupAnalyticsFilters() {
 // IMPROVED: Compact action buttons for invoices
 function renderInvoices() {
     console.log('Rendering invoices...');
-    cleanupExpenseFilters();
+    enhancedExpenseCleanup();
     const tbody = document.getElementById('invoices-body');
     if (!tbody) return;
 
@@ -1640,7 +1933,7 @@ function filterInvoices(filter) {
 // FIXED: Client rendering with working delete functionality
 function renderClients() {
     console.log('Rendering clients...');
-    cleanupExpenseFilters();
+    enhancedExpenseCleanup();
     const grid = document.getElementById('clients-grid');
     if (!grid || !appData.dataLoaded) {
         console.log('Grid not found or data not loaded');
@@ -2040,7 +2333,7 @@ async function deleteClient(clientId, clientName) {
 
 function renderAnalytics(period = 'monthly') {
     console.log('Rendering analytics...');
-    cleanupExpenseFilters();
+   enhancedExpenseCleanup();
     
     const analyticsPage = document.getElementById('analytics-page');
     if (analyticsPage && !document.getElementById('modern-analytics-layout')) {
@@ -2350,7 +2643,7 @@ function renderTopClientInsights(invoices) {
 // ENHANCED: Settings with GSTIN field and corrected bank details
 function renderSettings() {
     console.log('Rendering settings...');
-    cleanupExpenseFilters();
+    enhancedExpenseCleanup();
 
     if (!appData.dataLoaded) {
         console.log('Data not loaded yet, skipping settings render');
@@ -3987,41 +4280,31 @@ document.addEventListener('keydown', (e) => {
 // 🆕 ADD THIS COMPLETE FUNCTION - copy everything between these lines
 
 // Aggressive cleanup of expense elements from all pages except expenses
-function aggressiveExpenseCleanup() {
-    console.log('🧹 App-level expense cleanup...');
+function enhancedExpenseCleanup() {
+    console.log('🧹🧹 Performing ENHANCED expense cleanup...');
     
     try {
-        // Get current active page
-        const activePage = document.querySelector('.page.active');
-        const activePageId = activePage ? activePage.id : '';
-        
-        // If we're NOT on expenses page, remove ALL expense elements
-        if (activePageId !== 'expenses-page') {
-            // Remove expense filters from all non-expense pages
-            document.querySelectorAll('.page:not(#expenses-page)').forEach(page => {
-                page.querySelectorAll(`
-                    .expense-filters-container,
-                    .expense-filters-wrapper,
-                    [id*="expense-filter"],
-                    [class*="expense-filter"]
-                `).forEach(el => {
-                    console.log('🗑️ Removing leaked expense element:', el.id || el.className);
-                    el.remove();
-                });
-            });
-            
-            // Remove any orphaned expense elements anywhere in the document
+        // Use navigation manager for cleanup if available
+        if (window.navigationManager) {
+            window.navigationManager._cleanupExpenseComponents();
+        } else {
+            // Fallback to manual cleanup
             document.querySelectorAll(`
-                [id^="expense-filter-"]:not(#expenses-page [id^="expense-filter-"]),
-                .expense-filters-container:not(#expenses-page .expense-filters-container)
-            `).forEach(el => {
-                console.log('🗑️ Removing orphaned expense element:', el.id || el.className);
-                el.remove();
+                .expense-filters-container:not(#expenses-page .expense-filters-container),
+                .expense-filters-wrapper:not(#expenses-page .expense-filters-wrapper),
+                .expense-balance-grid:not(#expenses-page .expense-balance-grid),
+                .expense-charts:not(#expenses-page .expense-charts),
+                [id*="expense"]:not(#expenses-page [id*="expense"]),
+                [class*="expense"]:not(#expenses-page [class*="expense"])
+            `).forEach(element => {
+                console.log('🗑️ Enhanced cleanup removing element:', element.id || element.className);
+                element.remove();
             });
         }
         
+        console.log('✅ Enhanced expense cleanup completed');
     } catch (error) {
-        console.error('Error in aggressive expense cleanup:', error);
+        console.error('❌ Error during enhanced cleanup:', error);
     }
 }
 
@@ -4223,6 +4506,29 @@ if (window.location.hostname === 'localhost' || window.location.hostname.include
     console.log('📥 Use debugApp.testInvoiceDownload("invoice-id") to test PDF download');
     console.log('🧪 Use debugApp.validateGSTIN("gstin") to validate GSTIN format');
 }
+
+
+window.addEventListener('error', (event) => {
+    console.error('Global error caught:', event.error);
+    
+    // Cleanup on critical errors
+    if (window.navigationManager) {
+        window.navigationManager._cleanupExpenseComponents();
+    }
+    
+    showToast('An unexpected error occurred. Components have been cleaned up.', 'error');
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('Unhandled promise rejection:', event.reason);
+    
+    // Cleanup on promise rejections
+    if (window.navigationManager) {
+        window.navigationManager._cleanupExpenseComponents();
+    }
+    
+    showToast('A network or database error occurred. Components have been cleaned up.', 'error');
+});
 
 // Additional improvements and ideas:
 // 1. Dashboard now shows more detailed metrics and analytics
