@@ -378,8 +378,6 @@ class ExpenseManager {
         }
     }
 }
-
-}
 // ...
 
 // Check authentication first
