@@ -97,6 +97,87 @@ let monthlyChart, clientChart, analyticsChart;
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing application...');
     initializeApp();
+
+    // Attach event delegation ONCE for each page container
+    // Invoices page
+    const invoicesPage = document.getElementById('invoices-page');
+    if (invoicesPage) {
+        invoicesPage.addEventListener('click', (e) => {
+            if (!invoicesPage.classList.contains('active')) return;
+            if (e.target.id === 'save-draft') {
+                saveInvoice('Draft');
+            } else if (e.target.id === 'save-invoice') {
+                saveInvoice('Pending');
+            } else if (e.target.classList.contains('remove-item')) {
+                removeLineItem(e.target.closest('.line-item'));
+                calculateInvoiceTotal();
+            } else if (e.target.id === 'new-invoice-btn') {
+                openInvoiceModal();
+            }
+        });
+        invoicesPage.addEventListener('input', (e) => {
+            if (!invoicesPage.classList.contains('active')) return;
+            if (e.target.classList.contains('quantity') || e.target.classList.contains('rate')) {
+                calculateLineItem(e.target.closest('.line-item'));
+                calculateInvoiceTotal();
+            }
+        });
+        const invoiceForm = document.getElementById('invoice-form');
+        if (invoiceForm) {
+            invoiceForm.addEventListener('submit', (e) => {
+                if (!invoicesPage.classList.contains('active')) return;
+                e.preventDefault();
+                saveInvoice('Pending');
+            });
+        }
+    }
+
+    // Clients page
+    const clientsPage = document.getElementById('clients-page');
+    if (clientsPage) {
+        clientsPage.addEventListener('click', (e) => {
+            if (!clientsPage.classList.contains('active')) return;
+            if (e.target.classList.contains('client-action-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                const btn = e.target;
+                const clientId = btn.getAttribute('data-client-id');
+                const clientIndex = parseInt(btn.getAttribute('data-client-index'));
+                if (btn.classList.contains('edit')) {
+                    if (appData.clients[clientIndex] && appData.clients[clientIndex].id === clientId) {
+                        editClient(clientId);
+                    } else {
+                        console.error('Client mismatch detected');
+                        showToast('Error: Client data mismatch. Please refresh the page.', 'error');
+                    }
+                } else if (btn.classList.contains('delete')) {
+                    const clientName = btn.getAttribute('data-client-name');
+                    deleteClient(clientId, clientName);
+                }
+            }
+        });
+    }
+
+    // Analytics page
+    const analyticsPage = document.getElementById('analytics-page');
+    if (analyticsPage) {
+        analyticsPage.addEventListener('click', (e) => {
+            if (!analyticsPage.classList.contains('active')) return;
+            if (e.target.id === 'apply-filters') {
+                applyAnalyticsFilters();
+            } else if (e.target.id === 'clear-filters') {
+                clearAnalyticsFilters();
+            }
+        });
+        analyticsPage.addEventListener('change', (e) => {
+            if (!analyticsPage.classList.contains('active')) return;
+            if (e.target.id === 'analytics-period') {
+                analyticsState.currentPeriod = e.target.value;
+                console.log('Period changed to:', analyticsState.currentPeriod);
+                applyAnalyticsFilters();
+            }
+        });
+    }
 });
 
 async function initializeApp() {
@@ -1715,34 +1796,7 @@ function renderClients() {
     </div>
 `).join('');
 
-    // Attach event delegation to the clients page container
-    const clientsPage = document.getElementById('clients-page');
-    if (clientsPage) {
-        // Remove any previous listeners by replacing the container
-        const newClientsPage = clientsPage.cloneNode(true);
-        clientsPage.parentNode.replaceChild(newClientsPage, clientsPage);
-        // Attach event delegation
-        newClientsPage.addEventListener('click', (e) => {
-            if (e.target.classList.contains('client-action-btn')) {
-                e.preventDefault();
-                e.stopPropagation();
-                const btn = e.target;
-                const clientId = btn.getAttribute('data-client-id');
-                const clientIndex = parseInt(btn.getAttribute('data-client-index'));
-                if (btn.classList.contains('edit')) {
-                    if (appData.clients[clientIndex] && appData.clients[clientIndex].id === clientId) {
-                        editClient(clientId);
-                    } else {
-                        console.error('Client mismatch detected');
-                        showToast('Error: Client data mismatch. Please refresh the page.', 'error');
-                    }
-                } else if (btn.classList.contains('delete')) {
-                    const clientName = btn.getAttribute('data-client-name');
-                    deleteClient(clientId, clientName);
-                }
-            }
-        });
-    }
+    // ...existing code...
 
     // Add enhanced client card styles
     if (!document.getElementById('enhanced-client-styles')) {
@@ -2071,25 +2125,6 @@ function renderAnalytics(period = 'monthly') {
             </div>
         `;
         analyticsPage.appendChild(analyticsLayout);
-
-        // Remove any previous listeners by replacing the container
-        const newAnalyticsPage = analyticsPage.cloneNode(true);
-        analyticsPage.parentNode.replaceChild(newAnalyticsPage, analyticsPage);
-        // Attach event delegation for analytics filters
-        newAnalyticsPage.addEventListener('click', (e) => {
-            if (e.target.id === 'apply-filters') {
-                applyAnalyticsFilters();
-            } else if (e.target.id === 'clear-filters') {
-                clearAnalyticsFilters();
-            }
-        });
-        newAnalyticsPage.addEventListener('change', (e) => {
-            if (e.target.id === 'analytics-period') {
-                analyticsState.currentPeriod = e.target.value;
-                console.log('Period changed to:', analyticsState.currentPeriod);
-                applyAnalyticsFilters();
-            }
-        });
 
         // Add analytics grid styles
         if (!document.getElementById('analytics-grid-styles')) {
