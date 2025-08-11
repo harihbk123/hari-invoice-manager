@@ -1851,6 +1851,9 @@ function setupNavigation() {
                 else if (targetPage === 'clients') renderClients();
                 else if (targetPage === 'analytics') renderAnalytics();
                 else if (targetPage === 'settings') renderSettings();
+                else if (targetPage === 'expenses' && window.expenseUI) {
+                    window.expenseUI.initializeUI();
+                }
             } else {
                 console.error('Target page not found:', targetPage);
             }
