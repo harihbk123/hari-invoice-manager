@@ -73,11 +73,24 @@ class ExpenseUI {
     }
 
     renderExpenses() {
-        // Render a placeholder row for now
         const tbody = document.getElementById('expenses-table-body');
-        if (tbody) {
+        if (!tbody) return;
+        const expenses = this.expenseManager.expenses || [];
+        if (!expenses.length) {
             tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--color-text-secondary); padding:40px;">No expenses found. Add your first expense!</td></tr>`;
+            return;
         }
+        tbody.innerHTML = expenses.map(exp => `
+            <tr>
+                <td>${exp.date}</td>
+                <td>${exp.description}</td>
+                <td>${exp.categoryName || ''}</td>
+                <td>₹${exp.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                <td>${exp.paymentMethod || ''}</td>
+                <td>${exp.vendorName || ''}</td>
+                <td><!-- Actions can go here --></td>
+            </tr>
+        `).join('');
     }
     constructor(expenseManager, showToast) {
         this.expenseManager = expenseManager;
@@ -683,24 +696,23 @@ document.addEventListener('DOMContentLoaded', function() {
     if (clientsPage) {
         clientsPage.addEventListener('click', (e) => {
             if (!clientsPage.classList.contains('active')) return;
-            if (e.target.classList.contains('client-action-btn')) {
-                e.preventDefault();
-                e.stopPropagation();
-                const btn = e.target;
-                const clientId = btn.getAttribute('data-client-id');
-                if (btn.classList.contains('edit')) {
-                    // Find client by ID only, not by index
-                    const client = appData.clients.find(c => c.id === clientId);
-                    if (client) {
-                        editClient(clientId);
-                    } else {
-                        console.error('Client not found for editing:', clientId);
-                        showToast('Error: Client not found. Please refresh the page.', 'error');
-                    }
-                } else if (btn.classList.contains('delete')) {
-                    const clientName = btn.getAttribute('data-client-name');
-                    deleteClient(clientId, clientName);
+            const btn = e.target.closest('.client-action-btn');
+            if (!btn) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const clientId = btn.getAttribute('data-client-id');
+            if (btn.classList.contains('edit')) {
+                // Find client by ID only, not by index
+                const client = appData.clients.find(c => c.id === clientId);
+                if (client) {
+                    editClient(clientId);
+                } else {
+                    console.error('Client not found for editing:', clientId);
+                    showToast('Error: Client not found. Please refresh the page.', 'error');
                 }
+            } else if (btn.classList.contains('delete')) {
+                const clientName = btn.getAttribute('data-client-name');
+                deleteClient(clientId, clientName);
             }
         });
     }
