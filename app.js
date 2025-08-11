@@ -688,13 +688,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.stopPropagation();
                 const btn = e.target;
                 const clientId = btn.getAttribute('data-client-id');
-                const clientIndex = parseInt(btn.getAttribute('data-client-index'));
                 if (btn.classList.contains('edit')) {
-                    if (appData.clients[clientIndex] && appData.clients[clientIndex].id === clientId) {
+                    // Find client by ID only, not by index
+                    const client = appData.clients.find(c => c.id === clientId);
+                    if (client) {
                         editClient(clientId);
                     } else {
-                        console.error('Client mismatch detected');
-                        showToast('Error: Client data mismatch. Please refresh the page.', 'error');
+                        console.error('Client not found for editing:', clientId);
+                        showToast('Error: Client not found. Please refresh the page.', 'error');
                     }
                 } else if (btn.classList.contains('delete')) {
                     const clientName = btn.getAttribute('data-client-name');
