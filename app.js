@@ -20,12 +20,40 @@ class ExpenseUI {
     }
 
     initializeUI() {
-        if (!this.expensesPage) return;
-        this.renderExpenseFilters();
-        this.renderExpensesTable();
-        this.renderBalanceSummary();
-        this.renderCharts();
-        this.setupEventListeners();
+        try {
+            this.setupExpenseNavigation?.();
+            this.setupExpenseModals?.();
+            this.setupExpenseForms?.();
+            this.setupExpenseFilters?.();
+            // Render the Expenses page if not already present
+            if (!document.getElementById('expenses-page')) {
+                const mainContent = document.querySelector('.main-content');
+                const expensesPage = document.createElement('div');
+                expensesPage.id = 'expenses-page';
+                expensesPage.className = 'page';
+                expensesPage.innerHTML = this.getExpensesPageHTML?.() || '';
+                mainContent.appendChild(expensesPage);
+            } else {
+                // If present, update the HTML structure if needed
+                const expensesPage = document.getElementById('expenses-page');
+                expensesPage.innerHTML = this.getExpensesPageHTML?.() || '';
+            }
+            // Activate the page
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById('expenses-page').classList.add('active');
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            const navLink = document.querySelector('[data-page="expenses"]');
+            if (navLink) navLink.classList.add('active');
+            // Attach listeners and render content
+            this.attachExpensePageListeners?.(document.getElementById('expenses-page'));
+            this.aggressiveCleanup?.();
+            setTimeout(() => {
+                this.renderExpenses?.();
+            }, 50);
+            console.log('Expense UI initialized successfully');
+        } catch (error) {
+            console.error('Error initializing Expense UI:', error);
+        }
     }
 
     renderExpenseFilters() {
