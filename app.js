@@ -2296,7 +2296,12 @@ function renderClients() {
     </div>
 `).join('');
 
-    // ...existing code...
+// ...existing code...
+// Place these methods inside the ExpenseManager class definition:
+// async addCategory(categoryData) { ... }
+// async deleteExpense(expenseId) { ... }
+// getPaymentMethods() { ... }
+// exportToCSV() { ... }
 
     // Add enhanced client card styles
     if (!document.getElementById('enhanced-client-styles')) {
