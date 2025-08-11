@@ -1,191 +1,27 @@
-// EXPENSE MANAGEMENT UI COMPONENTS - expense-ui.js (LEAK-PROOF VERSION)
-// Enhanced with comprehensive cleanup and state management
+// EXPENSE MANAGEMENT UI COMPONENTS - expense-ui.js
+// UI rendering and interaction logic for expense management
 
 class ExpenseUI {
     constructor(expenseManager, showToast) {
         this.expenseManager = expenseManager;
         this.showToast = showToast || console.log;
         this.charts = {};
-        
-        // ENHANCED: Component state tracking for proper cleanup
-        this.isActive = false;
-        this.isInitialized = false;
-        this.mountedElements = new Set(); // Track created elements
-        this.activeListeners = new Map(); // Track active event listeners
-        this.activeTimeouts = new Set(); // Track timeouts/intervals
-        
-        // Bind methods to preserve context
-        this._boundNavigateToExpenses = this.navigateToExpenses.bind(this);
-        this._boundHandleGlobalClick = this._handleGlobalClick.bind(this);
-        this._boundHandlePageVisibilityChange = this._handlePageVisibilityChange.bind(this);
-        this._boundBeforeUnload = this._handleBeforeUnload.bind(this);
-        
-        // Navigation state management
-        this.navigationState = {
-            currentPage: null,
-            previousPage: null,
-            isTransitioning: false
-        };
     }
 
-    // Initialize UI components with enhanced state management
+    // Initialize UI components and event listeners
     initializeUI() {
-        if (this.isInitialized) {
-            console.log('⚠️ ExpenseUI already initialized');
-            return;
-        }
-
         try {
-            console.log('🚀 Initializing ExpenseUI with leak prevention...');
-            
             this.setupExpenseNavigation();
             this.setupExpenseModals();
             this.setupExpenseForms();
-            this.setupGlobalCleanupListeners();
-            
-            this.isInitialized = true;
-            console.log('✅ ExpenseUI initialized successfully with leak prevention');
+            this.setupExpenseFilters();
+            console.log('Expense UI initialized successfully');
         } catch (error) {
-            console.error('❌ Error initializing ExpenseUI:', error);
-            this.cleanup(); // Cleanup on error
+            console.error('Error initializing Expense UI:', error);
         }
     }
 
-    // ENHANCED: Setup global cleanup listeners for navigation state management
-    setupGlobalCleanupListeners() {
-        // Listen for page visibility changes
-        this.addManagedListener(document, 'visibilitychange', this._boundHandlePageVisibilityChange);
-        
-        // Listen for beforeunload to cleanup
-        this.addManagedListener(window, 'beforeunload', this._boundBeforeUnload);
-        
-        // Setup navigation observer using MutationObserver
-        this.setupNavigationObserver();
-    }
-
-    // ENHANCED: Navigation observer to detect page changes
-    setupNavigationObserver() {
-        if (this.navigationObserver) {
-            this.navigationObserver.disconnect();
-        }
-
-        this.navigationObserver = new MutationObserver((mutations) => {
-            let pageChanged = false;
-            
-            mutations.forEach((mutation) => {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                    const target = mutation.target;
-                    if (target.classList.contains('page')) {
-                        pageChanged = true;
-                    }
-                }
-            });
-
-            if (pageChanged) {
-                this._handlePageChange();
-            }
-        });
-
-        // Observe all page elements for class changes
-        const pages = document.querySelectorAll('.page');
-        pages.forEach(page => {
-            this.navigationObserver.observe(page, {
-                attributes: true,
-                attributeFilter: ['class']
-            });
-        });
-    }
-
-    // ENHANCED: Handle page changes with proper state management
-    _handlePageChange() {
-        const activePage = document.querySelector('.page.active');
-        const newPageId = activePage ? activePage.id : null;
-        
-        if (this.navigationState.currentPage !== newPageId) {
-            this.navigationState.previousPage = this.navigationState.currentPage;
-            this.navigationState.currentPage = newPageId;
-            this.navigationState.isTransitioning = true;
-            
-            console.log(`📍 Page changed: ${this.navigationState.previousPage} → ${newPageId}`);
-            
-            // If we're leaving the expenses page, cleanup
-            if (this.navigationState.previousPage === 'expenses-page' && newPageId !== 'expenses-page') {
-                this._handleLeavingExpensesPage();
-            }
-            
-            // Reset transition state after a delay
-            setTimeout(() => {
-                this.navigationState.isTransitioning = false;
-            }, 100);
-        }
-    }
-
-    // ENHANCED: Handle leaving expenses page
-    _handleLeavingExpensesPage() {
-        console.log('🚪 Leaving expenses page - performing cleanup...');
-        this.isActive = false;
-        this.cleanupExpenseElements();
-        this.cleanupExpenseListeners();
-        this.cleanupCharts();
-    }
-
-    // ENHANCED: Handle page visibility changes
-    _handlePageVisibilityChange() {
-        if (document.hidden && this.isActive) {
-            console.log('👁️ Page hidden - pausing expense operations');
-            this.pauseExpenseOperations();
-        } else if (!document.hidden && this.isActive) {
-            console.log('👁️ Page visible - resuming expense operations');
-            this.resumeExpenseOperations();
-        }
-    }
-
-    // ENHANCED: Handle before unload
-    _handleBeforeUnload() {
-        console.log('🔄 Page unloading - performing final cleanup');
-        this.cleanup();
-    }
-
-    // ENHANCED: Managed event listener system
-    addManagedListener(element, event, handler, options = {}) {
-        if (!element) {
-            console.warn('⚠️ Cannot add listener to null element');
-            return;
-        }
-
-        try {
-            element.addEventListener(event, handler, options);
-            
-            // Store reference for cleanup
-            const key = `${element.constructor.name}-${event}-${Date.now()}`;
-            this.activeListeners.set(key, {
-                element,
-                event,
-                handler,
-                options
-            });
-            
-            console.log(`✅ Added managed listener: ${event} on ${element.constructor.name}`);
-        } catch (error) {
-            console.error('❌ Error adding managed listener:', error);
-        }
-    }
-
-    // ENHANCED: Remove managed event listener
-    removeManagedListener(key) {
-        if (this.activeListeners.has(key)) {
-            const { element, event, handler } = this.activeListeners.get(key);
-            try {
-                element.removeEventListener(event, handler);
-                this.activeListeners.delete(key);
-                console.log(`🗑️ Removed managed listener: ${event}`);
-            } catch (error) {
-                console.error('❌ Error removing managed listener:', error);
-            }
-        }
-    }
-
-    // ENHANCED: Setup expense navigation with proper state management
+    // Setup navigation for expenses page
     setupExpenseNavigation() {
         // Add expense navigation to sidebar if not exists
         const sidebarNav = document.querySelector('.sidebar-nav');
@@ -197,10 +33,6 @@ class ExpenseUI {
                     <span>Expenses</span>
                 </a>
             `;
-            
-            // Track created element
-            this.mountedElements.add(expenseNavItem);
-            
             // Insert before analytics
             const analyticsItem = sidebarNav.querySelector('[data-page="analytics"]')?.parentElement;
             if (analyticsItem) {
@@ -209,11 +41,10 @@ class ExpenseUI {
                 sidebarNav.appendChild(expenseNavItem);
             }
 
-            // Add managed click handler
-            const navLink = expenseNavItem.querySelector('.nav-link');
-            this.addManagedListener(navLink, 'click', (e) => {
+            // Add click handler
+            expenseNavItem.querySelector('.nav-link').addEventListener('click', (e) => {
                 e.preventDefault();
-                this._boundNavigateToExpenses();
+                this.navigateToExpenses();
             });
         }
 
@@ -224,24 +55,12 @@ class ExpenseUI {
             expensesPage.id = 'expenses-page';
             expensesPage.className = 'page';
             expensesPage.innerHTML = this.getExpensesPageHTML();
-            
-            // Track created element
-            this.mountedElements.add(expensesPage);
-            
             mainContent.appendChild(expensesPage);
         }
     }
 
-    // ENHANCED: Navigate to expenses with proper state management
+    // Navigate to expenses page
     navigateToExpenses() {
-        // Prevent navigation during transitions
-        if (this.navigationState.isTransitioning) {
-            console.log('⏳ Navigation in progress - ignoring request');
-            return;
-        }
-
-        console.log('🏠 Navigating to expenses page...');
-        
         // Remove active class from all nav links and pages
         document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
         document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
@@ -251,187 +70,593 @@ class ExpenseUI {
         const expensesPage = document.getElementById('expenses-page');
         
         if (expensesNavLink) expensesNavLink.classList.add('active');
-        if (expensesPage) {
-            expensesPage.classList.add('active');
-            this.isActive = true;
-            console.log('✅ Expenses page activated');
+        if (expensesPage) expensesPage.classList.add('active');
+
+        // AGGRESSIVE cleanup of any leaked expense elements
+        this.aggressiveCleanup();
+
+        // Render expenses ONLY after cleanup
+        setTimeout(() => {
+            this.renderExpenses();
+        }, 50);
+    }
+
+    // Aggressive cleanup of expense elements from other pages
+    aggressiveCleanup() {
+        console.log('🧹 Starting aggressive cleanup of expense elements...');
+        
+        try {
+            // Remove ALL expense-related elements from non-expense pages
+            const nonExpensePages = document.querySelectorAll('.page:not(#expenses-page)');
             
-            // Wait for DOM to settle before rendering
-            this.scheduleDelayedOperation(() => {
-                if (this.isActive && this._isOnExpensesPage()) {
-                    console.log('🎨 Rendering expenses content...');
-                    this.renderExpenses();
-                } else {
-                    console.log('⚠️ Page changed during navigation - skipping render');
+            nonExpensePages.forEach(page => {
+                // Remove expense filters
+                page.querySelectorAll('.expense-filters-container, .expense-filters-wrapper, [id*="expense-filter"]').forEach(el => {
+                    console.log('Removing leaked element:', el.className || el.id);
+                    el.remove();
+                });
+                
+                // Remove expense charts
+                page.querySelectorAll('[id*="expense"], [id*="Expense"]').forEach(el => {
+                    if (!el.closest('#expenses-page')) {
+                        console.log('Removing leaked expense element:', el.id);
+                        el.remove();
+                    }
+                });
+                
+                // Remove expense balance cards (except from dashboard)
+                if (!page.id.includes('dashboard')) {
+                    page.querySelectorAll('.expense-balance-grid, .expense-balance-cards').forEach(el => {
+                        console.log('Removing leaked balance element');
+                        el.remove();
+                    });
                 }
-            }, 100);
-        } else {
-            console.error('❌ Expenses page not found in DOM');
+            });
+
+            // Remove any orphaned expense elements with specific selectors
+            document.querySelectorAll(`
+                [id^="expense-filter-"]:not(#expenses-page [id^="expense-filter-"]),
+                .expense-filters-container:not(#expenses-page .expense-filters-container),
+                .expense-filters-wrapper:not(#expenses-page .expense-filters-wrapper)
+            `).forEach(el => {
+                console.log('Removing orphaned expense element:', el.id || el.className);
+                el.remove();
+            });
+
+            console.log('✅ Aggressive cleanup completed');
+            
+        } catch (error) {
+            console.error('Error during aggressive cleanup:', error);
         }
     }
 
-    // ENHANCED: Schedule delayed operations with tracking
-    scheduleDelayedOperation(operation, delay) {
-        const timeoutId = setTimeout(() => {
-            this.activeTimeouts.delete(timeoutId);
-            operation();
-        }, delay);
-        
-        this.activeTimeouts.add(timeoutId);
-        return timeoutId;
+    // Get expenses page HTML template
+    getExpensesPageHTML() {
+        return `
+            <!-- Expenses Page Header -->
+            <div class="page-header">
+                <div>
+                    <h1>💰 Expense Management</h1>
+                    <p style="color: var(--color-text-secondary); margin: 4px 0 0 0; font-size: 14px;">
+                        Track and manage your business expenses
+                    </p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn--secondary btn--sm" id="export-expenses">📊 Export</button>
+                    <button class="btn btn--primary" id="add-expense-btn">+ Add Expense</button>
+                </div>
+            </div>
+
+            <!-- Balance Overview Cards -->
+            <div class="expense-balance-cards" id="expense-balance-cards">
+                <!-- Balance cards will be populated by JavaScript -->
+            </div>
+
+            <!-- Expense Filters - UNIQUE TO EXPENSES PAGE ONLY -->
+            <div class="expense-filters-wrapper" id="expenses-page-filters-wrapper">
+                <div class="expense-filters-container" id="expenses-page-filters-container">
+                    <!-- Filters will be populated by JavaScript ONLY when on expenses page -->
+                </div>
+            </div>
+
+            <!-- Expense Analytics Charts -->
+            <div class="expense-charts" id="expense-charts" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin: 24px 0;">
+                <div class="chart-container">
+                    <h3>Monthly Expense Trend</h3>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="expenseMonthlyChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h3>Category Breakdown</h3>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="expenseCategoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expenses Table -->
+            <div class="expenses-table-section">
+                <div class="table-container">
+                    <table class="invoices-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Payment Method</th>
+                                <th>Vendor</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expenses-table-body">
+                            <!-- Expenses will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
     }
 
-    // ENHANCED: Check if currently on expenses page
-    _isOnExpensesPage() {
-        const activePage = document.querySelector('.page.active');
-        return activePage && activePage.id === 'expenses-page';
-    }
-
-    // ENHANCED: Setup expense modals with proper cleanup
+    // Setup expense modals
     setupExpenseModals() {
         // Check if modals already exist
         if (document.getElementById('expense-modal')) return;
 
-        const modalHTML = this.getModalHTML();
-        const modalContainer = document.createElement('div');
-        modalContainer.innerHTML = modalHTML;
-        
-        // Track created elements
-        Array.from(modalContainer.children).forEach(child => {
-            this.mountedElements.add(child);
-            document.body.appendChild(child);
-        });
+        const modalHTML = `
+            <!-- Add/Edit Expense Modal -->
+            <div id="expense-modal" class="modal hidden">
+                <div class="modal-overlay" id="expense-modal-overlay"></div>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="expense-modal-title">Add New Expense</h2>
+                        <button class="modal-close" id="close-expense-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="expense-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="expense-amount">Amount (₹)</label>
+                                    <input type="number" class="form-control" id="expense-amount" min="0" step="0.01" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="expense-date">Date</label>
+                                    <input type="date" class="form-control" id="expense-date" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="expense-description">Description</label>
+                                <input type="text" class="form-control" id="expense-description" required placeholder="What was this expense for?">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="expense-category">Category</label>
+                                    <select class="form-control" id="expense-category" required>
+                                        <option value="">Select Category</option>
+                                        <!-- Categories populated by JavaScript -->
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="expense-payment-method">Payment Method</label>
+                                    <select class="form-control" id="expense-payment-method">
+                                        <!-- Payment methods populated by JavaScript -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="expense-vendor">Vendor/Supplier</label>
+                                    <input type="text" class="form-control" id="expense-vendor" placeholder="Optional">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="expense-receipt">Receipt Number</label>
+                                    <input type="text" class="form-control" id="expense-receipt" placeholder="Optional">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="expense-notes">Notes</label>
+                                <textarea class="form-control" id="expense-notes" rows="3" placeholder="Additional notes (optional)"></textarea>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="expense-business" checked>
+                                        <span>Business Expense</span>
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="expense-tax-deductible">
+                                        <span>Tax Deductible</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn--secondary" id="cancel-expense">Cancel</button>
+                        <button type="submit" class="btn btn--primary" id="save-expense">Save Expense</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Category Modal -->
+            <div id="category-modal" class="modal hidden">
+                <div class="modal-overlay" id="category-modal-overlay"></div>
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h2>Add New Category</h2>
+                        <button class="modal-close" id="close-category-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="category-form">
+                            <div class="form-group">
+                                <label class="form-label" for="category-name">Category Name</label>
+                                <input type="text" class="form-control" id="category-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="category-description">Description</label>
+                                <textarea class="form-control" id="category-description" rows="2" placeholder="Optional"></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="category-icon">Icon</label>
+                                    <select class="form-control" id="category-icon">
+                                        <option value="💰">💰 Money</option>
+                                        <option value="🏢">🏢 Office</option>
+                                        <option value="🚗">🚗 Transport</option>
+                                        <option value="💻">💻 Technology</option>
+                                        <option value="📱">📱 Communication</option>
+                                        <option value="🍽️">🍽️ Food</option>
+                                        <option value="⚡">⚡ Utilities</option>
+                                        <option value="📚">📚 Education</option>
+                                        <option value="🏥">🏥 Healthcare</option>
+                                        <option value="📎">📎 Miscellaneous</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="category-color">Color</label>
+                                    <input type="color" class="form-control" id="category-color" value="#6B7280">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn--secondary" onclick="this.closest('.modal').classList.add('hidden')">Cancel</button>
+                        <button type="submit" class="btn btn--primary" id="save-category">Add Category</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
 
         // Add modal styles
         this.addExpenseModalStyles();
     }
 
-    // ENHANCED: Setup expense forms with managed event delegation
+    // Setup expense forms and event listeners
     setupExpenseForms() {
-        // Use managed event delegation instead of global listeners
-        this.addManagedListener(document, 'click', this._boundHandleGlobalClick);
+        // Add expense button
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'add-expense-btn') {
+                this.openExpenseModal();
+            } else if (e.target.id === 'export-expenses') {
+                this.exportExpenses();
+            } else if (e.target.classList.contains('edit-expense-btn')) {
+                const expenseId = e.target.getAttribute('data-expense-id');
+                this.editExpense(expenseId);
+            } else if (e.target.classList.contains('delete-expense-btn')) {
+                const expenseId = e.target.getAttribute('data-expense-id');
+                this.deleteExpense(expenseId);
+            }
+        });
+
+        // Modal close handlers
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'expense-modal-overlay' || e.target.id === 'close-expense-modal' || e.target.id === 'cancel-expense') {
+                this.closeExpenseModal();
+            } else if (e.target.id === 'category-modal-overlay' || e.target.id === 'close-category-modal') {
+                this.closeCategoryModal();
+            }
+        });
+
+        // Form submission handlers
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'save-expense') {
+                e.preventDefault();
+                this.saveExpense();
+            } else if (e.target.id === 'save-category') {
+                e.preventDefault();
+                this.saveCategory();
+            }
+        });
+
+        // Category selection handler - show "Add New Category" option
+        document.addEventListener('change', (e) => {
+            if (e.target.id === 'expense-category' && e.target.value === 'add-new') {
+                this.openCategoryModal();
+            }
+        });
     }
 
-    // ENHANCED: Global click handler with proper scoping
-    _handleGlobalClick(e) {
-        // Only handle expense-related clicks when on expenses page or in modals
-        if (!this._shouldHandleClick(e.target)) {
-            return;
+    // Setup expense filters
+    setupExpenseFilters() {
+        // Filters will be set up when expenses page is rendered
+    }
+
+    // Open expense modal
+    openExpenseModal(expenseId = null) {
+        const modal = document.getElementById('expense-modal');
+        if (!modal) return;
+
+        modal.classList.remove('hidden');
+        this.expenseManager.editingExpenseId = expenseId;
+
+        // Populate categories and payment methods
+        this.populateExpenseFormSelects();
+
+        if (expenseId) {
+            // Edit mode
+            document.getElementById('expense-modal-title').textContent = 'Edit Expense';
+            document.getElementById('save-expense').textContent = 'Update Expense';
+            this.populateExpenseForm(expenseId);
+        } else {
+            // Add mode
+            document.getElementById('expense-modal-title').textContent = 'Add New Expense';
+            document.getElementById('save-expense').textContent = 'Save Expense';
+            document.getElementById('expense-form').reset();
+            document.getElementById('expense-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('expense-business').checked = true;
+        }
+    }
+
+    // Close expense modal
+    closeExpenseModal() {
+        const modal = document.getElementById('expense-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            this.expenseManager.editingExpenseId = null;
+        }
+    }
+
+    // Open category modal
+    openCategoryModal() {
+        const modal = document.getElementById('category-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            document.getElementById('category-form').reset();
+        }
+    }
+
+    // Close category modal
+    closeCategoryModal() {
+        const modal = document.getElementById('category-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    // Populate expense form selects
+    populateExpenseFormSelects() {
+        // Populate categories
+        const categorySelect = document.getElementById('expense-category');
+        if (categorySelect) {
+            categorySelect.innerHTML = '<option value="">Select Category</option>';
+            
+            this.expenseManager.categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = `${category.icon} ${category.name}`;
+                categorySelect.appendChild(option);
+            });
+
+            // Add "Add New Category" option
+            const addNewOption = document.createElement('option');
+            addNewOption.value = 'add-new';
+            addNewOption.textContent = '+ Add New Category';
+            addNewOption.style.color = 'var(--color-primary)';
+            categorySelect.appendChild(addNewOption);
         }
 
-        const target = e.target;
-        
-        if (target.id === 'add-expense-btn') {
-            this.openExpenseModal();
-        } else if (target.id === 'export-expenses') {
-            this.exportExpenses();
-        } else if (target.classList.contains('edit-expense-btn')) {
-            const expenseId = target.getAttribute('data-expense-id');
-            this.editExpense(expenseId);
-        } else if (target.classList.contains('delete-expense-btn')) {
-            const expenseId = target.getAttribute('data-expense-id');
-            this.deleteExpense(expenseId);
-        } else if (this._isModalCloseTarget(target)) {
-            this._handleModalClose(target);
-        } else if (this._isFormSubmitTarget(target)) {
-            e.preventDefault();
-            this._handleFormSubmit(target);
+        // Populate payment methods
+        const paymentSelect = document.getElementById('expense-payment-method');
+        if (paymentSelect) {
+            paymentSelect.innerHTML = '';
+            
+            this.expenseManager.getPaymentMethods().forEach(method => {
+                const option = document.createElement('option');
+                option.value = method.value;
+                option.textContent = `${method.icon} ${method.label}`;
+                paymentSelect.appendChild(option);
+            });
         }
     }
 
-    // ENHANCED: Determine if click should be handled
-    _shouldHandleClick(target) {
-        // Always handle modal-related clicks
-        if (target.closest('#expense-modal') || target.closest('#category-modal')) {
-            return true;
-        }
-        
-        // Only handle page clicks if on expenses page
-        if (this._isOnExpensesPage() && this.isActive) {
-            return true;
-        }
-        
-        return false;
+    // Populate expense form for editing
+    populateExpenseForm(expenseId) {
+        const expense = this.expenseManager.expenses.find(exp => exp.id === expenseId);
+        if (!expense) return;
+
+        document.getElementById('expense-amount').value = expense.amount;
+        document.getElementById('expense-date').value = expense.date;
+        document.getElementById('expense-description').value = expense.description;
+        document.getElementById('expense-category').value = expense.categoryId || '';
+        document.getElementById('expense-payment-method').value = expense.paymentMethod;
+        document.getElementById('expense-vendor').value = expense.vendorName;
+        document.getElementById('expense-receipt').value = expense.receiptNumber;
+        document.getElementById('expense-notes').value = expense.notes;
+        document.getElementById('expense-business').checked = expense.isBusinessExpense;
+        document.getElementById('expense-tax-deductible').checked = expense.taxDeductible;
     }
 
-    // ENHANCED: Modal close target detection
-    _isModalCloseTarget(target) {
-        return target.id === 'expense-modal-overlay' ||
-               target.id === 'close-expense-modal' ||
-               target.id === 'cancel-expense' ||
-               target.id === 'category-modal-overlay' ||
-               target.id === 'close-category-modal';
-    }
+    // Save expense
+    async saveExpense() {
+        try {
+            const form = document.getElementById('expense-form');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
 
-    // ENHANCED: Form submit target detection
-    _isFormSubmitTarget(target) {
-        return target.id === 'save-expense' || target.id === 'save-category';
-    }
+            const expenseData = {
+                amount: parseFloat(document.getElementById('expense-amount').value),
+                date: document.getElementById('expense-date').value,
+                description: document.getElementById('expense-description').value,
+                categoryId: document.getElementById('expense-category').value,
+                paymentMethod: document.getElementById('expense-payment-method').value,
+                vendorName: document.getElementById('expense-vendor').value,
+                receiptNumber: document.getElementById('expense-receipt').value,
+                notes: document.getElementById('expense-notes').value,
+                isBusinessExpense: document.getElementById('expense-business').checked,
+                taxDeductible: document.getElementById('expense-tax-deductible').checked
+            };
 
-    // ENHANCED: Handle modal close
-    _handleModalClose(target) {
-        if (target.id === 'expense-modal-overlay' || 
-            target.id === 'close-expense-modal' || 
-            target.id === 'cancel-expense') {
+            await this.expenseManager.saveExpense(expenseData);
+            
             this.closeExpenseModal();
-        } else if (target.id === 'category-modal-overlay' || 
-                   target.id === 'close-category-modal') {
+            this.renderExpenses();
+            
+            const action = this.expenseManager.editingExpenseId ? 'updated' : 'added';
+            this.showToast(`Expense ${action} successfully`, 'success');
+
+        } catch (error) {
+            console.error('Error saving expense:', error);
+            this.showToast(`Error saving expense: ${error.message}`, 'error');
+        }
+    }
+
+    // Save category
+    async saveCategory() {
+        try {
+            const categoryData = {
+                name: document.getElementById('category-name').value.trim(),
+                description: document.getElementById('category-description').value.trim(),
+                icon: document.getElementById('category-icon').value,
+                color: document.getElementById('category-color').value
+            };
+
+            if (!categoryData.name) {
+                this.showToast('Category name is required', 'error');
+                return;
+            }
+
+            await this.expenseManager.addCategory(categoryData);
+            
             this.closeCategoryModal();
+            this.populateExpenseFormSelects();
+            this.showToast('Category added successfully', 'success');
+
+        } catch (error) {
+            console.error('Error saving category:', error);
+            this.showToast(`Error saving category: ${error.message}`, 'error');
         }
     }
 
-    // ENHANCED: Handle form submit
-    _handleFormSubmit(target) {
-        if (target.id === 'save-expense') {
-            this.saveExpense();
-        } else if (target.id === 'save-category') {
-            this.saveCategory();
+    // Edit expense
+    editExpense(expenseId) {
+        this.openExpenseModal(expenseId);
+    }
+
+    // Delete expense
+    async deleteExpense(expenseId) {
+        const expense = this.expenseManager.expenses.find(exp => exp.id === expenseId);
+        if (!expense) return;
+
+        const confirmed = confirm(`Are you sure you want to delete this expense?\n\n${expense.description} - ${this.expenseManager.formatCurrency(expense.amount)}\n\nThis action cannot be undone.`);
+        if (!confirmed) return;
+
+        try {
+            await this.expenseManager.deleteExpense(expenseId);
+            this.renderExpenses();
+            this.showToast('Expense deleted successfully', 'success');
+        } catch (error) {
+            console.error('Error deleting expense:', error);
+            this.showToast(`Error deleting expense: ${error.message}`, 'error');
         }
     }
 
-    // ENHANCED: Render expenses with state validation
+    // Render expenses page
     renderExpenses() {
         if (!this.expenseManager.isInitialized) {
-            console.log('⚠️ Expense manager not initialized yet');
+            console.log('Expense manager not initialized yet');
             return;
         }
 
-        if (!this._isOnExpensesPage() || !this.isActive) {
-            console.log('⚠️ Not on expenses page or inactive - skipping render');
-            return;
-        }
-
-        console.log('🎨 Rendering expenses components...');
-        
-        try {
-            this.renderBalanceCards();
-            this.renderExpenseFilters();
-            this.renderExpenseCharts();
-            this.renderExpensesTable();
-            console.log('✅ Expenses rendered successfully');
-        } catch (error) {
-            console.error('❌ Error rendering expenses:', error);
-        }
+        this.renderBalanceCards();
+        this.renderExpenseFilters();
+        this.renderExpenseCharts();
+        this.renderExpensesTable();
     }
 
-    // ENHANCED: Render expense filters with state-specific IDs
+    // Render balance cards
+    renderBalanceCards() {
+        const container = document.getElementById('expense-balance-cards');
+        if (!container) return;
+
+        const balance = this.expenseManager.balanceSummary;
+        const analytics = this.expenseManager.getExpenseAnalytics();
+
+        container.innerHTML = `
+            <div class="expense-balance-grid">
+                <div class="balance-card earnings">
+                    <div class="balance-card-icon">💰</div>
+                    <div class="balance-card-content">
+                        <div class="balance-card-label">Total Earnings</div>
+                        <div class="balance-card-value">${this.expenseManager.formatCurrency(balance.totalEarnings)}</div>
+                    </div>
+                </div>
+                <div class="balance-card expenses">
+                    <div class="balance-card-icon">💸</div>
+                    <div class="balance-card-content">
+                        <div class="balance-card-label">Total Expenses</div>
+                        <div class="balance-card-value">${this.expenseManager.formatCurrency(balance.totalExpenses)}</div>
+                    </div>
+                </div>
+                <div class="balance-card balance ${balance.currentBalance >= 0 ? 'positive' : 'negative'}">
+                    <div class="balance-card-icon">${balance.currentBalance >= 0 ? '📈' : '📉'}</div>
+                    <div class="balance-card-content">
+                        <div class="balance-card-label">Current Balance</div>
+                        <div class="balance-card-value">${this.expenseManager.formatCurrency(balance.currentBalance)}</div>
+                    </div>
+                </div>
+                <div class="balance-card insights">
+                    <div class="balance-card-icon">📊</div>
+                    <div class="balance-card-content">
+                        <div class="balance-card-label">Top Category</div>
+                        <div class="balance-card-value" style="font-size: 14px;">${analytics.topCategory.name}</div>
+                        <div class="balance-card-subtitle">${this.expenseManager.formatCurrency(analytics.topCategory.amount)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Add balance card styles if not already added
+        this.addBalanceCardStyles();
+    }
+
+    // Render expense filters
     renderExpenseFilters() {
-        if (!this._isOnExpensesPage()) {
-            console.log('❌ Not on expenses page - aborting filter render');
-            return;
-        }
-
-        console.log('🔍 Rendering expense filters...');
-        
+        // ONLY render filters if we're actually on the expenses page
         const expensesPage = document.getElementById('expenses-page');
-        const container = expensesPage?.querySelector('#expenses-page-filters-container');
-        
-        if (!container) {
-            console.error('❌ Expense filter container not found');
+        if (!expensesPage || !expensesPage.classList.contains('active')) {
+            console.log('Not on expenses page, skipping filter render');
             return;
         }
 
-        // Clear existing filters
+        const container = document.getElementById('expenses-page-filters-container');
+        if (!container) {
+            console.error('Expenses page filter container not found');
+            return;
+        }
+
+        // Clear any existing filters first
         container.innerHTML = '';
 
         const categories = this.expenseManager.categories;
@@ -441,7 +666,7 @@ class ExpenseUI {
             <div class="filters-row">
                 <div class="filter-group">
                     <label class="filter-label">Category</label>
-                    <select class="form-control filter-select" id="expenses-page-category-filter">
+                    <select class="form-control filter-select" id="expense-filter-category">
                         <option value="all">All Categories</option>
                         ${categories.map(cat => `
                             <option value="${cat.id}">${cat.icon} ${cat.name}</option>
@@ -450,7 +675,7 @@ class ExpenseUI {
                 </div>
                 <div class="filter-group">
                     <label class="filter-label">Payment Method</label>
-                    <select class="form-control filter-select" id="expenses-page-payment-filter">
+                    <select class="form-control filter-select" id="expense-filter-payment-method">
                         <option value="all">All Methods</option>
                         ${paymentMethods.map(method => `
                             <option value="${method.value}">${method.icon} ${method.label}</option>
@@ -460,253 +685,109 @@ class ExpenseUI {
                 <div class="filter-group">
                     <label class="filter-label">Date Range</label>
                     <div class="date-range-inputs">
-                        <input type="date" class="form-control" id="expenses-page-date-from" placeholder="From">
-                        <input type="date" class="form-control" id="expenses-page-date-to" placeholder="To">
+                        <input type="date" class="form-control" id="expense-filter-date-from" placeholder="From">
+                        <input type="date" class="form-control" id="expense-filter-date-to" placeholder="To">
                     </div>
                 </div>
                 <div class="filter-group">
                     <label class="filter-label">Options</label>
                     <div class="filter-checkboxes">
                         <label class="checkbox-label">
-                            <input type="checkbox" id="expenses-page-business-only">
+                            <input type="checkbox" id="expense-filter-business-only">
                             <span>Business Only</span>
                         </label>
                     </div>
                 </div>
                 <div class="filter-group">
-                    <button class="btn btn--primary btn--sm" id="expenses-page-apply-filters">Apply Filters</button>
-                    <button class="btn btn--secondary btn--sm" id="expenses-page-clear-filters">Clear</button>
+                    <button class="btn btn--primary btn--sm" id="apply-expense-filters">Apply Filters</button>
+                    <button class="btn btn--secondary btn--sm" id="clear-expense-filters">Clear</button>
                 </div>
             </div>
         `;
 
-        console.log('✅ Expense filters rendered successfully');
-    }
-
-    // ENHANCED: Apply expense filters with state validation
-    applyExpenseFilters() {
-        if (!this._isOnExpensesPage() || !this.isActive) {
-            console.log('❌ Not on expenses page - skipping filter application');
-            return;
+        // Add filter event listeners with more specific targeting
+        const applyBtn = document.getElementById('apply-expense-filters');
+        const clearBtn = document.getElementById('clear-expense-filters');
+        
+        if (applyBtn) {
+            // Remove existing listeners first
+            applyBtn.replaceWith(applyBtn.cloneNode(true));
+            document.getElementById('apply-expense-filters').addEventListener('click', () => this.applyExpenseFilters());
+        }
+        
+        if (clearBtn) {
+            // Remove existing listeners first
+            clearBtn.replaceWith(clearBtn.cloneNode(true));
+            document.getElementById('clear-expense-filters').addEventListener('click', () => this.clearExpenseFilters());
         }
 
-        console.log('🔍 Applying expense filters...');
+        console.log('Expense filters rendered successfully on expenses page');
+    }
 
-        const elements = {
-            category: document.getElementById('expenses-page-category-filter'),
-            payment: document.getElementById('expenses-page-payment-filter'),
-            dateFrom: document.getElementById('expenses-page-date-from'),
-            dateTo: document.getElementById('expenses-page-date-to'),
-            business: document.getElementById('expenses-page-business-only')
-        };
-
-        // Validate all elements exist
-        const missingElements = Object.entries(elements)
-            .filter(([key, element]) => !element)
-            .map(([key]) => key);
-
-        if (missingElements.length > 0) {
-            console.error('❌ Missing filter elements:', missingElements);
+    // Apply expense filters
+    applyExpenseFilters() {
+        // Only apply filters if we're on the expenses page
+        const expensesPage = document.getElementById('expenses-page');
+        if (!expensesPage || !expensesPage.classList.contains('active')) {
+            console.log('Not on expenses page, skipping filter application');
             return;
         }
 
         const filters = {
-            category: elements.category.value,
-            paymentMethod: elements.payment.value,
+            category: document.getElementById('expense-filter-category')?.value,
+            paymentMethod: document.getElementById('expense-filter-payment-method')?.value,
             dateRange: {
-                from: elements.dateFrom.value,
-                to: elements.dateTo.value
+                from: document.getElementById('expense-filter-date-from')?.value,
+                to: document.getElementById('expense-filter-date-to')?.value
             },
-            businessOnly: elements.business.checked
+            businessOnly: document.getElementById('expense-filter-business-only')?.checked
         };
 
         this.expenseManager.applyFilters(filters);
         this.renderExpensesTable();
         this.renderExpenseCharts();
-        
         this.showToast('Filters applied successfully', 'info');
-        console.log('✅ Expense filters applied successfully');
     }
 
-    // ENHANCED: Clear expense filters with state validation
+    // Clear expense filters
     clearExpenseFilters() {
-        if (!this._isOnExpensesPage() || !this.isActive) {
-            console.log('❌ Not on expenses page - skipping filter clear');
+        // Only clear filters if we're on the expenses page
+        const expensesPage = document.getElementById('expenses-page');
+        if (!expensesPage || !expensesPage.classList.contains('active')) {
+            console.log('Not on expenses page, skipping filter clear');
             return;
         }
 
-        console.log('🧹 Clearing expense filters...');
+        const categorySelect = document.getElementById('expense-filter-category');
+        const paymentSelect = document.getElementById('expense-filter-payment-method');
+        const dateFromInput = document.getElementById('expense-filter-date-from');
+        const dateToInput = document.getElementById('expense-filter-date-to');
+        const businessCheckbox = document.getElementById('expense-filter-business-only');
 
-        const elements = {
-            category: document.getElementById('expenses-page-category-filter'),
-            payment: document.getElementById('expenses-page-payment-filter'),
-            dateFrom: document.getElementById('expenses-page-date-from'),
-            dateTo: document.getElementById('expenses-page-date-to'),
-            business: document.getElementById('expenses-page-business-only')
-        };
+        if (categorySelect) categorySelect.value = 'all';
+        if (paymentSelect) paymentSelect.value = 'all';
+        if (dateFromInput) dateFromInput.value = '';
+        if (dateToInput) dateToInput.value = '';
+        if (businessCheckbox) businessCheckbox.checked = false;
 
-        // Reset all filter values
-        Object.entries(elements).forEach(([key, element]) => {
-            if (element) {
-                if (element.type === 'checkbox') {
-                    element.checked = false;
-                } else if (element.tagName === 'SELECT') {
-                    element.value = 'all';
-                } else {
-                    element.value = '';
-                }
-            }
-        });
-
-        // Clear filtered data
         this.expenseManager.expenseState.filteredData = null;
-        
         this.renderExpensesTable();
         this.renderExpenseCharts();
-        
         this.showToast('Filters cleared', 'info');
-        console.log('✅ Expense filters cleared successfully');
     }
 
-    // ENHANCED: Pause operations when page not visible
-    pauseExpenseOperations() {
-        // Pause chart animations
-        Object.values(this.charts).forEach(chart => {
-            if (chart && typeof chart.stop === 'function') {
-                chart.stop();
-            }
-        });
-        
-        // Clear any pending timeouts
-        this.activeTimeouts.forEach(timeoutId => {
-            clearTimeout(timeoutId);
-        });
-        this.activeTimeouts.clear();
-    }
-
-    // ENHANCED: Resume operations when page becomes visible
-    resumeExpenseOperations() {
-        if (this._isOnExpensesPage() && this.isActive) {
-            // Re-render charts if needed
-            this.renderExpenseCharts();
-        }
-    }
-
-    // ENHANCED: Cleanup expense elements
-    cleanupExpenseElements() {
-        console.log('🧹 Cleaning up expense elements...');
-        
-        // Remove all non-expense-page elements
-        document.querySelectorAll(`
-            .expense-filters-container:not(#expenses-page .expense-filters-container),
-            .expense-filters-wrapper:not(#expenses-page .expense-filters-wrapper),
-            [id^="expense-filter-"]:not(#expenses-page [id^="expense-filter-"]),
-            [id^="expenses-page-"]:not(#expenses-page [id^="expenses-page-"])
-        `).forEach(element => {
-            console.log('🗑️ Removing leaked element:', element.id || element.className);
-            element.remove();
-        });
-    }
-
-    // ENHANCED: Cleanup expense listeners
-    cleanupExpenseListeners() {
-        console.log('🧹 Cleaning up expense listeners...');
-        
-        // Remove all managed listeners
-        this.activeListeners.forEach((listenerData, key) => {
-            this.removeManagedListener(key);
-        });
-        
-        // Clear timeouts
-        this.activeTimeouts.forEach(timeoutId => {
-            clearTimeout(timeoutId);
-        });
-        this.activeTimeouts.clear();
-    }
-
-    // ENHANCED: Cleanup charts
-    cleanupCharts() {
-        console.log('🧹 Cleaning up charts...');
-        
-        Object.entries(this.charts).forEach(([key, chart]) => {
-            if (chart && typeof chart.destroy === 'function') {
-                try {
-                    chart.destroy();
-                    console.log(`🗑️ Destroyed chart: ${key}`);
-                } catch (error) {
-                    console.warn(`⚠️ Error destroying chart ${key}:`, error);
-                }
-            }
-        });
-        
-        this.charts = {};
-    }
-
-    // ENHANCED: Complete cleanup method
-    cleanup() {
-        console.log('🧹 Performing complete ExpenseUI cleanup...');
-        
-        this.isActive = false;
-        
-        try {
-            // Cleanup charts
-            this.cleanupCharts();
-            
-            // Cleanup listeners
-            this.cleanupExpenseListeners();
-            
-            // Cleanup elements
-            this.cleanupExpenseElements();
-            
-            // Disconnect navigation observer
-            if (this.navigationObserver) {
-                this.navigationObserver.disconnect();
-                this.navigationObserver = null;
-            }
-            
-            // Remove mounted elements
-            this.mountedElements.forEach(element => {
-                try {
-                    if (element.parentNode) {
-                        element.parentNode.removeChild(element);
-                    }
-                } catch (error) {
-                    console.warn('⚠️ Error removing mounted element:', error);
-                }
-            });
-            this.mountedElements.clear();
-            
-            // Reset state
-            this.navigationState = {
-                currentPage: null,
-                previousPage: null,
-                isTransitioning: false
-            };
-            
-            console.log('✅ ExpenseUI cleanup completed');
-        } catch (error) {
-            console.error('❌ Error during cleanup:', error);
-        }
-    }
-
-    // ENHANCED: Render expense charts with state validation
+    // Render expense charts
     renderExpenseCharts() {
-        if (!this._isOnExpensesPage() || !this.isActive) {
-            return;
-        }
-
-        this.scheduleDelayedOperation(() => {
-            if (this._isOnExpensesPage() && this.isActive) {
-                this.renderMonthlyExpenseChart();
-                this.renderCategoryChart();
-            }
+        setTimeout(() => {
+            this.renderMonthlyExpenseChart();
+            this.renderCategoryChart();
         }, 100);
     }
 
-    // ENHANCED: Render monthly expense chart
+    // Render monthly expense chart
     renderMonthlyExpenseChart() {
         const ctx = document.getElementById('expenseMonthlyChart');
-        if (!ctx || !this._isOnExpensesPage()) return;
+        if (!ctx) return;
 
         if (this.charts.monthly) {
             this.charts.monthly.destroy();
@@ -717,6 +798,7 @@ class ExpenseUI {
         
         let chartData = data;
         if (filteredData) {
+            // Calculate monthly data for filtered expenses
             const monthlyMap = new Map();
             filteredData.forEach(expense => {
                 const date = new Date(expense.date);
@@ -749,7 +831,9 @@ class ExpenseUI {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false }
+                    legend: {
+                        display: false
+                    }
                 },
                 scales: {
                     y: {
@@ -765,270 +849,334 @@ class ExpenseUI {
         });
     }
 
-    // Rest of the methods remain the same but with state validation...
-    // [Include other methods like renderCategoryChart, renderBalanceCards, etc. with similar state validation]
+    // Render category chart
+    renderCategoryChart() {
+        const ctx = document.getElementById('expenseCategoryChart');
+        if (!ctx) return;
 
-    // GET HTML TEMPLATES
-    getExpensesPageHTML() {
-        return `
-            <div class="page-header">
-                <div>
-                    <h1>💰 Expense Management</h1>
-                    <p style="color: var(--color-text-secondary); margin: 4px 0 0 0; font-size: 14px;">
-                        Track and manage your business expenses
-                    </p>
-                </div>
-                <div class="header-actions">
-                    <button class="btn btn--secondary btn--sm" id="export-expenses">📊 Export</button>
-                    <button class="btn btn--primary" id="add-expense-btn">+ Add Expense</button>
-                </div>
-            </div>
+        if (this.charts.category) {
+            this.charts.category.destroy();
+        }
 
-            <div class="expense-balance-cards" id="expense-balance-cards"></div>
+        const categoryData = this.expenseManager.getCategoryBreakdown();
+        const filteredData = this.expenseManager.expenseState.filteredData;
+        
+        let chartData = categoryData;
+        if (filteredData) {
+            // Calculate category data for filtered expenses
+            const categoryMap = new Map();
+            filteredData.forEach(expense => {
+                const categoryName = expense.categoryName || 'Uncategorized';
+                const category = this.expenseManager.categories.find(cat => cat.name === categoryName);
+                
+                if (!categoryMap.has(categoryName)) {
+                    categoryMap.set(categoryName, {
+                        name: categoryName,
+                        amount: 0,
+                        color: category?.color || '#6B7280'
+                    });
+                }
+                categoryMap.get(categoryName).amount += expense.amount;
+            });
+            chartData = Array.from(categoryMap.values()).sort((a, b) => b.amount - a.amount);
+        }
 
-            <div class="expense-filters-wrapper" id="expenses-page-filters-wrapper">
-                <div class="expense-filters-container" id="expenses-page-filters-container"></div>
-            </div>
+        if (chartData.length === 0) {
+            ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+            return;
+        }
 
-            <div class="expense-charts" id="expense-charts" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin: 24px 0;">
-                <div class="chart-container">
-                    <h3>Monthly Expense Trend</h3>
-                    <div style="position: relative; height: 300px;">
-                        <canvas id="expenseMonthlyChart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <h3>Category Breakdown</h3>
-                    <div style="position: relative; height: 300px;">
-                        <canvas id="expenseCategoryChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div class="expenses-table-section">
-                <div class="table-container">
-                    <table class="invoices-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Description</th>
-                                <th>Category</th>
-                                <th>Amount</th>
-                                <th>Payment Method</th>
-                                <th>Vendor</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="expenses-table-body"></tbody>
-                    </table>
-                </div>
-            </div>
-        `;
+        this.charts.category = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: chartData.map(item => item.name),
+                datasets: [{
+                    data: chartData.map(item => item.amount),
+                    backgroundColor: chartData.map(item => item.color),
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${label}: ₹${new Intl.NumberFormat('en-IN').format(value)} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 
-    getModalHTML() {
-        return `
-            <div id="expense-modal" class="modal hidden">
-                <div class="modal-overlay" id="expense-modal-overlay"></div>
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2 id="expense-modal-title">Add New Expense</h2>
-                        <button class="modal-close" id="close-expense-modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="expense-form">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label" for="expense-amount">Amount (₹)</label>
-                                    <input type="number" class="form-control" id="expense-amount" min="0" step="0.01" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="expense-date">Date</label>
-                                    <input type="date" class="form-control" id="expense-date" required>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="expense-description">Description</label>
-                                <input type="text" class="form-control" id="expense-description" required placeholder="What was this expense for?">
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label" for="expense-category">Category</label>
-                                    <select class="form-control" id="expense-category" required>
-                                        <option value="">Select Category</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="expense-payment-method">Payment Method</label>
-                                    <select class="form-control" id="expense-payment-method"></select>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label" for="expense-vendor">Vendor/Supplier</label>
-                                    <input type="text" class="form-control" id="expense-vendor" placeholder="Optional">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="expense-receipt">Receipt Number</label>
-                                    <input type="text" class="form-control" id="expense-receipt" placeholder="Optional">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="expense-notes">Notes</label>
-                                <textarea class="form-control" id="expense-notes" rows="3" placeholder="Additional notes (optional)"></textarea>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="expense-business" checked>
-                                        <span>Business Expense</span>
-                                    </label>
-                                </div>
-                                <div class="form-group">
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="expense-tax-deductible">
-                                        <span>Tax Deductible</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn--secondary" id="cancel-expense">Cancel</button>
-                        <button type="submit" class="btn btn--primary" id="save-expense">Save Expense</button>
-                    </div>
-                </div>
-            </div>
-        `;
+    // Render expenses table
+    renderExpensesTable() {
+        const tbody = document.getElementById('expenses-table-body');
+        if (!tbody) return;
+
+        const expenses = this.expenseManager.expenseState.filteredData || this.expenseManager.expenses;
+
+        if (expenses.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px; color: var(--color-text-secondary);">
+                        <div style="font-size: 48px; margin-bottom: 16px;">💸</div>
+                        <h3>No expenses found</h3>
+                        <p>Add your first expense to get started</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = expenses.map(expense => {
+            const category = this.expenseManager.categories.find(cat => cat.id === expense.categoryId);
+            const paymentMethod = this.expenseManager.getPaymentMethods().find(method => method.value === expense.paymentMethod);
+
+            return `
+                <tr>
+                    <td>${this.expenseManager.formatDate(expense.date)}</td>
+                    <td>
+                        <div style="font-weight: 500;">${expense.description}</div>
+                        ${expense.vendorName ? `<div style="font-size: 12px; color: var(--color-text-secondary);">Vendor: ${expense.vendorName}</div>` : ''}
+                    </td>
+                    <td>
+                        <span style="display: inline-flex; align-items: center; gap: 6px;">
+                            ${category ? category.icon : '💰'} ${expense.categoryName}
+                        </span>
+                    </td>
+                    <td style="font-weight: 600; color: var(--color-error);">
+                        ${this.expenseManager.formatCurrency(expense.amount)}
+                    </td>
+                    <td>
+                        <span style="display: inline-flex; align-items: center; gap: 6px;">
+                            ${paymentMethod ? paymentMethod.icon : '💳'} ${paymentMethod ? paymentMethod.label : expense.paymentMethod}
+                        </span>
+                    </td>
+                    <td>${expense.vendorName || '-'}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn edit edit-expense-btn" data-expense-id="${expense.id}" title="Edit expense">✏️</button>
+                            <button class="action-btn delete delete-expense-btn" data-expense-id="${expense.id}" title="Delete expense">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
-    // Placeholder methods for remaining functionality
-    openExpenseModal() { console.log('Opening expense modal...'); }
-    closeExpenseModal() { console.log('Closing expense modal...'); }
-    closeCategoryModal() { console.log('Closing category modal...'); }
-    saveExpense() { console.log('Saving expense...'); }
-    saveCategory() { console.log('Saving category...'); }
-    editExpense(id) { console.log('Editing expense:', id); }
-    deleteExpense(id) { console.log('Deleting expense:', id); }
-    exportExpenses() { console.log('Exporting expenses...'); }
-    renderBalanceCards() { console.log('Rendering balance cards...'); }
-    renderExpensesTable() { console.log('Rendering expenses table...'); }
-    renderCategoryChart() { console.log('Rendering category chart...'); }
-    addExpenseModalStyles() { console.log('Adding modal styles...'); }
-}
-
-// Enhanced integration class
-class ExpenseIntegration {
-    constructor() {
-        this.expenseManager = null;
-        this.expenseUI = null;
-        this.isInitialized = false;
-        this.integrationEnabled = false;
-        this.cleanupHandlers = new Set();
-    }
-
-    async initialize(supabaseClient, showToastFunction) {
+    // Export expenses
+    exportExpenses() {
         try {
-            console.log('🔧 Initializing Enhanced Expense Integration...');
-
-            if (typeof window.ExpenseManager === 'undefined') {
-                console.warn('⚠️ ExpenseManager not loaded, expense features disabled');
-                return false;
-            }
-
-            if (typeof window.ExpenseUI === 'undefined') {
-                console.warn('⚠️ ExpenseUI not loaded, expense features disabled');
-                return false;
-            }
-
-            this.expenseManager = new window.ExpenseManager(supabaseClient);
-            const managerInitialized = await this.expenseManager.initialize();
-
-            if (!managerInitialized) {
-                console.warn('⚠️ Failed to initialize expense manager');
-                return false;
-            }
-
-            this.expenseUI = new window.ExpenseUI(this.expenseManager, showToastFunction);
-            this.expenseUI.initializeUI();
-
-            // Setup cleanup for page unload
-            const cleanup = () => this.cleanup();
-            window.addEventListener('beforeunload', cleanup);
-            this.cleanupHandlers.add(() => window.removeEventListener('beforeunload', cleanup));
-
-            this.isInitialized = true;
-            this.integrationEnabled = true;
-
-            console.log('✅ Enhanced Expense Integration initialized successfully');
-            return true;
-
+            this.expenseManager.exportToCSV();
+            this.showToast('Expenses exported successfully', 'success');
         } catch (error) {
-            console.error('❌ Error initializing Enhanced Expense Integration:', error);
-            this.cleanup();
-            return false;
+            console.error('Error exporting expenses:', error);
+            this.showToast('Error exporting expenses', 'error');
         }
     }
 
-    cleanup() {
-        console.log('🧹 Cleaning up Expense Integration...');
-        
-        if (this.expenseUI) {
-            this.expenseUI.cleanup();
-        }
+    // Add balance card styles
+    addBalanceCardStyles() {
+        if (document.getElementById('expense-balance-styles')) return;
 
-        this.cleanupHandlers.forEach(handler => handler());
-        this.cleanupHandlers.clear();
-
-        this.isInitialized = false;
-        this.integrationEnabled = false;
-    }
-
-    isEnabled() {
-        return this.integrationEnabled;
-    }
-
-    getExpenseManager() {
-        return this.expenseManager;
-    }
-
-    getExpenseUI() {
-        return this.expenseUI;
-    }
-}
-
-// Global initialization
-let globalExpenseIntegration = null;
-
-async function initializeExpenseIntegration(supabaseClient, showToastFunction) {
-    try {
-        globalExpenseIntegration = new ExpenseIntegration();
-        const success = await globalExpenseIntegration.initialize(supabaseClient, showToastFunction);
-        
-        if (success) {
-            window.expenseIntegration = globalExpenseIntegration;
-            if (showToastFunction) {
-                showToastFunction('💰 Enhanced Expense Management enabled! Leak-proof architecture.', 'success');
+        const style = document.createElement('style');
+        style.id = 'expense-balance-styles';
+        style.textContent = `
+            .expense-balance-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+                margin-bottom: 32px;
             }
-            return true;
-        } else {
-            console.log('⚠️ Enhanced Expense Integration disabled');
-            return false;
-        }
-    } catch (error) {
-        console.error('❌ Failed to initialize enhanced expense integration:', error);
-        if (showToastFunction) {
-            showToastFunction('Expense features could not be loaded. Main app continues normally.', 'warning');
-        }
-        return false;
+
+            .balance-card {
+                background: var(--color-surface);
+                border-radius: 12px;
+                padding: 20px;
+                border: 1px solid var(--color-border);
+                box-shadow: var(--shadow-sm);
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                transition: all 0.2s ease;
+            }
+
+            .balance-card:hover {
+                box-shadow: var(--shadow-md);
+                transform: translateY(-1px);
+            }
+
+            .balance-card-icon {
+                font-size: 32px;
+                width: 56px;
+                height: 56px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .balance-card.earnings .balance-card-icon {
+                background: rgba(var(--color-success-rgb), 0.1);
+            }
+
+            .balance-card.expenses .balance-card-icon {
+                background: rgba(var(--color-error-rgb), 0.1);
+            }
+
+            .balance-card.balance.positive .balance-card-icon {
+                background: rgba(var(--color-success-rgb), 0.1);
+            }
+
+            .balance-card.balance.negative .balance-card-icon {
+                background: rgba(var(--color-error-rgb), 0.1);
+            }
+
+            .balance-card.insights .balance-card-icon {
+                background: rgba(var(--color-primary-rgb, 33, 128, 141), 0.1);
+            }
+
+            .balance-card-content {
+                flex: 1;
+            }
+
+            .balance-card-label {
+                font-size: 12px;
+                color: var(--color-text-secondary);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                font-weight: 600;
+                margin-bottom: 4px;
+            }
+
+            .balance-card-value {
+                font-size: 20px;
+                font-weight: 700;
+                color: var(--color-text);
+                margin-bottom: 2px;
+            }
+
+            .balance-card.balance.negative .balance-card-value {
+                color: var(--color-error);
+            }
+
+            .balance-card-subtitle {
+                font-size: 11px;
+                color: var(--color-text-secondary);
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Add expense modal styles
+    addExpenseModalStyles() {
+        if (document.getElementById('expense-modal-styles')) return;
+
+        const style = document.createElement('style');
+        style.id = 'expense-modal-styles';
+        style.textContent = `
+            .expense-filters-container {
+                background: var(--color-surface);
+                border-radius: 12px;
+                padding: 20px;
+                border: 1px solid var(--color-border);
+                margin-bottom: 24px;
+            }
+
+            .filters-row {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 16px;
+                align-items: end;
+            }
+
+            .filter-group {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .filter-label {
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--color-text-secondary);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .filter-select {
+                font-size: 13px;
+                padding: 8px 12px;
+            }
+
+            .date-range-inputs {
+                display: flex;
+                gap: 8px;
+            }
+
+            .date-range-inputs input {
+                flex: 1;
+                font-size: 13px;
+                padding: 8px 12px;
+            }
+
+            .filter-checkboxes {
+                display: flex;
+                align-items: center;
+                padding: 8px 0;
+            }
+
+            .checkbox-label {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 13px;
+                color: var(--color-text);
+                cursor: pointer;
+            }
+
+            .checkbox-label input[type="checkbox"] {
+                width: 16px;
+                height: 16px;
+                accent-color: var(--color-primary);
+            }
+
+            @media (max-width: 768px) {
+                .filters-row {
+                    grid-template-columns: 1fr;
+                }
+                
+                .expense-balance-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+        `;
+        document.head.appendChild(style);
     }
 }
 
-// Export for use
+// Export for use in main application
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { ExpenseUI, ExpenseIntegration, initializeExpenseIntegration };
+    module.exports = ExpenseUI;
 } else if (typeof window !== 'undefined') {
     window.ExpenseUI = ExpenseUI;
-    window.ExpenseIntegration = ExpenseIntegration;
-    window.initializeExpenseIntegration = initializeExpenseIntegration;
 }
