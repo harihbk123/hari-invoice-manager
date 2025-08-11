@@ -1447,6 +1447,16 @@ function cleanupExpenseFilters() {
 function renderDashboard() {
     console.log('Rendering dashboard...');
     cleanupExpenseFilters();
+    // Clear dynamic content
+    const dashboardPage = document.getElementById('dashboard-page');
+    if (dashboardPage) {
+        // Clear recent invoices
+        const tbody = dashboardPage.querySelector('#recent-invoices-body');
+        if (tbody) tbody.innerHTML = '';
+        // Destroy charts if exist
+        if (window.monthlyChart) { window.monthlyChart.destroy(); window.monthlyChart = null; }
+        if (window.clientChart) { window.clientChart.destroy(); window.clientChart = null; }
+    }
     updateDashboardMetrics();
     renderRecentInvoices();
     setTimeout(() => renderCharts(), 100);
@@ -1599,6 +1609,12 @@ function setupAnalyticsFilters() {
 function renderInvoices() {
     console.log('Rendering invoices...');
     cleanupExpenseFilters();
+    // Clear dynamic content
+    const invoicesPage = document.getElementById('invoices-page');
+    if (invoicesPage) {
+        const tbody = invoicesPage.querySelector('#invoices-body');
+        if (tbody) tbody.innerHTML = '';
+    }
     const tbody = document.getElementById('invoices-body');
     if (!tbody) return;
 
@@ -1727,6 +1743,12 @@ function filterInvoices(filter) {
 function renderClients() {
     console.log('Rendering clients...');
     cleanupExpenseFilters();
+    // Clear dynamic content
+    const clientsPage = document.getElementById('clients-page');
+    if (clientsPage) {
+        const grid = clientsPage.querySelector('#clients-grid');
+        if (grid) grid.innerHTML = '';
+    }
     const grid = document.getElementById('clients-grid');
     if (!grid || !appData.dataLoaded) {
         console.log('Grid not found or data not loaded');
@@ -2092,14 +2114,16 @@ async function deleteClient(clientId, clientName) {
 function renderAnalytics(period = 'monthly') {
     console.log('Rendering analytics...');
     cleanupExpenseFilters();
-    
+    // Clear dynamic content
     const analyticsPage = document.getElementById('analytics-page');
+    if (analyticsPage) {
+        // Remove old analytics layout
+        const oldLayout = analyticsPage.querySelector('#modern-analytics-layout');
+        if (oldLayout) oldLayout.remove();
+        // Destroy analytics chart if exists
+        if (window.analyticsChart) { window.analyticsChart.destroy(); window.analyticsChart = null; }
+    }
     if (analyticsPage && !document.getElementById('modern-analytics-layout')) {
-        const existingContent = analyticsPage.querySelector('#analyticsChart')?.parentElement;
-        if (existingContent) {
-            existingContent.remove();
-        }
-
         const analyticsLayout = document.createElement('div');
         analyticsLayout.id = 'modern-analytics-layout';
         analyticsLayout.innerHTML = `
@@ -2125,7 +2149,6 @@ function renderAnalytics(period = 'monthly') {
             </div>
         `;
         analyticsPage.appendChild(analyticsLayout);
-
         // Add analytics grid styles
         if (!document.getElementById('analytics-grid-styles')) {
             const style = document.createElement('style');

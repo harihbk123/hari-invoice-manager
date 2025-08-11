@@ -588,6 +588,21 @@ class ExpenseUI {
             return;
         }
 
+        // Clear dynamic content
+        const expensesPage = document.getElementById('expenses-page');
+        if (expensesPage) {
+            const balanceCards = expensesPage.querySelector('#expense-balance-cards');
+            if (balanceCards) balanceCards.innerHTML = '';
+            const filtersContainer = expensesPage.querySelector('#expenses-page-filters-container');
+            if (filtersContainer) filtersContainer.innerHTML = '';
+            const charts = expensesPage.querySelector('#expense-charts');
+            if (charts) charts.innerHTML = '';
+            const tableBody = expensesPage.querySelector('#expenses-table-body');
+            if (tableBody) tableBody.innerHTML = '';
+        }
+        // Destroy charts if exist
+        if (this.charts && this.charts.monthly) { this.charts.monthly.destroy(); this.charts.monthly = null; }
+        if (this.charts && this.charts.category) { this.charts.category.destroy(); this.charts.category = null; }
         this.renderBalanceCards();
         this.renderExpenseFilters();
         this.renderExpenseCharts();
