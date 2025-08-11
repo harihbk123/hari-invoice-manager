@@ -4,58 +4,190 @@
 // ExpenseUI class (migrated from expense-ui.js)
 class ExpenseUI {
     // --- MIGRATED FROM expense-ui.js ---
-    getExpensesPageHTML() {
-        return `
-            <div class="page-header">
-                <div>
-                    <h1>💰 Expense Management</h1>
-                    <p style="color: var(--color-text-secondary); margin: 4px 0 0 0; font-size: 14px;">
-                        Track and manage your business expenses
-                    </p>
-                </div>
-                <div class="header-actions">
-                    <button class="btn btn--secondary btn--sm" id="export-expenses">📊 Export</button>
-                    <button class="btn btn--primary" id="add-expense-btn">+ Add Expense</button>
-                </div>
-            </div>
-            <div class="expense-balance-cards" id="expense-balance-cards"></div>
-            <div class="expense-filters-wrapper" id="expenses-page-filters-wrapper">
-                <div class="expense-filters-container" id="expenses-page-filters-container"></div>
-            </div>
-            <div class="expense-charts" id="expense-charts" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin: 24px 0;">
-                <div class="chart-container">
-                    <h3>Monthly Expense Trend</h3>
-                    <div style="position: relative; height: 300px;">
-                        <canvas id="expenseMonthlyChart"></canvas>
+// Replace the getExpensesPageHTML() method in the ExpenseUI class
+// Location: app.js, approximately line 58-113
+// This creates a modern, visually stunning expenses page
+
+getExpensesPageHTML() {
+    return `
+        <!-- Modern Expense Page with Enhanced Design -->
+        <div class="expense-page-wrapper">
+            <!-- Gradient Header with Animation -->
+            <div class="expense-header-section">
+                <div class="header-bg-animation"></div>
+                <div class="page-header expense-header">
+                    <div class="header-content-wrapper">
+                        <div class="header-left">
+                            <div class="icon-bubble">
+                                <span class="header-icon">💰</span>
+                                <div class="icon-pulse"></div>
+                            </div>
+                            <div class="header-text">
+                                <h1 class="page-title">Expense Management</h1>
+                                <p class="page-subtitle">Track, analyze, and optimize your business spending</p>
+                            </div>
+                        </div>
+                        <div class="header-actions">
+                            <button class="btn-modern btn-export" id="export-expenses">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <span>Export</span>
+                            </button>
+                            <button class="btn-modern btn-add-expense" id="add-expense-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                <span>Add Expense</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="chart-container">
-                    <h3>Category Breakdown</h3>
-                    <div style="position: relative; height: 300px;">
-                        <canvas id="expenseCategoryChart"></canvas>
+            </div>
+
+            <!-- Modern Balance Cards Grid -->
+            <div class="expense-metrics-section">
+                <div class="metrics-container" id="expense-balance-cards">
+                    <!-- Balance cards will be dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Advanced Filters Section -->
+            <div class="expense-filters-section">
+                <div class="filters-header">
+                    <h3 class="filters-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14,12V19.88C14.04,20.18 13.94,20.5 13.71,20.71C13.32,21.1 12.69,21.1 12.3,20.71L10.29,18.7C10.06,18.47 9.96,18.16 10,17.87V12H9.97L4.21,4.62C3.87,4.19 3.95,3.56 4.38,3.22C4.57,3.08 4.78,3 5,3V3H19V3C19.22,3 19.43,3.08 19.62,3.22C20.05,3.56 20.13,4.19 19.79,4.62L14.03,12H14Z"/>
+                        </svg>
+                        Smart Filters
+                    </h3>
+                    <button class="filter-toggle" id="toggle-filters">
+                        <span>Show Filters</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M7 10l5 5 5-5z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="filters-container" id="expenses-page-filters-container">
+                    <!-- Filters will be dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Analytics Dashboard -->
+            <div class="expense-analytics-section">
+                <div class="analytics-grid">
+                    <!-- Monthly Trend Chart -->
+                    <div class="chart-card trend-chart">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <span class="chart-icon">📊</span>
+                                <h3>Monthly Spending Trend</h3>
+                            </div>
+                            <div class="chart-options">
+                                <button class="chart-option-btn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <circle cx="12" cy="12" r="1"></circle>
+                                        <circle cx="12" cy="5" r="1"></circle>
+                                        <circle cx="12" cy="19" r="1"></circle>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="expenseMonthlyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Category Distribution Chart -->
+                    <div class="chart-card category-chart">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <span class="chart-icon">🎯</span>
+                                <h3>Category Distribution</h3>
+                            </div>
+                            <div class="chart-options">
+                                <button class="chart-option-btn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <circle cx="12" cy="12" r="1"></circle>
+                                        <circle cx="12" cy="5" r="1"></circle>
+                                        <circle cx="12" cy="19" r="1"></circle>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="expenseCategoryChart"></canvas>
+                            <div class="chart-legend" id="category-legend"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="expenses-table-section">
+
+            <!-- Modern Expenses Table -->
+            <div class="expense-table-section">
+                <div class="table-header">
+                    <h3 class="table-title">Recent Transactions</h3>
+                    <div class="table-controls">
+                        <div class="search-wrapper">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                            </svg>
+                            <input type="text" placeholder="Search transactions..." class="search-input" id="expense-search">
+                        </div>
+                        <div class="view-options">
+                            <button class="view-btn active" data-view="list">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+                                </svg>
+                            </button>
+                            <button class="view-btn" data-view="grid">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <div class="table-container">
-                    <table class="invoices-table">
+                    <table class="expense-table">
                         <thead>
                             <tr>
-                                <th>Date</th>
+                                <th class="sortable" data-sort="date">
+                                    Date
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="sort-icon">
+                                        <path d="M7 10l5 5 5-5z"/>
+                                    </svg>
+                                </th>
                                 <th>Description</th>
-                                <th>Category</th>
-                                <th>Amount</th>
+                                <th class="sortable" data-sort="category">
+                                    Category
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="sort-icon">
+                                        <path d="M7 10l5 5 5-5z"/>
+                                    </svg>
+                                </th>
+                                <th class="sortable" data-sort="amount">
+                                    Amount
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="sort-icon">
+                                        <path d="M7 10l5 5 5-5z"/>
+                                    </svg>
+                                </th>
                                 <th>Payment Method</th>
                                 <th>Vendor</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="expenses-table-body"></tbody>
+                        <tbody id="expenses-table-body">
+                            <!-- Table rows will be dynamically populated -->
+                        </tbody>
                     </table>
                 </div>
             </div>
-        `;
-    }
+        </div>
+    `;
+}
 
     attachExpensePageListeners(expensesPage) {
         // Add expense button, export, edit, delete
@@ -73,33 +205,932 @@ class ExpenseUI {
     }
 
     renderExpenses() {
-        // Render filters
-        this.renderExpenseFilters();
-
-        // Render table
-        const tbody = document.getElementById('expenses-table-body');
-        if (!tbody) return;
-        let expenses = this.expenseManager.expenses || [];
-        // Apply filters
-        expenses = this.applyExpenseFilters(expenses);
-        if (!expenses.length) {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--color-text-secondary); padding:40px;">No expenses found. Add your first expense!</td></tr>`;
-        } else {
-            tbody.innerHTML = expenses.map(exp => `
-                <tr>
-                    <td>${exp.date}</td>
-                    <td>${exp.description}</td>
-                    <td>${exp.categoryName || ''}</td>
-                    <td>₹${exp.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td>${exp.paymentMethod || ''}</td>
-                    <td>${exp.vendorName || ''}</td>
-                    <td><!-- Actions can go here --></td>
-                </tr>
-            `).join('');
-        }
-        // Render charts
-        this.renderExpenseCharts(expenses);
+    if (!this.expenseManager.isInitialized) {
+        console.log('Expense manager not initialized yet');
+        return;
     }
+
+    // Clear dynamic content first
+    const expensesPage = document.getElementById('expenses-page');
+    if (expensesPage) {
+        const balanceCards = expensesPage.querySelector('#expense-balance-cards');
+        if (balanceCards) balanceCards.innerHTML = '';
+        const filtersContainer = expensesPage.querySelector('#expenses-page-filters-container');
+        if (filtersContainer) filtersContainer.innerHTML = '';
+        const tableBody = expensesPage.querySelector('#expenses-table-body');
+        if (tableBody) tableBody.innerHTML = '';
+    }
+    
+    // Destroy existing charts if any
+    if (this.charts && this.charts.monthly && typeof this.charts.monthly.destroy === 'function') { 
+        this.charts.monthly.destroy(); 
+        this.charts.monthly = null; 
+    }
+    if (this.charts && this.charts.category && typeof this.charts.category.destroy === 'function') { 
+        this.charts.category.destroy(); 
+        this.charts.category = null; 
+    }
+    
+    // Render all components
+    this.renderModernBalanceCards();  // NEW method name
+    this.renderModernFilters();       // NEW method name
+    this.renderModernTable();         // NEW method name
+    this.addModernExpenseStyles();    // NEW method to add styles
+    
+    // Render charts after a small delay
+    setTimeout(() => {
+        this.renderModernCharts();    // NEW method name
+    }, 100);
+}
+
+    renderModernBalanceCards() {
+    const container = document.getElementById('expense-balance-cards');
+    if (!container) return;
+    
+    const balance = this.expenseManager.balanceSummary;
+    const analytics = this.expenseManager.getExpenseAnalytics();
+    
+    // Calculate mock trends (you can replace with real calculations)
+    const earningsChange = balance.totalEarnings > 0 ? '+12.5%' : '0%';
+    const expensesChange = balance.totalExpenses > 0 ? '+8.3%' : '0%';
+    
+    container.innerHTML = `
+        <div class="balance-cards-grid">
+            <!-- Earnings Card -->
+            <div class="balance-card earnings-card">
+                <div class="card-glow"></div>
+                <div class="card-content">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1.81.45 1.61 1.67 1.61 1.16 0 1.6-.64 1.6-1.36 0-.84-.68-1.37-2.07-1.75-1.7-.46-3.45-1.1-3.45-3.21 0-1.49 1.09-2.77 2.91-3.08V5h2.67v1.92c1.63.39 2.75 1.48 2.85 3.01h-1.96c-.05-.6-.39-1.31-1.44-1.31-1.08 0-1.54.45-1.54 1.25 0 .74.66 1.13 2.02 1.51 1.73.49 3.5 1.17 3.5 3.45 0 1.6-1.11 2.83-3.12 3.26z"/>
+                        </svg>
+                    </div>
+                    <div class="card-details">
+                        <p class="card-label">Total Earnings</p>
+                        <h3 class="card-value">₹${this.formatNumber(balance.totalEarnings)}</h3>
+                        <div class="card-trend positive">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M7 14l5-5 5 5z"/>
+                            </svg>
+                            ${earningsChange}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Expenses Card -->
+            <div class="balance-card expenses-card">
+                <div class="card-glow"></div>
+                <div class="card-content">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+                        </svg>
+                    </div>
+                    <div class="card-details">
+                        <p class="card-label">Total Expenses</p>
+                        <h3 class="card-value">₹${this.formatNumber(balance.totalExpenses)}</h3>
+                        <div class="card-trend negative">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M7 10l5 5 5-5z"/>
+                            </svg>
+                            ${expensesChange}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Balance Card -->
+            <div class="balance-card ${balance.currentBalance >= 0 ? 'profit-card' : 'loss-card'}">
+                <div class="card-glow"></div>
+                <div class="card-content">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            ${balance.currentBalance >= 0 ? 
+                                '<path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>' :
+                                '<path d="M16 18l2.29-2.29-4.88-4.88-4 4L2 7.41 3.41 6l6 6 4-4 6.3 6.29L22 12v6z"/>'
+                            }
+                        </svg>
+                    </div>
+                    <div class="card-details">
+                        <p class="card-label">Current Balance</p>
+                        <h3 class="card-value">₹${this.formatNumber(Math.abs(balance.currentBalance))}</h3>
+                        <div class="card-status ${balance.currentBalance >= 0 ? 'healthy' : 'warning'}">
+                            ${balance.currentBalance >= 0 ? '✓ Healthy' : '⚠ Needs Attention'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Top Category Card -->
+            <div class="balance-card category-card">
+                <div class="card-glow"></div>
+                <div class="card-content">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                    </div>
+                    <div class="card-details">
+                        <p class="card-label">Top Category</p>
+                        <h3 class="card-value" style="font-size: 1.2rem;">
+                            ${analytics.topCategory.icon} ${analytics.topCategory.name}
+                        </h3>
+                        <div class="card-amount">
+                            ₹${this.formatNumber(analytics.topCategory.amount)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// NEW METHOD 2: Modern Filters
+renderModernFilters() {
+    const container = document.getElementById('expenses-page-filters-container');
+    if (!container) return;
+    
+    const categories = this.expenseManager.categories;
+    const paymentMethods = this.expenseManager.getPaymentMethods();
+    
+    container.innerHTML = `
+        <div class="modern-filters">
+            <div class="filter-group">
+                <label class="filter-label">Category</label>
+                <select class="filter-select" id="expense-filter-category">
+                    <option value="all">All Categories</option>
+                    ${categories.map(cat => `
+                        <option value="${cat.id}">${cat.icon} ${cat.name}</option>
+                    `).join('')}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Payment</label>
+                <select class="filter-select" id="expense-filter-payment-method">
+                    <option value="all">All Methods</option>
+                    ${paymentMethods.map(method => `
+                        <option value="${method.value}">${method.icon} ${method.label}</option>
+                    `).join('')}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Date Range</label>
+                <div class="date-inputs">
+                    <input type="date" class="filter-input" id="expense-filter-date-from">
+                    <span>to</span>
+                    <input type="date" class="filter-input" id="expense-filter-date-to">
+                </div>
+            </div>
+            
+            <div class="filter-actions">
+                <button class="filter-btn apply" onclick="window.expenseUI.applyExpenseFilters()">Apply</button>
+                <button class="filter-btn clear" onclick="window.expenseUI.clearExpenseFilters()">Clear</button>
+            </div>
+        </div>
+    `;
+}
+
+// NEW METHOD 3: Modern Table
+renderModernTable() {
+    const tbody = document.getElementById('expenses-table-body');
+    if (!tbody) return;
+    
+    const expenses = this.expenseManager.expenseState.filteredData || this.expenseManager.expenses;
+    
+    if (expenses.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="empty-state">
+                    <div class="empty-icon">💸</div>
+                    <h3>No expenses found</h3>
+                    <p>Add your first expense to get started</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = expenses.map((expense, index) => {
+        const category = this.expenseManager.categories.find(cat => cat.id === expense.categoryId);
+        const paymentMethod = this.expenseManager.getPaymentMethods().find(m => m.value === expense.paymentMethod);
+        
+        return `
+            <tr class="expense-row" style="animation-delay: ${index * 0.05}s">
+                <td class="date-cell">
+                    <div class="date-wrapper">
+                        <span class="date-day">${new Date(expense.date).getDate()}</span>
+                        <span class="date-month">${new Date(expense.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                    </div>
+                </td>
+                <td class="description-cell">
+                    <div class="description-wrapper">
+                        <span class="description-text">${expense.description}</span>
+                        ${expense.vendorName ? `<span class="vendor-text">Vendor: ${expense.vendorName}</span>` : ''}
+                    </div>
+                </td>
+                <td class="category-cell">
+                    <span class="category-badge" style="background: ${category?.color}20; color: ${category?.color}">
+                        ${category ? category.icon : '💰'} ${expense.categoryName}
+                    </span>
+                </td>
+                <td class="amount-cell">
+                    <span class="amount-value">₹${this.formatNumber(expense.amount)}</span>
+                </td>
+                <td class="payment-cell">
+                    <span class="payment-badge">
+                        ${paymentMethod ? paymentMethod.icon : '💳'} ${paymentMethod ? paymentMethod.label : expense.paymentMethod}
+                    </span>
+                </td>
+                <td class="vendor-cell">${expense.vendorName || '-'}</td>
+                <td class="actions-cell">
+                    <button class="action-btn edit-btn edit-expense-btn" data-expense-id="${expense.id}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                        </svg>
+                    </button>
+                    <button class="action-btn delete-btn delete-expense-btn" data-expense-id="${expense.id}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                        </svg>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// NEW METHOD 4: Modern Charts
+renderModernCharts() {
+    // Monthly Chart
+    const monthlyCtx = document.getElementById('expenseMonthlyChart');
+    if (monthlyCtx) {
+        if (this.charts.monthly) {
+            this.charts.monthly.destroy();
+        }
+        
+        const data = this.expenseManager.getMonthlyExpenseData();
+        
+        this.charts.monthly = new Chart(monthlyCtx, {
+            type: 'line',
+            data: {
+                labels: data.map(item => item.month),
+                datasets: [{
+                    label: 'Monthly Expenses',
+                    data: data.map(item => item.amount),
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#667eea',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '₹' + new Intl.NumberFormat('en-IN').format(value);
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Category Chart
+    const categoryCtx = document.getElementById('expenseCategoryChart');
+    if (categoryCtx) {
+        if (this.charts.category) {
+            this.charts.category.destroy();
+        }
+        
+        const categoryData = this.expenseManager.getCategoryBreakdown();
+        
+        this.charts.category = new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: categoryData.map(item => item.name),
+                datasets: [{
+                    data: categoryData.map(item => item.amount),
+                    backgroundColor: [
+                        '#667eea', '#10b981', '#ef4444', '#f59e0b', 
+                        '#ec4899', '#8b5cf6', '#06b6d4', '#f97316'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            usePointStyle: true,
+                            font: { size: 11 }
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Add this new method to the ExpenseUI class
+// This adds all the modern styles for the expense page
+// Call this from renderExpenses() method
+
+addModernExpenseStyles() {
+    if (document.getElementById('modern-expense-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'modern-expense-styles';
+    style.textContent = `
+        /* Modern Expense Page Styles */
+        .expense-page-wrapper {
+            background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Animated Header Section */
+        .expense-header-section {
+            position: relative;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem 0;
+            margin: -20px -20px 2rem -20px;
+            overflow: hidden;
+        }
+
+        .header-bg-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0.1;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            animation: slide 20s linear infinite;
+        }
+
+        @keyframes slide {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(60px); }
+        }
+
+        .expense-header {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-content-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .icon-bubble {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-icon {
+            font-size: 32px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        .icon-pulse {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: pulse 2s ease-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.3);
+                opacity: 0;
+            }
+        }
+
+        .header-text h1 {
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .page-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.95rem;
+            margin: 0.25rem 0 0 0;
+        }
+
+        /* Modern Buttons */
+        .btn-modern {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-modern::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-modern:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-export {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-export:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-add-expense {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-add-expense:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Balance Cards Grid */
+        .balance-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .balance-card {
+            position: relative;
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        .balance-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .balance-card[data-delay="100"] {
+            animation-delay: 0.1s;
+        }
+
+        .balance-card[data-delay="200"] {
+            animation-delay: 0.2s;
+        }
+
+        .card-background {
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+            animation: rotate 30s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .earnings-card .card-background {
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+        }
+
+        .expenses-card .card-background {
+            background: radial-gradient(circle, rgba(239, 68, 68, 0.1) 0%, transparent 70%);
+        }
+
+        .profit-card .card-background {
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+        }
+
+        .loss-card .card-background {
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .card-icon {
+            flex-shrink: 0;
+        }
+
+        .icon-wrapper {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(102, 126, 234, 0.1) 100%);
+            color: #667eea;
+        }
+
+        .earnings-card .icon-wrapper {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
+            color: #10b981;
+        }
+
+        .expenses-card .icon-wrapper {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+            color: #ef4444;
+        }
+
+        .card-details {
+            flex: 1;
+        }
+
+        .card-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin: 0 0 0.5rem 0;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-value {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 0.5rem 0;
+            line-height: 1;
+        }
+
+        .card-trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+        }
+
+        .card-trend.positive {
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .card-trend.negative {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .card-sparkline {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            opacity: 0.3;
+        }
+
+        .card-sparkline svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Analytics Grid */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .chart-title h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .chart-icon {
+            font-size: 1.25rem;
+        }
+
+        .chart-option-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: #f1f5f9;
+            color: #64748b;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .chart-option-btn:hover {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .chart-body {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Modern Table */
+        .expense-table-section {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            margin: 2rem 0;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .table-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .search-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            color: #64748b;
+            pointer-events: none;
+        }
+
+        .search-input {
+            padding: 0.5rem 1rem 0.5rem 2.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            width: 250px;
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .view-options {
+            display: flex;
+            gap: 0.25rem;
+            padding: 0.25rem;
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .view-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .view-btn.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .expense-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .expense-table thead th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #64748b;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .expense-table tbody tr {
+            transition: all 0.2s;
+        }
+
+        .expense-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .expense-table tbody td {
+            padding: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            font-size: 0.9375rem;
+        }
+
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sortable:hover {
+            color: #475569;
+        }
+
+        .sort-icon {
+            display: inline-block;
+            margin-left: 0.25rem;
+            opacity: 0.5;
+            transition: all 0.2s;
+        }
+
+        .sortable:hover .sort-icon {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .analytics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .balance-cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content-wrapper {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+            
+            .header-actions {
+                width: 100%;
+                display: flex;
+                gap: 0.5rem;
+            }
+            
+            .btn-modern {
+                flex: 1;
+            }
+        }
+    `;
+    
+    document.head.appendChild(style);
+}
+
+// Helper method to format numbers
+formatNumber(num) {
+    if (num === null || num === undefined || isNaN(num)) return '0';
+    return new Intl.NumberFormat('en-IN').format(num);
+}
 
     renderExpenseFilters() {
         const filtersContainer = document.getElementById('expenses-page-filters-container');
