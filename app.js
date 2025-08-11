@@ -467,57 +467,67 @@ renderModernCharts() {
     // Monthly Chart
     const monthlyCtx = document.getElementById('expenseMonthlyChart');
     if (monthlyCtx) {
-        if (this.charts.monthly) {
+        if (this.charts && this.charts.monthly) {
             this.charts.monthly.destroy();
         }
-        
-        const data = this.expenseManager.getMonthlyExpenseData();
-        
-        this.charts.monthly = new Chart(monthlyCtx, {
-            type: 'line',
-            data: {
-                labels: data.map(item => item.month),
-                datasets: [{
-                    label: 'Monthly Expenses',
-                    data: data.map(item => item.amount),
-                    borderColor: '#667eea',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#667eea',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 5,
-                    pointHoverRadius: 7
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
+        let data = [];
+        try {
+            data = this.expenseManager && typeof this.expenseManager.getMonthlyExpenseData === 'function'
+                ? this.expenseManager.getMonthlyExpenseData() : [];
+        } catch (e) {
+            console.error('Error getting monthly expense data:', e);
+            data = [];
+        }
+        if (Array.isArray(data) && data.length > 0) {
+            this.charts.monthly = new Chart(monthlyCtx, {
+                type: 'line',
+                data: {
+                    labels: data.map(item => item.month),
+                    datasets: [{
+                        label: 'Monthly Expenses',
+                        data: data.map(item => item.amount),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return '₹' + new Intl.NumberFormat('en-IN').format(value);
-                            }
-                        }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
                     },
-                    x: {
-                        grid: {
-                            display: false
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + new Intl.NumberFormat('en-IN').format(value);
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        } else {
+            // Optionally, show a message or clear the chart area
+            monthlyCtx.parentElement && (monthlyCtx.parentElement.innerHTML = '<div style="text-align:center;color:#aaa;padding:32px 0;">No monthly expense data available</div>');
+        }
     }
     
     // Category Chart
@@ -1247,14 +1257,15 @@ formatNumber(num) {
         }
     }
     constructor(expenseManager, showToast) {
-        this.expenseManager = expenseManager;
-        this.showToast = showToast;
-        this.expensesPage = document.getElementById('expenses-page');
-        this.expenseForm = null;
-        this.expenseTable = null;
-        this.expenseChart = null;
-        this.categoryChart = null;
-        this.filters = {
+    this.expenseManager = expenseManager;
+    this.showToast = showToast;
+    this.charts = {};
+    this.expensesPage = document.getElementById('expenses-page');
+    this.expenseForm = null;
+    this.expenseTable = null;
+    this.expenseChart = null;
+    this.categoryChart = null;
+    this.filters = {
             category: 'all',
             dateRange: { from: null, to: null },
             paymentMethod: 'all',
