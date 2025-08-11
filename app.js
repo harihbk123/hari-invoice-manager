@@ -378,7 +378,6 @@ class ExpenseManager {
         }
     }
 }
-// ...
 
 // Check authentication first
 function checkAuth() {
