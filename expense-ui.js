@@ -1,7 +1,24 @@
 // EXPENSE MANAGEMENT UI COMPONENTS - expense-ui.js
 // UI rendering and interaction logic for expense management
+// EXPENSE MANAGEMENT UI COMPONENTS - expense-ui.js
+// UI rendering and interaction logic for expense management
 
 class ExpenseUI {
+    // Populate expense form with data for editing
+    populateExpenseForm(expenseId) {
+        const expense = this.expenseManager.expenses.find(exp => exp.id == expenseId);
+        if (!expense) return;
+        document.getElementById('expense-amount').value = expense.amount;
+        document.getElementById('expense-date').value = expense.date.split('T')[0];
+        document.getElementById('expense-description').value = expense.description;
+        document.getElementById('expense-category').value = expense.categoryId;
+        document.getElementById('expense-payment-method').value = expense.paymentMethod;
+        document.getElementById('expense-vendor').value = expense.vendorName || '';
+        document.getElementById('expense-receipt').value = expense.receiptNumber || '';
+        document.getElementById('expense-notes').value = expense.notes || '';
+        document.getElementById('expense-business').checked = !!expense.business;
+        document.getElementById('expense-tax-deductible').checked = !!expense.taxDeductible;
+    }
     // Robust cleanup for all expense UI DOM, charts, and listeners
     cleanupExpensesPage() {
         const expensesPage = document.getElementById('expenses-page');

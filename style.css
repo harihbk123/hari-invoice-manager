@@ -1,3 +1,109 @@
+/* Modern Filters UI */
+.modern-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  align-items: flex-end;
+}
+.modern-filters .filter-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+}
+.modern-filters .filter-label {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.modern-filters .filter-select, .modern-filters .filter-input {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  font-size: 15px;
+  background: #fafbfc;
+  transition: border 0.2s;
+}
+.modern-filters .filter-select:focus, .modern-filters .filter-input:focus {
+  border-color: #667eea;
+  outline: none;
+}
+.modern-filters .date-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.modern-filters .filter-actions {
+  display: flex;
+  gap: 10px;
+}
+.modern-filters .filter-btn {
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: none;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  background: #667eea;
+  color: #fff;
+  transition: background 0.2s;
+}
+.modern-filters .filter-btn.clear {
+  background: #f3f4f6;
+  color: #333;
+}
+.modern-filters .filter-btn.apply:hover {
+  background: #4f46e5;
+}
+.modern-filters .filter-btn.clear:hover {
+  background: #e5e7eb;
+}
+
+/* Modern Chart Cards */
+.expense-charts {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+.expense-charts > div {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 24px 18px 18px 18px;
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+}
+.expense-charts h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 18px;
+  color: #333;
+}
+
+/* Edit Modal Improvements */
+#expense-modal .modal-content {
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(102,126,234,0.10);
+  background: #fff;
+}
+#expense-modal .modal-header {
+  border-bottom: 1px solid #f3f4f6;
+  padding-bottom: 10px;
+}
+#expense-modal .modal-footer {
+  border-top: 1px solid #f3f4f6;
+  padding-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
 :root {
   /* Primitive Color Tokens */
   --color-white: rgba(255, 255, 255, 1);
