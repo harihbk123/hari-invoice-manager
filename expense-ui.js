@@ -47,16 +47,6 @@ class ExpenseUI {
                 this.navigateToExpenses();
             });
         }
-
-        // Add expenses page to main content if not exists
-        const mainContent = document.querySelector('.main-content');
-        if (mainContent && !document.getElementById('expenses-page')) {
-            const expensesPage = document.createElement('div');
-            expensesPage.id = 'expenses-page';
-            expensesPage.className = 'page';
-            expensesPage.innerHTML = this.getExpensesPageHTML();
-            mainContent.appendChild(expensesPage);
-        }
     }
 
     // Navigate to expenses page
@@ -65,12 +55,27 @@ class ExpenseUI {
         document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
         document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
 
+        // Remove the old expenses page if it exists (and all listeners)
+        const oldExpensesPage = document.getElementById('expenses-page');
+        if (oldExpensesPage) {
+            oldExpensesPage.remove();
+        }
+
+        // Re-create the expenses page DOM
+        const mainContent = document.querySelector('.main-content');
+        const expensesPage = document.createElement('div');
+        expensesPage.id = 'expenses-page';
+        expensesPage.className = 'page';
+        expensesPage.innerHTML = this.getExpensesPageHTML();
+        mainContent.appendChild(expensesPage);
+
         // Activate expenses nav and page
         const expensesNavLink = document.querySelector('[data-page="expenses"]');
-        const expensesPage = document.getElementById('expenses-page');
-        
         if (expensesNavLink) expensesNavLink.classList.add('active');
-        if (expensesPage) expensesPage.classList.add('active');
+        expensesPage.classList.add('active');
+
+        // Attach local event listeners to the expenses page only
+        this.attachExpensePageListeners(expensesPage);
 
         // AGGRESSIVE cleanup of any leaked expense elements
         this.aggressiveCleanup();
@@ -79,6 +84,40 @@ class ExpenseUI {
         setTimeout(() => {
             this.renderExpenses();
         }, 50);
+    }
+
+    // Attach all event listeners to the expenses page container only
+    attachExpensePageListeners(expensesPage) {
+        // Add expense button, export, edit, delete
+        expensesPage.addEventListener('click', (e) => {
+            if (e.target.id === 'add-expense-btn') {
+                this.openExpenseModal();
+            } else if (e.target.id === 'export-expenses') {
+                this.exportExpenses();
+            } else if (e.target.classList.contains('edit-expense-btn')) {
+                const expenseId = e.target.getAttribute('data-expense-id');
+                this.editExpense(expenseId);
+            } else if (e.target.classList.contains('delete-expense-btn')) {
+                const expenseId = e.target.getAttribute('data-expense-id');
+                this.deleteExpense(expenseId);
+            } else if (e.target.id === 'expense-modal-overlay' || e.target.id === 'close-expense-modal' || e.target.id === 'cancel-expense') {
+                this.closeExpenseModal();
+            } else if (e.target.id === 'category-modal-overlay' || e.target.id === 'close-category-modal') {
+                this.closeCategoryModal();
+            } else if (e.target.id === 'save-expense') {
+                e.preventDefault();
+                this.saveExpense();
+            } else if (e.target.id === 'save-category') {
+                e.preventDefault();
+                this.saveCategory();
+            }
+        });
+        // Category selection handler - show "Add New Category" option
+        expensesPage.addEventListener('change', (e) => {
+            if (e.target.id === 'expense-category' && e.target.value === 'add-new') {
+                this.openCategoryModal();
+            }
+        });
     }
 
     // Aggressive cleanup of expense elements from other pages
@@ -341,49 +380,9 @@ class ExpenseUI {
         this.addExpenseModalStyles();
     }
 
-    // Setup expense forms and event listeners
+    // Setup expense forms and event listeners (no-op, handled by attachExpensePageListeners)
     setupExpenseForms() {
-        // Add expense button
-        document.addEventListener('click', (e) => {
-            if (e.target.id === 'add-expense-btn') {
-                this.openExpenseModal();
-            } else if (e.target.id === 'export-expenses') {
-                this.exportExpenses();
-            } else if (e.target.classList.contains('edit-expense-btn')) {
-                const expenseId = e.target.getAttribute('data-expense-id');
-                this.editExpense(expenseId);
-            } else if (e.target.classList.contains('delete-expense-btn')) {
-                const expenseId = e.target.getAttribute('data-expense-id');
-                this.deleteExpense(expenseId);
-            }
-        });
-
-        // Modal close handlers
-        document.addEventListener('click', (e) => {
-            if (e.target.id === 'expense-modal-overlay' || e.target.id === 'close-expense-modal' || e.target.id === 'cancel-expense') {
-                this.closeExpenseModal();
-            } else if (e.target.id === 'category-modal-overlay' || e.target.id === 'close-category-modal') {
-                this.closeCategoryModal();
-            }
-        });
-
-        // Form submission handlers
-        document.addEventListener('click', (e) => {
-            if (e.target.id === 'save-expense') {
-                e.preventDefault();
-                this.saveExpense();
-            } else if (e.target.id === 'save-category') {
-                e.preventDefault();
-                this.saveCategory();
-            }
-        });
-
-        // Category selection handler - show "Add New Category" option
-        document.addEventListener('change', (e) => {
-            if (e.target.id === 'expense-category' && e.target.value === 'add-new') {
-                this.openCategoryModal();
-            }
-        });
+        // No global listeners; all handled locally per expenses page
     }
 
     // Setup expense filters
