@@ -73,24 +73,147 @@ class ExpenseUI {
     }
 
     renderExpenses() {
+        // Render filters
+        this.renderExpenseFilters();
+
+        // Render table
         const tbody = document.getElementById('expenses-table-body');
         if (!tbody) return;
-        const expenses = this.expenseManager.expenses || [];
+        let expenses = this.expenseManager.expenses || [];
+        // Apply filters
+        expenses = this.applyExpenseFilters(expenses);
         if (!expenses.length) {
             tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--color-text-secondary); padding:40px;">No expenses found. Add your first expense!</td></tr>`;
-            return;
+        } else {
+            tbody.innerHTML = expenses.map(exp => `
+                <tr>
+                    <td>${exp.date}</td>
+                    <td>${exp.description}</td>
+                    <td>${exp.categoryName || ''}</td>
+                    <td>₹${exp.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td>${exp.paymentMethod || ''}</td>
+                    <td>${exp.vendorName || ''}</td>
+                    <td><!-- Actions can go here --></td>
+                </tr>
+            `).join('');
         }
-        tbody.innerHTML = expenses.map(exp => `
-            <tr>
-                <td>${exp.date}</td>
-                <td>${exp.description}</td>
-                <td>${exp.categoryName || ''}</td>
-                <td>₹${exp.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                <td>${exp.paymentMethod || ''}</td>
-                <td>${exp.vendorName || ''}</td>
-                <td><!-- Actions can go here --></td>
-            </tr>
-        `).join('');
+        // Render charts
+        this.renderExpenseCharts(expenses);
+    }
+
+    renderExpenseFilters() {
+        const filtersContainer = document.getElementById('expenses-page-filters-container');
+        if (!filtersContainer) return;
+        // Get unique categories and payment methods
+        const categories = [
+            { id: 'all', name: 'All Categories' },
+            ...[...new Map((this.expenseManager.expenses || []).map(e => [e.categoryId, { id: e.categoryId, name: e.categoryName }])).values()].filter(c => c.id)
+        ];
+        const paymentMethods = [
+            { value: 'all', label: 'All Methods' },
+            ...Array.from(new Set((this.expenseManager.expenses || []).map(e => e.paymentMethod))).filter(Boolean).map(m => ({ value: m, label: m }))
+        ];
+        filtersContainer.innerHTML = `
+            <select id="expense-filter-category">
+                ${categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+            </select>
+            <input type="month" id="expense-filter-from" placeholder="From">
+            <input type="month" id="expense-filter-to" placeholder="To">
+            <select id="expense-filter-method">
+                ${paymentMethods.map(m => `<option value="${m.value}">${m.label}</option>`).join('')}
+            </select>
+            <label style="margin-left:8px;"><input type="checkbox" id="expense-filter-business"> Business Only</label>
+            <button id="expense-filter-apply" class="btn btn--sm btn--secondary" style="margin-left:8px;">Apply</button>
+        `;
+        // Attach listeners
+        document.getElementById('expense-filter-apply').onclick = () => this.renderExpenses();
+    }
+
+    applyExpenseFilters(expenses) {
+        // Read filter values
+        const cat = document.getElementById('expense-filter-category')?.value || 'all';
+        const from = document.getElementById('expense-filter-from')?.value;
+        const to = document.getElementById('expense-filter-to')?.value;
+        const method = document.getElementById('expense-filter-method')?.value || 'all';
+        const businessOnly = document.getElementById('expense-filter-business')?.checked;
+        return expenses.filter(exp => {
+            let ok = true;
+            if (cat !== 'all' && exp.categoryId !== cat) ok = false;
+            if (method !== 'all' && exp.paymentMethod !== method) ok = false;
+            if (businessOnly && !exp.isBusinessExpense) ok = false;
+            if (from) {
+                const expDate = exp.date.slice(0, 7);
+                if (expDate < from) ok = false;
+            }
+            if (to) {
+                const expDate = exp.date.slice(0, 7);
+                if (expDate > to) ok = false;
+            }
+            return ok;
+        });
+    }
+
+    renderExpenseCharts(expenses) {
+        // Monthly Expense Trend
+        const monthly = {};
+        expenses.forEach(exp => {
+            const ym = exp.date.slice(0, 7);
+            monthly[ym] = (monthly[ym] || 0) + exp.amount;
+        });
+        const months = Object.keys(monthly).sort();
+        const monthVals = months.map(m => monthly[m]);
+        // Category Breakdown
+        const catAgg = {};
+        expenses.forEach(exp => {
+            const cat = exp.categoryName || 'Uncategorized';
+            catAgg[cat] = (catAgg[cat] || 0) + exp.amount;
+        });
+        const catNames = Object.keys(catAgg);
+        const catVals = catNames.map(c => catAgg[c]);
+        // Destroy old charts if any
+        if (this.expenseChart) { this.expenseChart.destroy(); this.expenseChart = null; }
+        if (this.categoryChart) { this.categoryChart.destroy(); this.categoryChart = null; }
+        // Monthly Trend Chart
+        const ctx1 = document.getElementById('expenseMonthlyChart')?.getContext('2d');
+        if (ctx1) {
+            this.expenseChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Monthly Expenses',
+                        data: monthVals,
+                        borderColor: '#1FB8CD',
+                        backgroundColor: 'rgba(31,184,205,0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+        // Category Breakdown Chart
+        const ctx2 = document.getElementById('expenseCategoryChart')?.getContext('2d');
+        if (ctx2) {
+            this.categoryChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: catNames,
+                    datasets: [{
+                        data: catVals,
+                        backgroundColor: [
+                            '#1FB8CD', '#F59E42', '#6B7280', '#10B981', '#F43F5E', '#6366F1', '#FBBF24', '#A3E635', '#F472B6', '#F87171'
+                        ]
+                    }]
+                },
+                options: {
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
     }
     constructor(expenseManager, showToast) {
         this.expenseManager = expenseManager;
@@ -1578,26 +1701,26 @@ function calculateQuarterlyEarnings(invoices = appData.invoices) {
         .forEach(({ date, amount }) => {
             const d = new Date(date);
             if (Number.isNaN(d)) return;
-            const year = d.getFullYear();
-            const quarter = Math.ceil((d.getMonth() + 1) / 3);
-            const quarterKey = `${year}-Q${quarter}`;
-            quarterlyData.set(quarterKey, (quarterlyData.get(quarterKey) || 0) + amount);
+            const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            monthlyData.set(monthKey, (monthlyData.get(monthKey) || 0) + amount);
         });
 
-    return Array.from(quarterlyData, ([quarter, amount]) => ({ month: quarter, amount }))
-                 .sort((a, b) => a.month.localeCompare(b.month));
+    appData.monthlyEarnings = Array.from(monthlyData, ([month, amount]) => ({ month, amount }))
+                                   .sort((a, b) => a.month.localeCompare(b.month));
 }
 
-function calculateYearlyEarnings(invoices = appData.invoices) {
-    const yearlyData = new Map();
+function calculateQuarterlyEarnings(invoices = appData.invoices) {
+    const quarterlyData = new Map();
 
     invoices
         .filter(inv => inv.status === 'Paid')
         .forEach(({ date, amount }) => {
             const d = new Date(date);
             if (Number.isNaN(d)) return;
-            const year = d.getFullYear().toString();
-            yearlyData.set(year, (yearlyData.get(year) || 0) + amount);
+            const year = d.getFullYear();
+            const quarter = Math.ceil((d.getMonth() + 1) / 3);
+            const quarterKey = `${year}-Q${quarter}`;
+            quarterlyData.set(quarterKey, (quarterlyData.get(quarterKey) || 0) + amount);
         });
 
     return Array.from(yearlyData, ([year, amount]) => ({ month: year, amount }))
