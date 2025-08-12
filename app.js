@@ -4264,7 +4264,10 @@ function calculateInvoiceTotal() {
     }
 }
 
+let isSavingInvoice = false;
 async function saveInvoice(status) {
+    if (isSavingInvoice) return;
+    isSavingInvoice = true;
     console.log('Saving invoice with status:', status);
 
     const invoiceNumberInput = document.getElementById('invoice-number');
@@ -4379,6 +4382,8 @@ async function saveInvoice(status) {
     } catch (error) {
         console.error('Error saving invoice:', error);
         showToast('Error saving invoice. Please try again.', 'error');
+    } finally {
+        isSavingInvoice = false;
     }
 }
 
