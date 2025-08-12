@@ -691,7 +691,11 @@ class ExpenseUI {
     }
 }
 
-// Enhanced ExpenseManager class with proper error handling
+// ============================================
+// COMPLETE EXPENSEMANAGER CLASS - REPLACE YOUR ENTIRE EXISTING CLASS WITH THIS
+// This includes the missing updateBalanceFromInvoices method
+// ============================================
+
 class ExpenseManager {
     constructor(supabaseClient) {
         this.supabaseClient = supabaseClient;
@@ -917,6 +921,133 @@ class ExpenseManager {
             }
             return true;
         }
+    }
+
+    // ============================================
+    // THIS IS THE MISSING METHOD THAT WAS CAUSING THE ERROR
+    // ============================================
+    async updateBalanceFromInvoices(invoices) {
+        try {
+            // Calculate total earnings from paid invoices
+            const totalEarnings = invoices
+                .filter(inv => inv.status === 'Paid')
+                .reduce((sum, inv) => sum + inv.amount, 0);
+
+            // Calculate total expenses
+            const totalExpenses = this.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+            
+            // Calculate current balance
+            const currentBalance = totalEarnings - totalExpenses;
+
+            // Update local balance summary
+            this.balanceSummary = {
+                totalEarnings,
+                totalExpenses,
+                currentBalance
+            };
+
+            console.log('Balance updated:', this.balanceSummary);
+
+            // Try to update in database (optional - only if you have balance_summary table)
+            try {
+                // First check if balance_summary table exists and has records
+                const { data: existingBalance, error: fetchError } = await this.supabaseClient
+                    .from('balance_summary')
+                    .select('id')
+                    .limit(1);
+
+                if (!fetchError) {
+                    // Table exists, try to upsert
+                    const { error } = await this.supabaseClient
+                        .from('balance_summary')
+                        .upsert({
+                            id: 'default',
+                            total_earnings: totalEarnings,
+                            total_expenses: totalExpenses,
+                            current_balance: currentBalance,
+                            last_calculated_at: new Date().toISOString()
+                        });
+
+                    if (error) {
+                        console.warn('Could not update balance in database:', error);
+                    } else {
+                        console.log('Balance updated in database');
+                    }
+                } else {
+                    // Table doesn't exist or other error
+                    console.log('Balance summary table not available, using local storage only');
+                }
+            } catch (dbError) {
+                // Silently fail if table doesn't exist
+                console.log('Balance summary table operations not available');
+            }
+
+            return this.balanceSummary;
+        } catch (error) {
+            console.error('Error updating balance from invoices:', error);
+            return this.balanceSummary;
+        }
+    }
+
+    // Additional helper methods
+    getExpensesByCategory(categoryName) {
+        return this.expenses.filter(expense => expense.categoryName === categoryName);
+    }
+
+    getExpensesByDateRange(startDate, endDate) {
+        return this.expenses.filter(expense => {
+            const expenseDate = new Date(expense.date);
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            return expenseDate >= start && expenseDate <= end;
+        });
+    }
+
+    getMonthlyExpenseData() {
+        const monthlyData = new Map();
+        
+        this.expenses.forEach(expense => {
+            const date = new Date(expense.date);
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            monthlyData.set(monthKey, (monthlyData.get(monthKey) || 0) + expense.amount);
+        });
+        
+        return Array.from(monthlyData, ([month, amount]) => ({ month, amount }))
+                   .sort((a, b) => a.month.localeCompare(b.month));
+    }
+
+    getCategoryBreakdown() {
+        const categoryMap = new Map();
+        
+        this.expenses.forEach(expense => {
+            const categoryName = expense.categoryName || 'Uncategorized';
+            if (!categoryMap.has(categoryName)) {
+                categoryMap.set(categoryName, {
+                    name: categoryName,
+                    amount: 0,
+                    count: 0
+                });
+            }
+            
+            const categoryData = categoryMap.get(categoryName);
+            categoryData.amount += expense.amount;
+            categoryData.count += 1;
+        });
+        
+        return Array.from(categoryMap.values())
+                   .sort((a, b) => b.amount - a.amount);
+    }
+
+    getTotalExpenses() {
+        return this.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    }
+
+    getBusinessExpenses() {
+        return this.expenses.filter(expense => expense.isBusinessExpense);
+    }
+
+    getTaxDeductibleExpenses() {
+        return this.expenses.filter(expense => expense.taxDeductible);
     }
 }
 
@@ -2108,6 +2239,24 @@ async function saveInvoiceToSupabase(invoiceData) {
     try {
         console.log('Saving invoice to Supabase:', invoiceData);
 
+        // For new invoices, check if ID already exists
+        if (!editingInvoiceId) {
+            // Generate a unique invoice ID if not provided or if it exists
+            const { data: existingInvoice } = await supabaseClient
+                .from('invoices')
+                .select('id')
+                .eq('id', invoiceData.id)
+                .single();
+
+            if (existingInvoice) {
+                // ID already exists, generate a new one
+                const timestamp = Date.now();
+                const randomNum = Math.floor(Math.random() * 1000);
+                invoiceData.id = `${appData.settings.invoicePrefix}-${timestamp}-${randomNum}`;
+                console.log('Generated new unique invoice ID:', invoiceData.id);
+            }
+        }
+
         if (editingInvoiceId) {
             const { data, error } = await supabaseClient
                 .from('invoices')
@@ -2148,7 +2297,37 @@ async function saveInvoiceToSupabase(invoiceData) {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                // If it's still a duplicate key error, try once more with a different ID
+                if (error.code === '23505') {
+                    const timestamp = Date.now();
+                    const randomNum = Math.floor(Math.random() * 10000);
+                    invoiceData.id = `${appData.settings.invoicePrefix}-${timestamp}-${randomNum}`;
+                    
+                    const { data: retryData, error: retryError } = await supabaseClient
+                        .from('invoices')
+                        .insert([{
+                            id: invoiceData.id,
+                            client_id: invoiceData.clientId,
+                            client_name: invoiceData.client,
+                            amount: invoiceData.amount,
+                            subtotal: invoiceData.subtotal,
+                            tax: invoiceData.tax,
+                            date_issued: invoiceData.date,
+                            due_date: invoiceData.dueDate,
+                            status: invoiceData.status,
+                            items: invoiceData.items
+                        }])
+                        .select()
+                        .single();
+
+                    if (retryError) throw retryError;
+                    
+                    await updateClientTotals(invoiceData.clientId);
+                    return retryData;
+                }
+                throw error;
+            }
 
             await updateClientTotals(invoiceData.clientId);
             return data;
