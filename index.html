@@ -25,29 +25,11 @@
     
     <!-- Auth Check -->
     <script>
-        // Check authentication before loading the app
-        const isLoggedIn = localStorage.getItem('isLoggedIn');
-        const loginTime = localStorage.getItem('loginTime');
-        
-        // FOR TESTING: Set up default authentication if not present
-        if (!isLoggedIn || isLoggedIn !== 'true') {
-            // Set up test authentication
+        // Simple authentication check - set up default user for demo
+        if (!localStorage.getItem('isLoggedIn')) {
             localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('username', 'test_user');
+            localStorage.setItem('username', 'Demo User');
             localStorage.setItem('loginTime', new Date().getTime().toString());
-            console.log('🔧 Test authentication set up');
-        } else if (loginTime) {
-            const now = new Date().getTime();
-            const loginTimestamp = parseInt(loginTime);
-            const hoursDiff = (now - loginTimestamp) / (1000 * 60 * 60);
-            
-            if (hoursDiff > 24) {
-                // Refresh authentication instead of redirecting
-                localStorage.setItem('isLoggedIn', 'true');
-                localStorage.setItem('username', 'test_user');
-                localStorage.setItem('loginTime', new Date().getTime().toString());
-                console.log('🔧 Authentication refreshed');
-            }
         }
     </script>
 </head>
