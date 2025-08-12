@@ -3,6 +3,28 @@
 
 // ExpenseUI class (migrated from expense-ui.js)
 class ExpenseUI {
+    // Edit expense
+    editExpense(expenseId) {
+        this.openExpenseModal(expenseId);
+    }
+
+    // Delete expense
+    async deleteExpense(expenseId) {
+        const expense = this.expenseManager.expenses.find(exp => exp.id === expenseId);
+        if (!expense) return;
+
+        const confirmed = confirm(`Are you sure you want to delete this expense?\n\n${expense.description} - ${this.expenseManager.formatCurrency(expense.amount)}\n\nThis action cannot be undone.`);
+        if (!confirmed) return;
+
+        try {
+            await this.expenseManager.deleteExpense(expenseId);
+            this.renderExpenses();
+            this.showToast('Expense deleted successfully', 'success');
+        } catch (error) {
+            console.error('Error deleting expense:', error);
+            this.showToast(`Error deleting expense: ${error.message}`, 'error');
+        }
+    }
     // --- MIGRATED FROM expense-ui.js ---
 // Replace the getExpensesPageHTML() method in the ExpenseUI class
 // Location: app.js, approximately line 58-113
