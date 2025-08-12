@@ -2055,47 +2055,81 @@ async function saveSettingsToSupabase(settingsData) {
     }
 }
 
+// REPLACE YOUR ENTIRE setupNavigation FUNCTION WITH THIS:
+
 function setupNavigation() {
     console.log('Setting up navigation...');
     const navLinks = document.querySelectorAll('.nav-link');
     const pages = document.querySelectorAll('.page');
-
+    
     // Get reference to ExpenseUI instance if available
-    // ExpenseUI will be managed directly in this file after migration
     let expenseUI = window.expenseUI || null;
+    
     navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const targetPage = link.dataset.page;
             console.log('Navigating to:', targetPage);
 
-            // If leaving the expenses page, run robust cleanup
+            // ENHANCED: Always run cleanup when leaving ANY page
+            cleanupExpenseFilters();
+            
+            // Special cleanup when leaving expenses page
             const currentActivePage = document.querySelector('.page.active');
-            if (currentActivePage && currentActivePage.id === 'expenses-page' && targetPage !== 'expenses') {
-                if (expenseUI && typeof expenseUI.cleanupExpensesPage === 'function') {
-                    // ExpenseUI cleanup will be handled directly after migration
-                    if (expenseUI && typeof expenseUI.cleanupExpensesPage === 'function') {
-                        expenseUI.cleanupExpensesPage();
+            if (currentActivePage && currentActivePage.id === 'expenses-page') {
+                console.log('Leaving expenses page - running deep cleanup');
+                
+                // Destroy expense UI if it exists
+                if (window.expenseUI) {
+                    if (typeof window.expenseUI.cleanupExpensesPage === 'function') {
+                        window.expenseUI.cleanupExpensesPage();
+                    }
+                    // Destroy expense charts
+                    if (window.expenseUI.expenseChart) {
+                        window.expenseUI.expenseChart.destroy();
+                        window.expenseUI.expenseChart = null;
+                    }
+                    if (window.expenseUI.categoryChart) {
+                        window.expenseUI.categoryChart.destroy();
+                        window.expenseUI.categoryChart = null;
                     }
                 }
+                
+                // Extra cleanup for expense elements
+                setTimeout(() => {
+                    cleanupExpenseFilters();
+                }, 100);
             }
 
+            // Switch active states
             navLinks.forEach(nl => nl.classList.remove('active'));
             link.classList.add('active');
 
             pages.forEach(page => page.classList.remove('active'));
             const targetElement = document.getElementById(`${targetPage}-page`);
+            
             if (targetElement) {
                 targetElement.classList.add('active');
 
-                if (targetPage === 'dashboard') renderDashboard();
-                else if (targetPage === 'invoices') renderInvoices();
-                else if (targetPage === 'clients') renderClients();
-                else if (targetPage === 'analytics') renderAnalytics();
-                else if (targetPage === 'settings') renderSettings();
-                else if (targetPage === 'expenses' && window.expenseUI) {
-                    window.expenseUI.initializeUI();
-                }
+                // Run cleanup again after page switch
+                setTimeout(() => {
+                    cleanupExpenseFilters();
+                    
+                    // Render the appropriate page
+                    if (targetPage === 'dashboard') {
+                        renderDashboard();
+                    } else if (targetPage === 'invoices') {
+                        renderInvoices();
+                    } else if (targetPage === 'clients') {
+                        renderClients();
+                    } else if (targetPage === 'analytics') {
+                        renderAnalytics();
+                    } else if (targetPage === 'settings') {
+                        renderSettings();
+                    } else if (targetPage === 'expenses' && window.expenseUI) {
+                        window.expenseUI.initializeUI();
+                    }
+                }, 50);
             } else {
                 console.error('Target page not found:', targetPage);
             }
@@ -2106,34 +2140,64 @@ function setupNavigation() {
 // 🆕 ADD THIS NEW FUNCTION TO app.js
 function cleanupExpenseFilters() {
     try {
-        // Remove expense filters from all pages except expenses page
-        document.querySelectorAll('.page:not(#expenses-page) .expense-filters-container').forEach(container => {
-            console.log('Removing leaked expense filter container');
-            container.remove();
-        });
+        console.log('🧹 Running enhanced expense cleanup...');
         
-        // Remove expense filter elements that might have leaked
-        document.querySelectorAll('[id^="expense-filter-"]:not(#expenses-page [id^="expense-filter-"])').forEach(element => {
-            console.log('Removing leaked expense filter element:', element.id);
-            element.remove();
-        });
-
-        // Clean up any expense charts that might have leaked
-        document.querySelectorAll('.page:not(#expenses-page) #expenseMonthlyChart, .page:not(#expenses-page) #expenseCategoryChart').forEach(chart => {
-            console.log('Removing leaked expense chart');
-            chart.remove();
-        });
-
-        // Clean up expense balance cards from non-dashboard pages
-        document.querySelectorAll('.page:not(#dashboard-page):not(#expenses-page) .expense-balance-grid').forEach(balanceGrid => {
-            console.log('Removing leaked expense balance grid');
-            balanceGrid.remove();
-        });
-
+        // Get current active page
+        const activePage = document.querySelector('.page.active');
+        const activePageId = activePage ? activePage.id : '';
+        
+        // Only run cleanup if we're NOT on the expenses page
+        if (activePageId !== 'expenses-page') {
+            // 1. Remove expense filters from ALL other pages
+            document.querySelectorAll('.page:not(#expenses-page)').forEach(page => {
+                // Remove all expense-related containers
+                page.querySelectorAll(`
+                    .expense-filters-container,
+                    .expense-filters-wrapper,
+                    .expense-balance-cards,
+                    .expense-charts,
+                    [id*="expense-filter"],
+                    [id*="expense-balance"],
+                    [id*="expenseMonthlyChart"],
+                    [id*="expenseCategoryChart"]
+                `).forEach(el => {
+                    console.log('🗑️ Removing expense element from', page.id, ':', el.className || el.id);
+                    el.remove();
+                });
+            });
+            
+            // 2. Remove any orphaned expense elements in the main document
+            document.querySelectorAll(`
+                body > .expense-filters-container,
+                body > .expense-filters-wrapper,
+                .main-content > .expense-filters-container:not(#expenses-page .expense-filters-container),
+                #dashboard-page .expense-filters-container,
+                #invoices-page .expense-filters-container,
+                #clients-page .expense-filters-container,
+                #analytics-page .expense-filters-container,
+                #settings-page .expense-filters-container
+            `).forEach(el => {
+                console.log('🗑️ Removing orphaned expense element:', el.id || el.className);
+                el.remove();
+            });
+            
+            // 3. Destroy any leaked expense charts
+            if (window.expenseChart && typeof window.expenseChart.destroy === 'function') {
+                window.expenseChart.destroy();
+                window.expenseChart = null;
+            }
+            if (window.categoryChart && typeof window.categoryChart.destroy === 'function') {
+                window.categoryChart.destroy();
+                window.categoryChart = null;
+            }
+        }
+        
+        console.log('✅ Expense cleanup complete');
     } catch (error) {
-        console.warn('Error cleaning up expense filters:', error);
+        console.warn('Error during expense cleanup:', error);
     }
 }
+
 
 
 function renderDashboard() {
@@ -3466,37 +3530,60 @@ function setupForms() {
     setupSettingsForm();
 }
 
+// REPLACE YOUR ENTIRE SECTION WITH THIS FIXED VERSION
+// This properly handles all invoice form events without duplicates
+
 function setupInvoiceForm() {
+    console.log('Setting up invoice form...');
+    
+    // Clean up ALL existing listeners first
+    cleanupInvoiceListeners();
+    
+    // Setup "Add Line Item" button in modal
     const addLineItemBtn = document.getElementById('add-line-item');
-
     if (addLineItemBtn) {
-        addLineItemBtn.addEventListener('click', addLineItem);
+        addLineItemBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            addLineItem();
+        });
     }
 
-    // Remove any previous listeners by replacing the container
-    const oldInvoiceForm = document.getElementById('invoice-form');
-    if (oldInvoiceForm) {
-        const newInvoiceForm = oldInvoiceForm.cloneNode(true);
-        oldInvoiceForm.parentNode.replaceChild(newInvoiceForm, oldInvoiceForm);
-    }
-
-    // Attach event listeners only to the invoices page
-    const invoicesPage = document.getElementById('invoices-page');
-    if (invoicesPage) {
-        invoicesPage.addEventListener('click', (e) => {
+    // Setup invoice modal event delegation (single listener for all modal events)
+    const invoiceModal = document.getElementById('invoice-modal');
+    if (invoiceModal && !invoiceModal.hasAttribute('data-listeners-attached')) {
+        // Mark that we've attached listeners
+        invoiceModal.setAttribute('data-listeners-attached', 'true');
+        
+        // Single click handler for all modal buttons
+        invoiceModal.addEventListener('click', (e) => {
+            // Save Draft button
             if (e.target.id === 'save-draft') {
+                e.preventDefault();
                 saveInvoice('Draft');
-            } else if (e.target.id === 'save-invoice') {
+            }
+            // Save Invoice button
+            else if (e.target.id === 'save-invoice') {
+                e.preventDefault();
                 saveInvoice('Pending');
-            } else if (e.target.classList.contains('remove-item')) {
+            }
+            // Update Invoice button (for editing)
+            else if (e.target.id === 'update-invoice') {
+                e.preventDefault();
+                const statusSelect = document.getElementById('invoice-status-select');
+                const selectedStatus = statusSelect ? statusSelect.value : 'Pending';
+                saveInvoice(selectedStatus);
+            }
+            // Remove line item button
+            else if (e.target.classList.contains('remove-item')) {
+                e.preventDefault();
+                e.stopPropagation();
                 removeLineItem(e.target.closest('.line-item'));
                 calculateInvoiceTotal();
-            } else if (e.target.id === 'new-invoice-btn') {
-                openInvoiceModal();
             }
         });
-
-        invoicesPage.addEventListener('input', (e) => {
+        
+        // Single input handler for quantity/rate calculations
+        invoiceModal.addEventListener('input', (e) => {
             if (e.target.classList.contains('quantity') || e.target.classList.contains('rate')) {
                 calculateLineItem(e.target.closest('.line-item'));
                 calculateInvoiceTotal();
@@ -3504,13 +3591,65 @@ function setupInvoiceForm() {
         });
     }
 
-    // Set up form submission
+    // Setup form submission
     const invoiceForm = document.getElementById('invoice-form');
-    if (invoiceForm) {
+    if (invoiceForm && !invoiceForm.hasAttribute('data-submit-attached')) {
+        invoiceForm.setAttribute('data-submit-attached', 'true');
         invoiceForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            saveInvoice('Pending');
+            console.log('Form submitted');
+            // Check if we're in edit mode
+            if (editingInvoiceId) {
+                const statusSelect = document.getElementById('invoice-status-select');
+                const selectedStatus = statusSelect ? statusSelect.value : 'Pending';
+                saveInvoice(selectedStatus);
+            } else {
+                saveInvoice('Pending');
+            }
         });
+    }
+
+    // Setup page buttons (outside modal)
+    setupInvoicePageButtons();
+    
+    console.log('Invoice form setup complete');
+}
+
+function setupInvoicePageButtons() {
+    // Setup "Create Invoice" button on dashboard
+    const createInvoiceBtn = document.getElementById('create-invoice-btn');
+    if (createInvoiceBtn && !createInvoiceBtn.hasAttribute('data-listener-attached')) {
+        createInvoiceBtn.setAttribute('data-listener-attached', 'true');
+        createInvoiceBtn.addEventListener('click', () => {
+            openInvoiceModal();
+        });
+    }
+    
+    // Setup "New Invoice" button on invoices page
+    const newInvoiceBtn = document.getElementById('new-invoice-btn');
+    if (newInvoiceBtn && !newInvoiceBtn.hasAttribute('data-listener-attached')) {
+        newInvoiceBtn.setAttribute('data-listener-attached', 'true');
+        newInvoiceBtn.addEventListener('click', () => {
+            openInvoiceModal();
+        });
+    }
+}
+
+function cleanupInvoiceListeners() {
+    // Remove listeners from modal
+    const invoiceModal = document.getElementById('invoice-modal');
+    if (invoiceModal && invoiceModal.hasAttribute('data-listeners-attached')) {
+        const newModal = invoiceModal.cloneNode(true);
+        newModal.removeAttribute('data-listeners-attached');
+        invoiceModal.parentNode.replaceChild(newModal, invoiceModal);
+    }
+    
+    // Remove listeners from form
+    const invoiceForm = document.getElementById('invoice-form');
+    if (invoiceForm && invoiceForm.hasAttribute('data-submit-attached')) {
+        const newForm = invoiceForm.cloneNode(true);
+        newForm.removeAttribute('data-submit-attached');
+        invoiceForm.parentNode.replaceChild(newForm, invoiceForm);
     }
 }
 
@@ -3537,11 +3676,9 @@ function addLineItem() {
             </div>
         `;
         container.appendChild(lineItem);
-        // Attach input listeners for live calculation
-        const quantityInput = lineItem.querySelector('.quantity');
-        const rateInput = lineItem.querySelector('.rate');
-        if (quantityInput) quantityInput.addEventListener('input', () => { calculateLineItem(lineItem); calculateInvoiceTotal(); });
-        if (rateInput) rateInput.addEventListener('input', () => { calculateLineItem(lineItem); calculateInvoiceTotal(); });
+        
+        // No need to attach individual listeners - handled by event delegation
+        console.log('Line item added');
     }
 }
 
@@ -3549,6 +3686,9 @@ function removeLineItem(lineItem) {
     const container = document.getElementById('line-items-container');
     if (container && container.children.length > 1 && lineItem) {
         lineItem.remove();
+        console.log('Line item removed');
+    } else if (container && container.children.length === 1) {
+        showToast('At least one line item is required', 'warning');
     }
 }
 
@@ -3696,12 +3836,10 @@ async function saveInvoice(status) {
             .reduce((sum, inv) => sum + inv.amount, 0);
 
         calculateMonthlyEarnings();
-                // 🆕 ADD THIS CODE HERE - Update expense balance
-        if (window.expenseIntegration && window.expenseIntegration.isEnabled()) {
-            // Expense balance update will be handled directly after migration
+        
+        // Update expense balance if expense module is enabled
         if (window.expenseManager && window.expenseManager.isInitialized) {
             await window.expenseManager.updateBalanceFromInvoices(appData.invoices);
-        }
         }
 
         renderInvoices();
@@ -3709,6 +3847,9 @@ async function saveInvoice(status) {
         renderClients();
 
         closeModal(document.getElementById('invoice-modal'));
+        
+        // Clean up form after successful save
+        editingInvoiceId = null;
 
     } catch (error) {
         console.error('Error saving invoice:', error);
