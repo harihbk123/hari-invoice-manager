@@ -1677,56 +1677,58 @@ async function loadDataFromSupabase() {
     }
 }
 
+// REPLACE YOUR ENTIRE SECTION WITH THIS CORRECTED CODE:
+// This fixes all issues in the monthly, quarterly, and yearly calculations
+
 function calculateMonthlyEarnings() {
     const monthlyData = new Map();
-
+    
     appData.invoices
         .filter(inv => inv.status === 'Paid')
         .forEach(({ date, amount }) => {
             const d = new Date(date);
-            if (Number.isNaN(d)) return;
+            if (isNaN(d.getTime())) return;  // FIXED: Proper date validation
             const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
             monthlyData.set(monthKey, (monthlyData.get(monthKey) || 0) + amount);
         });
-
+    
     appData.monthlyEarnings = Array.from(monthlyData, ([month, amount]) => ({ month, amount }))
                                    .sort((a, b) => a.month.localeCompare(b.month));
 }
 
 function calculateQuarterlyEarnings(invoices = appData.invoices) {
     const quarterlyData = new Map();
-
+    
     invoices
         .filter(inv => inv.status === 'Paid')
         .forEach(({ date, amount }) => {
             const d = new Date(date);
-            if (Number.isNaN(d)) return;
-            const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-            monthlyData.set(monthKey, (monthlyData.get(monthKey) || 0) + amount);
-        });
-
-    appData.monthlyEarnings = Array.from(monthlyData, ([month, amount]) => ({ month, amount }))
-                                   .sort((a, b) => a.month.localeCompare(b.month));
-}
-
-function calculateQuarterlyEarnings(invoices = appData.invoices) {
-    const quarterlyData = new Map();
-
-    invoices
-        .filter(inv => inv.status === 'Paid')
-        .forEach(({ date, amount }) => {
-            const d = new Date(date);
-            if (Number.isNaN(d)) return;
+            if (isNaN(d.getTime())) return;  // FIXED: Proper date validation
             const year = d.getFullYear();
             const quarter = Math.ceil((d.getMonth() + 1) / 3);
             const quarterKey = `${year}-Q${quarter}`;
-            quarterlyData.set(quarterKey, (quarterlyData.get(quarterKey) || 0) + amount);
+            quarterlyData.set(quarterKey, (quarterlyData.get(quarterKey) || 0) + amount);  // FIXED: Use quarterlyData
         });
-
-    return Array.from(yearlyData, ([year, amount]) => ({ month: year, amount }))
+    
+    return Array.from(quarterlyData, ([quarter, amount]) => ({ month: quarter, amount }))  // FIXED: Use quarterlyData
                  .sort((a, b) => a.month.localeCompare(b.month));
 }
 
+function calculateYearlyEarnings(invoices = appData.invoices) {
+    const yearlyData = new Map();
+    
+    invoices
+        .filter(inv => inv.status === 'Paid')
+        .forEach(({ date, amount }) => {
+            const d = new Date(date);
+            if (isNaN(d.getTime())) return;  // Proper date validation
+            const year = d.getFullYear().toString();
+            yearlyData.set(year, (yearlyData.get(year) || 0) + amount);
+        });
+    
+    return Array.from(yearlyData, ([year, amount]) => ({ month: year, amount }))
+                 .sort((a, b) => a.month.localeCompare(b.month));
+}
 async function saveClientToSupabase(clientData) {
     try {
         console.log('Saving client to Supabase:', clientData);
