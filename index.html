@@ -240,51 +240,80 @@
                         </div>
 
                         <div class="settings-section">
-                            <h3>Banking Details</h3>
-                            <div class="banking-info">
-                                <div class="form-group">
-                                    <label class="form-label" for="bank-name">Account Holder Name</label>
-                                    <input type="text" class="form-control" id="bank-name">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="bank-account">Account Number</label>
-                                    <input type="text" class="form-control" placeholder="Enter account number" id="bank-account">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="bank-ifsc">IFSC Code</label>
-                                    <input type="text" class="form-control" placeholder="Enter IFSC code" id="bank-ifsc">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="bank-swift">SWIFT Code</label>
-                                    <input type="text" class="form-control" placeholder="Enter SWIFT code" id="bank-swift">
-                                </div>
-                            </div>
-                        </div>
+    <h3>Banking Details</h3>
+    <div class="banking-info">
+        <!-- FIXED: This is now correctly labeled and has correct ID -->
+        <div class="form-group">
+            <label class="form-label" for="bank-account-name">Account Holder Name</label>
+            <input type="text" class="form-control" id="bank-account-name" placeholder="Enter account holder name">
+        </div>
+        
+        <!-- NEW: Bank Name field (was missing, but ID was being used for account holder) -->
+        <div class="form-group">
+            <label class="form-label" for="bank-name">Bank Name</label>
+            <input type="text" class="form-control" id="bank-name" placeholder="Enter bank name (e.g., Kotak Mahindra Bank)">
+        </div>
+        
+        <!-- NEW: Account Type dropdown -->
+        <div class="form-group">
+            <label class="form-label" for="account-type">Account Type</label>
+            <select class="form-control" id="account-type">
+                <option value="Savings">Savings Account</option>
+                <option value="Current" selected>Current Account</option>
+                <option value="Business">Business Account</option>
+            </select>
+        </div>
+        
+        <!-- EXISTING: Account Number -->
+        <div class="form-group">
+            <label class="form-label" for="bank-account">Account Number</label>
+            <input type="text" class="form-control" placeholder="Enter account number" id="bank-account">
+        </div>
+        
+        <!-- NEW: Branch Name field -->
+        <div class="form-group">
+            <label class="form-label" for="bank-branch">Branch Name</label>
+            <input type="text" class="form-control" id="bank-branch" placeholder="Enter branch name (e.g., Indira Nagar, Bengaluru)">
+        </div>
+        
+        <!-- EXISTING: IFSC Code -->
+        <div class="form-group">
+            <label class="form-label" for="bank-ifsc">IFSC Code</label>
+            <input type="text" class="form-control" placeholder="Enter IFSC code" id="bank-ifsc">
+        </div>
+        
+        <!-- EXISTING: SWIFT Code -->
+        <div class="form-group">
+            <label class="form-label" for="bank-swift">SWIFT Code</label>
+            <input type="text" class="form-control" placeholder="Enter SWIFT code" id="bank-swift">
+        </div>
+    </div>
+</div>
 
-                        <div class="settings-section">
-                            <h3>Invoice Settings</h3>
-                            <div class="form-group">
-                                <label class="form-label" for="currency-setting">Currency</label>
-                                <select class="form-control" id="currency-setting">
-                                    <option value="INR">Indian Rupee (₹)</option>
-                                    <option value="USD">US Dollar ($)</option>
-                                    <option value="EUR">Euro (€)</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="tax-rate">Tax Rate (%)</label>
-                                <input type="number" class="form-control" id="tax-rate" min="0" max="100" step="0.01">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="invoice-prefix">Invoice Prefix</label>
-                                <input type="text" class="form-control" id="invoice-prefix">
-                            </div>
-                        </div>
+<div class="settings-section">
+    <h3>Invoice Settings</h3>
+    <div class="form-group">
+        <label class="form-label" for="currency-setting">Currency</label>
+        <select class="form-control" id="currency-setting">
+            <option value="INR">Indian Rupee (₹)</option>
+            <option value="USD">US Dollar ($)</option>
+            <option value="EUR">Euro (€)</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label class="form-label" for="tax-rate">Tax Rate (%)</label>
+        <input type="number" class="form-control" id="tax-rate" min="0" max="100" step="0.01">
+    </div>
+    <div class="form-group">
+        <label class="form-label" for="invoice-prefix">Invoice Prefix</label>
+        <input type="text" class="form-control" id="invoice-prefix">
+    </div>
+</div>
 
-                        <div class="settings-actions">
-                            <button type="button" class="btn btn--secondary" id="reset-settings">Reset to Default</button>
-                            <button type="submit" class="btn btn--primary" id="save-settings">Save Settings</button>
-                        </div>
+<div class="settings-actions">
+    <button type="button" class="btn btn--secondary" id="reset-settings">Reset to Default</button>
+    <button type="submit" class="btn btn--primary" id="save-settings">Save Settings</button>
+</div>
                     </form>
                 </div>
             </div>
