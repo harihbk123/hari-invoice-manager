@@ -193,9 +193,31 @@ getExpensesPageHTML() {
         // Add expense button, export, edit, delete
         expensesPage.addEventListener('click', (e) => {
             if (e.target.id === 'add-expense-btn') {
-                this.showToast('Add Expense clicked (stub)', 'info');
+                this.openExpenseModal();
             } else if (e.target.id === 'export-expenses') {
-                this.showToast('Export Expenses clicked (stub)', 'info');
+                this.exportExpenses();
+            } else if (e.target.classList.contains('edit-expense-btn')) {
+                const expenseId = e.target.getAttribute('data-expense-id');
+                this.editExpense(expenseId);
+            } else if (e.target.classList.contains('delete-expense-btn')) {
+                const expenseId = e.target.getAttribute('data-expense-id');
+                this.deleteExpense(expenseId);
+            } else if (e.target.id === 'expense-modal-overlay' || e.target.id === 'close-expense-modal' || e.target.id === 'cancel-expense') {
+                this.closeExpenseModal();
+            } else if (e.target.id === 'category-modal-overlay' || e.target.id === 'close-category-modal') {
+                this.closeCategoryModal();
+            } else if (e.target.id === 'save-expense') {
+                e.preventDefault();
+                this.saveExpense();
+            } else if (e.target.id === 'save-category') {
+                e.preventDefault();
+                this.saveCategory();
+            }
+        });
+        // Category selection handler - show "Add New Category" option
+        expensesPage.addEventListener('change', (e) => {
+            if (e.target.id === 'expense-category' && e.target.value === 'add-new') {
+                this.openCategoryModal();
             }
         });
     }
